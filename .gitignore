@@ -1,2 +1,31 @@
-*/target/*
+# Secrets / env
 .env
+**/.env
+!.env.example
+
+# Maven / Java
+**/target/
+*.class
+*.log
+
+# Gradle / Android
+.gradle/
+**/.gradle/
+build/
+**/build/
+local.properties
+.externalNativeBuild/
+.cxx/
+captures/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+**/.classpath
+**/.factorypath
+**/.project
+**/.settings/
+
+# OS
+.DS_Store

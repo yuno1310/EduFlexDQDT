@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">EduFlex</string>
+    <string name="welcome_title">Welcome back</string>
+    <string name="welcome_subtitle">Login or create an account to continue learning.</string>
+    <string name="username_hint">Username</string>
+    <string name="password_hint">Password</string>
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+</resources>
