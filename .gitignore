@@ -29,3 +29,9 @@ captures/
 
 # OS
 .DS_Store
+
+
+# Firebase
+google-services.json
+
+PROJECT_CONTEXT.md
