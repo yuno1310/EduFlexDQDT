@@ -143,7 +143,7 @@
 							<springAnnotations>true</springAnnotations>
 						</generate>
 						<target>
-							<packageName>com.example.eduflex.generated</packageName>
+							<packageName>com.eduflex.generated</packageName>
 							<directory>src/main/java</directory>
 						</target>
 					</generator>
