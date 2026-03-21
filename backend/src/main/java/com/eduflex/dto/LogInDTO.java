@@ -7,6 +7,6 @@ public class LogInDTO {
   public record LogInRequest(@NotBlank @Email String email, @NotBlank String password) {
   }
 
-  public record LogInResponse(boolean success, String message) {
+  public record LogInResponse(boolean success, String message, String token) {
   }
 }
