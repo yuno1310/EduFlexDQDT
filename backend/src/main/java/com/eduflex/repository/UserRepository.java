@@ -7,6 +7,8 @@ import org.springframework.stereotype.Repository;
 import com.eduflex.entity.UsersDbO;
 import com.eduflex.generated.tables.Users;
 
+import java.util.UUID;
+
 @Repository
 public class UserRepository {
   @Autowired
@@ -29,5 +31,14 @@ public class UserRepository {
       return null;
     }
   }
+
+  public UsersDbO find_by_id(UUID userId) {
+    var record = dsl.selectFrom(Users.USERS)
+            .where(Users.USERS.USER_ID.eq(userId))
+            .limit(1)
+            .fetchOne();
+    return record != null ? new UsersDbO(record) : null;
+}
+
 
 }

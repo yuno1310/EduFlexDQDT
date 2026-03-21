@@ -35,6 +35,3 @@ captures/
 google-services.json
 
 PROJECT_CONTEXT.md
-
-# jOOQ generated sources
-backend/src/main/java/com/eduflex/generated/

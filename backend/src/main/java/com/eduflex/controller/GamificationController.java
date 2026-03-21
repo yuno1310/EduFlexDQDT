@@ -1,49 +1,46 @@
 package com.eduflex.controller;
 
-import com.eduflex.dto.GamificationStatsDTO;
-import com.eduflex.service.GamificationService;
+import com.eduflex.dto.AddXpDTO;
+import com.eduflex.dto.GetGamificationStatsDTO;
+import com.eduflex.dto.UpdateStreakDTO;
+import com.eduflex.service.AddXpUseCase;
+import com.eduflex.service.GetGamificationStatsUseCase;
+import com.eduflex.service.UpdateStreakUseCase;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users/{userId}")
 public class GamificationController {
 
-    private final GamificationService gamificationService;
+    @Autowired
+    private GetGamificationStatsUseCase getGamificationStatsUseCase;
 
-    public GamificationController(GamificationService gamificationService) {
-        this.gamificationService = gamificationService;
-    }
+    @Autowired
+    private AddXpUseCase addXpUseCase;
 
-    /**
-     * GET /api/users/{userId}/stats
-     * Get gamification stats (XP, level, streak) for a user
-     */
+    @Autowired
+    private UpdateStreakUseCase updateStreakUseCase;
+
     @GetMapping("/stats")
-    public ResponseEntity<GamificationStatsDTO> getStats(@PathVariable String userId) {
-        return ResponseEntity.ok(gamificationService.getStatsByUserId(userId));
+    public ResponseEntity<GetGamificationStatsDTO.GetGamificationStatsResponse> getStats(
+            @PathVariable UUID userId) {
+        return ResponseEntity.ok(getGamificationStatsUseCase.execute(userId));
     }
 
-    /**
-     * POST /api/users/{userId}/xp
-     * Add XP to a user. Body: { "amount": 10 }
-     */
     @PostMapping("/xp")
-    public ResponseEntity<GamificationStatsDTO> addXp(
-            @PathVariable String userId,
-            @RequestBody Map<String, Integer> body) {
-        int amount = body.getOrDefault("amount", 0);
-        return ResponseEntity.ok(gamificationService.addXp(userId, amount));
+    public ResponseEntity<AddXpDTO.AddXpResponse> addXp(
+            @PathVariable UUID userId,
+            @RequestBody AddXpDTO.AddXpRequest request) {
+        return ResponseEntity.ok(addXpUseCase.execute(userId, request));
     }
 
-    /**
-     * POST /api/users/{userId}/streak
-     * Update daily streak for a user
-     */
     @PostMapping("/streak")
-    public ResponseEntity<GamificationStatsDTO> updateStreak(@PathVariable String userId) {
-        return ResponseEntity.ok(gamificationService.updateStreak(userId));
+    public ResponseEntity<UpdateStreakDTO.UpdateStreakResponse> updateStreak(
+            @PathVariable UUID userId) {
+        return ResponseEntity.ok(updateStreakUseCase.execute(userId));
     }
 }
