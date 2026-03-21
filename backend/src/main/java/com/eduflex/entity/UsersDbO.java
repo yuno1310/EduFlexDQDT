@@ -1,20 +1,17 @@
 package com.eduflex.entity;
 
-import java.time.OffsetDateTime;
-
 import com.eduflex.generated.tables.Users;
 import com.eduflex.generated.tables.records.UsersRecord;
 
 public class UsersDbO {
   public UsersRecord record;
 
-  public UsersDbO(String userID, String email, String password, String fullName, OffsetDateTime createdAt, boolean active) {
+  public UsersDbO(String email, String password_hash, String fullName,
+      boolean active) {
     record = Users.USERS.newRecord();
-    record.setUserId(userID);
     record.setEmail(email);
-    record.setPasswordHash(password);
+    record.setPasswordHash(password_hash);
     record.setFullName(fullName);
-    record.setCreatedAt(createdAt);
     record.setIsActive(active);
   }
 

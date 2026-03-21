@@ -6,16 +6,24 @@ package com.eduflex.generated.tables;
 
 import com.eduflex.generated.Keys;
 import com.eduflex.generated.Public;
+import com.eduflex.generated.tables.Badges.BadgesPath;
+import com.eduflex.generated.tables.GamificationStats.GamificationStatsPath;
+import com.eduflex.generated.tables.UserBadges.UserBadgesPath;
 import com.eduflex.generated.tables.records.UsersRecord;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.UUID;
 
 import org.jooq.Condition;
 import org.jooq.Field;
+import org.jooq.ForeignKey;
+import org.jooq.InverseForeignKey;
 import org.jooq.Name;
+import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
+import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -53,7 +61,7 @@ public class Users extends TableImpl<UsersRecord> {
     /**
      * The column <code>public.users.user_id</code>.
      */
-    public final TableField<UsersRecord, String> USER_ID = createField(DSL.name("user_id"), SQLDataType.VARCHAR.nullable(false), this, "");
+    public final TableField<UsersRecord, UUID> USER_ID = createField(DSL.name("user_id"), SQLDataType.UUID.nullable(false).defaultValue(DSL.field(DSL.raw("gen_random_uuid()"), SQLDataType.UUID)), this, "");
 
     /**
      * The column <code>public.users.email</code>.
@@ -109,6 +117,39 @@ public class Users extends TableImpl<UsersRecord> {
         this(DSL.name("users"), null);
     }
 
+    public <O extends Record> Users(Table<O> path, ForeignKey<O, UsersRecord> childPath, InverseForeignKey<O, UsersRecord> parentPath) {
+        super(path, childPath, parentPath, USERS);
+    }
+
+    /**
+     * A subtype implementing {@link Path} for simplified path-based joins.
+     */
+    public static class UsersPath extends Users implements Path<UsersRecord> {
+
+        private static final long serialVersionUID = 1L;
+        public <O extends Record> UsersPath(Table<O> path, ForeignKey<O, UsersRecord> childPath, InverseForeignKey<O, UsersRecord> parentPath) {
+            super(path, childPath, parentPath);
+        }
+        private UsersPath(Name alias, Table<UsersRecord> aliased) {
+            super(alias, aliased);
+        }
+
+        @Override
+        public UsersPath as(String alias) {
+            return new UsersPath(DSL.name(alias), this);
+        }
+
+        @Override
+        public UsersPath as(Name alias) {
+            return new UsersPath(alias, this);
+        }
+
+        @Override
+        public UsersPath as(Table<?> alias) {
+            return new UsersPath(alias.getQualifiedName(), this);
+        }
+    }
+
     @Override
     public Schema getSchema() {
         return aliased() ? null : Public.PUBLIC;
@@ -117,6 +158,40 @@ public class Users extends TableImpl<UsersRecord> {
     @Override
     public UniqueKey<UsersRecord> getPrimaryKey() {
         return Keys.USERS_PKEY;
+    }
+
+    private transient GamificationStatsPath _gamificationStats;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.gamification_stats</code> table
+     */
+    public GamificationStatsPath gamificationStats() {
+        if (_gamificationStats == null)
+            _gamificationStats = new GamificationStatsPath(this, null, Keys.GAMIFICATION_STATS__FK_GAMIFICATION_USER.getInverseKey());
+
+        return _gamificationStats;
+    }
+
+    private transient UserBadgesPath _userBadges;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.user_badges</code>
+     * table
+     */
+    public UserBadgesPath userBadges() {
+        if (_userBadges == null)
+            _userBadges = new UserBadgesPath(this, null, Keys.USER_BADGES__FK_USER_BADGE_USER.getInverseKey());
+
+        return _userBadges;
+    }
+
+    /**
+     * Get the implicit many-to-many join path to the <code>public.badges</code>
+     * table
+     */
+    public BadgesPath badges() {
+        return userBadges().badges();
     }
 
     @Override

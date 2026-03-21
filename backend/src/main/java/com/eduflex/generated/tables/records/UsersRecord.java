@@ -7,7 +7,7 @@ package com.eduflex.generated.tables.records;
 import com.eduflex.generated.tables.Users;
 
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
+import java.util.UUID;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -24,15 +24,15 @@ public class UsersRecord extends UpdatableRecordImpl<UsersRecord> {
     /**
      * Setter for <code>public.users.user_id</code>.
      */
-    public void setUserId(String value) {
+    public void setUserId(UUID value) {
         set(0, value);
     }
 
     /**
      * Getter for <code>public.users.user_id</code>.
      */
-    public String getUserId() {
-        return (String) get(0);
+    public UUID getUserId() {
+        return (UUID) get(0);
     }
 
     /**
@@ -80,8 +80,8 @@ public class UsersRecord extends UpdatableRecordImpl<UsersRecord> {
     /**
      * Setter for <code>public.users.created_at</code>.
      */
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        set(4, createdAt);
+    public void setCreatedAt(LocalDateTime value) {
+        set(4, value);
     }
 
     /**
@@ -110,7 +110,7 @@ public class UsersRecord extends UpdatableRecordImpl<UsersRecord> {
     // -------------------------------------------------------------------------
 
     @Override
-    public Record1<String> key() {
+    public Record1<UUID> key() {
         return (Record1) super.key();
     }
 
@@ -128,7 +128,7 @@ public class UsersRecord extends UpdatableRecordImpl<UsersRecord> {
     /**
      * Create a detached, initialised UsersRecord
      */
-    public UsersRecord(String userId, String email, String passwordHash, String fullName, LocalDateTime createdAt, Boolean isActive) {
+    public UsersRecord(UUID userId, String email, String passwordHash, String fullName, LocalDateTime createdAt, Boolean isActive) {
         super(Users.USERS);
 
         setUserId(userId);

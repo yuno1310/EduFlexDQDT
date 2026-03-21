@@ -10,6 +10,7 @@ import com.eduflex.generated.tables.records.UsersRecord;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.jooq.Configuration;
 import org.jooq.impl.DAOImpl;
@@ -22,7 +23,7 @@ import org.springframework.stereotype.Repository;
  */
 @SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 @Repository
-public class UsersDao extends DAOImpl<UsersRecord, com.eduflex.generated.tables.pojos.Users, String> {
+public class UsersDao extends DAOImpl<UsersRecord, com.eduflex.generated.tables.pojos.Users, UUID> {
 
     /**
      * Create a new UsersDao without any configuration
@@ -40,7 +41,7 @@ public class UsersDao extends DAOImpl<UsersRecord, com.eduflex.generated.tables.
     }
 
     @Override
-    public String getId(com.eduflex.generated.tables.pojos.Users object) {
+    public UUID getId(com.eduflex.generated.tables.pojos.Users object) {
         return object.getUserId();
     }
 
@@ -48,28 +49,28 @@ public class UsersDao extends DAOImpl<UsersRecord, com.eduflex.generated.tables.
      * Fetch records that have <code>user_id BETWEEN lowerInclusive AND
      * upperInclusive</code>
      */
-    public List<com.eduflex.generated.tables.pojos.Users> fetchRangeOfUserId(String lowerInclusive, String upperInclusive) {
+    public List<com.eduflex.generated.tables.pojos.Users> fetchRangeOfUserId(UUID lowerInclusive, UUID upperInclusive) {
         return fetchRange(Users.USERS.USER_ID, lowerInclusive, upperInclusive);
     }
 
     /**
      * Fetch records that have <code>user_id IN (values)</code>
      */
-    public List<com.eduflex.generated.tables.pojos.Users> fetchByUserId(String... values) {
+    public List<com.eduflex.generated.tables.pojos.Users> fetchByUserId(UUID... values) {
         return fetch(Users.USERS.USER_ID, values);
     }
 
     /**
      * Fetch a unique record that has <code>user_id = value</code>
      */
-    public com.eduflex.generated.tables.pojos.Users fetchOneByUserId(String value) {
+    public com.eduflex.generated.tables.pojos.Users fetchOneByUserId(UUID value) {
         return fetchOne(Users.USERS.USER_ID, value);
     }
 
     /**
      * Fetch a unique record that has <code>user_id = value</code>
      */
-    public Optional<com.eduflex.generated.tables.pojos.Users> fetchOptionalByUserId(String value) {
+    public Optional<com.eduflex.generated.tables.pojos.Users> fetchOptionalByUserId(UUID value) {
         return fetchOptional(Users.USERS.USER_ID, value);
     }
 

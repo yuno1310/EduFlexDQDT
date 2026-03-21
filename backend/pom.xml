@@ -74,6 +74,11 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.8.4</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -82,6 +87,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <mainClass>com.eduflex.EduflexDQDTApplication</mainClass>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
@@ -90,72 +96,72 @@
                     </excludes>
                 </configuration>
             </plugin>
-			      <plugin>
-			      	<groupId>org.flywaydb</groupId>
-			      	<artifactId>flyway-maven-plugin</artifactId>
-			      	<configuration>
-                <url>jdbc:postgresql://aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres</url>
-                <user>postgres.pkcsfpmyyzilmeolygor</user>
-                <password>AR8S8uPXZ7LVx1VT</password>
-			      		<schemas>
-			      			<schema>public</schema>
-			      		</schemas>
-			      		<locations>
-			      			<location>filesystem:src/main/resources/db/migration</location>
-			      		</locations>
-			      	</configuration>
-			      	<dependencies>
-			      		<dependency>
-			      			<groupId>org.postgresql</groupId>
-			      			<artifactId>postgresql</artifactId>
-			      			<version>42.7.3</version>
-			      		</dependency>
-              </dependencies>
-			      </plugin>
-			      <plugin>
-			      	<groupId>org.jooq</groupId>
-			      	<artifactId>jooq-codegen-maven</artifactId>
-			      	<executions>
-			      		<execution>
-			      			<id>generate-jooq</id>
-			      			<phase>generate-sources</phase>
-			      			<goals>
-			      				<goal>generate</goal>
-			      			</goals>
-			      		</execution>
-			      	</executions>
-			      	<configuration>
-			      		<jdbc>
-			      			<driver>org.postgresql.Driver</driver>
-                      <url>jdbc:postgresql://aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres</url>
-                      <user>postgres.pkcsfpmyyzilmeolygor</user>
-                      <password>AR8S8uPXZ7LVx1VT</password>
-			      		</jdbc>
-			      		<generator>
-			      			<database>
-			      				<name>org.jooq.meta.postgres.PostgresDatabase</name>
-			      				<inputSchema>public</inputSchema>
-			      			</database>
-			      			<generate>
-			      				<pojos>true</pojos>
-			      				<daos>true</daos>
-			      				<javaTimeTypes>true</javaTimeTypes>
-			      				<springAnnotations>true</springAnnotations>
-			      			</generate>
-			      			<target>
-			      				<packageName>com.eduflex.generated</packageName>
-			      				<directory>src/main/java</directory>
-			      			</target>
-			      		</generator>
-			      	</configuration>
-			      	<dependencies>
-			      		<dependency>
-			      			<groupId>org.postgresql</groupId>
-			      			<artifactId>postgresql</artifactId>
-			      			<version>42.7.3</version>
-			      		</dependency>
-			      	</dependencies>
-			      </plugin>
-          </plugins>
+            <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <configuration>
+                    <url>jdbc:postgresql://aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres</url>
+                    <user>postgres.pkcsfpmyyzilmeolygor</user>
+                    <password>AR8S8uPXZ7LVx1VT</password>
+                    <schemas>
+                        <schema>public</schema>
+                    </schemas>
+                    <locations>
+                        <location>filesystem:src/main/resources/db/migration</location>
+                    </locations>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.postgresql</groupId>
+                        <artifactId>postgresql</artifactId>
+                        <version>42.7.3</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>org.jooq</groupId>
+                <artifactId>jooq-codegen-maven</artifactId>
+                <executions>
+                    <execution>
+                        <id>generate-jooq</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <jdbc>
+                        <driver>org.postgresql.Driver</driver>
+                        <url>jdbc:postgresql://aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres</url>
+                        <user>postgres.pkcsfpmyyzilmeolygor</user>
+                        <password>AR8S8uPXZ7LVx1VT</password>
+                    </jdbc>
+                    <generator>
+                        <database>
+                            <name>org.jooq.meta.postgres.PostgresDatabase</name>
+                            <inputSchema>public</inputSchema>
+                        </database>
+                        <generate>
+                            <pojos>true</pojos>
+                            <daos>true</daos>
+                            <javaTimeTypes>true</javaTimeTypes>
+                            <springAnnotations>true</springAnnotations>
+                        </generate>
+                        <target>
+                            <packageName>com.eduflex.generated</packageName>
+                            <directory>src/main/java</directory>
+                        </target>
+                    </generator>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.postgresql</groupId>
+                        <artifactId>postgresql</artifactId>
+                        <version>42.7.3</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
     </build>
 </project>

@@ -4,7 +4,11 @@
 package com.eduflex.generated;
 
 
+import com.eduflex.generated.tables.Badges;
+import com.eduflex.generated.tables.Courses;
 import com.eduflex.generated.tables.FlywaySchemaHistory;
+import com.eduflex.generated.tables.GamificationStats;
+import com.eduflex.generated.tables.UserBadges;
 import com.eduflex.generated.tables.Users;
 
 
@@ -15,9 +19,29 @@ import com.eduflex.generated.tables.Users;
 public class Tables {
 
     /**
+     * The table <code>public.badges</code>.
+     */
+    public static final Badges BADGES = Badges.BADGES;
+
+    /**
+     * The table <code>public.courses</code>.
+     */
+    public static final Courses COURSES = Courses.COURSES;
+
+    /**
      * The table <code>public.flyway_schema_history</code>.
      */
     public static final FlywaySchemaHistory FLYWAY_SCHEMA_HISTORY = FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY;
+
+    /**
+     * The table <code>public.gamification_stats</code>.
+     */
+    public static final GamificationStats GAMIFICATION_STATS = GamificationStats.GAMIFICATION_STATS;
+
+    /**
+     * The table <code>public.user_badges</code>.
+     */
+    public static final UserBadges USER_BADGES = UserBadges.USER_BADGES;
 
     /**
      * The table <code>public.users</code>.

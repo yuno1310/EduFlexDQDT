@@ -4,7 +4,11 @@
 package com.eduflex.generated;
 
 
+import com.eduflex.generated.tables.Badges;
+import com.eduflex.generated.tables.Courses;
 import com.eduflex.generated.tables.FlywaySchemaHistory;
+import com.eduflex.generated.tables.GamificationStats;
+import com.eduflex.generated.tables.UserBadges;
 import com.eduflex.generated.tables.Users;
 
 import java.util.Arrays;
@@ -29,9 +33,29 @@ public class Public extends SchemaImpl {
     public static final Public PUBLIC = new Public();
 
     /**
+     * The table <code>public.badges</code>.
+     */
+    public final Badges BADGES = Badges.BADGES;
+
+    /**
+     * The table <code>public.courses</code>.
+     */
+    public final Courses COURSES = Courses.COURSES;
+
+    /**
      * The table <code>public.flyway_schema_history</code>.
      */
     public final FlywaySchemaHistory FLYWAY_SCHEMA_HISTORY = FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY;
+
+    /**
+     * The table <code>public.gamification_stats</code>.
+     */
+    public final GamificationStats GAMIFICATION_STATS = GamificationStats.GAMIFICATION_STATS;
+
+    /**
+     * The table <code>public.user_badges</code>.
+     */
+    public final UserBadges USER_BADGES = UserBadges.USER_BADGES;
 
     /**
      * The table <code>public.users</code>.
@@ -54,7 +78,11 @@ public class Public extends SchemaImpl {
     @Override
     public final List<Table<?>> getTables() {
         return Arrays.asList(
+            Badges.BADGES,
+            Courses.COURSES,
             FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY,
+            GamificationStats.GAMIFICATION_STATS,
+            UserBadges.USER_BADGES,
             Users.USERS
         );
     }

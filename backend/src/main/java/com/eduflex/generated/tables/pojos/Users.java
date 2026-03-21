@@ -6,6 +6,7 @@ package com.eduflex.generated.tables.pojos;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 
 /**
@@ -16,7 +17,7 @@ public class Users implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private String userId;
+    private UUID userId;
     private String email;
     private String passwordHash;
     private String fullName;
@@ -35,7 +36,7 @@ public class Users implements Serializable {
     }
 
     public Users(
-        String userId,
+        UUID userId,
         String email,
         String passwordHash,
         String fullName,
@@ -53,14 +54,14 @@ public class Users implements Serializable {
     /**
      * Getter for <code>public.users.user_id</code>.
      */
-    public String getUserId() {
+    public UUID getUserId() {
         return this.userId;
     }
 
     /**
      * Setter for <code>public.users.user_id</code>.
      */
-    public void setUserId(String userId) {
+    public void setUserId(UUID userId) {
         this.userId = userId;
     }
 
