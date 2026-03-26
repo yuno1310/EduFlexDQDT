@@ -8,6 +8,7 @@ import com.eduflex.generated.tables.Badges;
 import com.eduflex.generated.tables.Courses;
 import com.eduflex.generated.tables.FlywaySchemaHistory;
 import com.eduflex.generated.tables.GamificationStats;
+import com.eduflex.generated.tables.Lesson;
 import com.eduflex.generated.tables.UserBadges;
 import com.eduflex.generated.tables.Users;
 
@@ -37,6 +38,11 @@ public class Tables {
      * The table <code>public.gamification_stats</code>.
      */
     public static final GamificationStats GAMIFICATION_STATS = GamificationStats.GAMIFICATION_STATS;
+
+    /**
+     * The table <code>public.lesson</code>.
+     */
+    public static final Lesson LESSON = Lesson.LESSON;
 
     /**
      * The table <code>public.user_badges</code>.

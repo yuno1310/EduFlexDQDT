@@ -8,6 +8,7 @@ import com.eduflex.generated.tables.Badges;
 import com.eduflex.generated.tables.Courses;
 import com.eduflex.generated.tables.FlywaySchemaHistory;
 import com.eduflex.generated.tables.GamificationStats;
+import com.eduflex.generated.tables.Lesson;
 import com.eduflex.generated.tables.UserBadges;
 import com.eduflex.generated.tables.Users;
 
@@ -53,6 +54,11 @@ public class Public extends SchemaImpl {
     public final GamificationStats GAMIFICATION_STATS = GamificationStats.GAMIFICATION_STATS;
 
     /**
+     * The table <code>public.lesson</code>.
+     */
+    public final Lesson LESSON = Lesson.LESSON;
+
+    /**
      * The table <code>public.user_badges</code>.
      */
     public final UserBadges USER_BADGES = UserBadges.USER_BADGES;
@@ -82,6 +88,7 @@ public class Public extends SchemaImpl {
             Courses.COURSES,
             FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY,
             GamificationStats.GAMIFICATION_STATS,
+            Lesson.LESSON,
             UserBadges.USER_BADGES,
             Users.USERS
         );
