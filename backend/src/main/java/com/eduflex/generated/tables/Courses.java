@@ -6,6 +6,7 @@ package com.eduflex.generated.tables;
 
 import com.eduflex.generated.Keys;
 import com.eduflex.generated.Public;
+import com.eduflex.generated.tables.Lesson.LessonPath;
 import com.eduflex.generated.tables.records.CoursesRecord;
 
 import java.time.LocalDateTime;
@@ -14,9 +15,13 @@ import java.util.UUID;
 
 import org.jooq.Condition;
 import org.jooq.Field;
+import org.jooq.ForeignKey;
+import org.jooq.InverseForeignKey;
 import org.jooq.Name;
+import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
+import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -105,6 +110,39 @@ public class Courses extends TableImpl<CoursesRecord> {
         this(DSL.name("courses"), null);
     }
 
+    public <O extends Record> Courses(Table<O> path, ForeignKey<O, CoursesRecord> childPath, InverseForeignKey<O, CoursesRecord> parentPath) {
+        super(path, childPath, parentPath, COURSES);
+    }
+
+    /**
+     * A subtype implementing {@link Path} for simplified path-based joins.
+     */
+    public static class CoursesPath extends Courses implements Path<CoursesRecord> {
+
+        private static final long serialVersionUID = 1L;
+        public <O extends Record> CoursesPath(Table<O> path, ForeignKey<O, CoursesRecord> childPath, InverseForeignKey<O, CoursesRecord> parentPath) {
+            super(path, childPath, parentPath);
+        }
+        private CoursesPath(Name alias, Table<CoursesRecord> aliased) {
+            super(alias, aliased);
+        }
+
+        @Override
+        public CoursesPath as(String alias) {
+            return new CoursesPath(DSL.name(alias), this);
+        }
+
+        @Override
+        public CoursesPath as(Name alias) {
+            return new CoursesPath(alias, this);
+        }
+
+        @Override
+        public CoursesPath as(Table<?> alias) {
+            return new CoursesPath(alias.getQualifiedName(), this);
+        }
+    }
+
     @Override
     public Schema getSchema() {
         return aliased() ? null : Public.PUBLIC;
@@ -113,6 +151,19 @@ public class Courses extends TableImpl<CoursesRecord> {
     @Override
     public UniqueKey<CoursesRecord> getPrimaryKey() {
         return Keys.COURSES_PKEY;
+    }
+
+    private transient LessonPath _lesson;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.lesson</code>
+     * table
+     */
+    public LessonPath lesson() {
+        if (_lesson == null)
+            _lesson = new LessonPath(this, null, Keys.LESSON__FK_LESSON_COURSE.getInverseKey());
+
+        return _lesson;
     }
 
     @Override
