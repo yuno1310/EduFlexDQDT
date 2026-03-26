@@ -14,4 +14,8 @@ public class LessonDbO {
     record.setTitle(title);
     record.setContentType(contentType);
   }
+
+  public LessonDbO(LessonRecord record) {
+    this.record = record;
+  }
 }

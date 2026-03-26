@@ -21,4 +21,5 @@ public class CreateCourseUseCase {
       return new CreateCourseResponse(false, "Failed to create new course");
     }
   }
+
 }
