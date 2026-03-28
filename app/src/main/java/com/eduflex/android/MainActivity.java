@@ -10,6 +10,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.os.Build;
 import android.util.Log;
+import com.eduflex.android.api.ApiClient;
 import com.google.firebase.messaging.FirebaseMessaging;
 public class MainActivity extends AppCompatActivity {
 
@@ -17,6 +18,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Initialise API client so the auth interceptor can read the stored JWT
+        ApiClient.init(this);
 
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.nav_host_fragment);
@@ -30,7 +34,6 @@ public class MainActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         String token = task.getResult();
                         Log.d("FCM_TOKEN", "Token: " + token);
-                        // Token này dùng để backend gửi notification đến thiết bị này
                     }
                 });
     }
