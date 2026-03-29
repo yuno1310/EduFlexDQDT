@@ -7,14 +7,21 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.eduflex.android.R;
+import com.eduflex.android.model.Course;
 import java.util.List;
 
 public class CourseCardAdapter extends RecyclerView.Adapter<CourseCardAdapter.ViewHolder> {
 
-    private final List<String> items;
+    public interface OnCourseClickListener {
+        void onCourseClick(Course course);
+    }
 
-    public CourseCardAdapter(List<String> items) {
+    private final List<Course> items;
+    private final OnCourseClickListener listener;
+
+    public CourseCardAdapter(List<Course> items, OnCourseClickListener listener) {
         this.items = items;
+        this.listener = listener;
     }
 
     @NonNull
@@ -27,7 +34,15 @@ public class CourseCardAdapter extends RecyclerView.Adapter<CourseCardAdapter.Vi
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.tvTitle.setText(items.get(position));
+        Course course = items.get(position);
+        holder.tvTitle.setText(course.getTitle());
+        holder.tvInstructor.setText(course.getLearningMode());
+        holder.tvPrice.setText(course.getStatus());
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onCourseClick(course);
+            }
+        });
     }
 
     @Override
@@ -35,9 +50,14 @@ public class CourseCardAdapter extends RecyclerView.Adapter<CourseCardAdapter.Vi
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvTitle;
+        TextView tvInstructor;
+        TextView tvPrice;
+
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvTitle = itemView.findViewById(R.id.tv_title);
+            tvInstructor = itemView.findViewById(R.id.tv_instructor);
+            tvPrice = itemView.findViewById(R.id.tv_price);
         }
     }
 }

@@ -8,6 +8,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -20,12 +22,13 @@ import com.eduflex.android.api.GamificationApi;
 import com.eduflex.android.auth.TokenManager;
 import com.eduflex.android.model.GamificationStatsResponse;
 
-import java.util.Arrays;
-import java.util.List;
-
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import com.eduflex.android.api.CourseApi;
+import com.eduflex.android.model.CategoryListResponse;
+import com.eduflex.android.model.Course;
+import com.eduflex.android.model.CourseListResponse;
 
 public class HomeFragment extends Fragment {
 
@@ -36,6 +39,7 @@ public class HomeFragment extends Fragment {
     private TextView tvLevel;
     private GamificationApi gamificationApi;
     private TokenManager tokenManager;
+    private CourseApi courseApi;
 
     public HomeFragment() {
         super(R.layout.fragment_home);
@@ -53,6 +57,7 @@ public class HomeFragment extends Fragment {
         // Init API (use authenticated client so the JWT is attached)
         gamificationApi = ApiClient.createAuthenticatedService(GamificationApi.class);
         tokenManager = new TokenManager(requireContext());
+        courseApi = ApiClient.createAuthenticatedService(CourseApi.class);
 
         // Setup UI
         setupContinueLearning(view);
@@ -122,32 +127,88 @@ public class HomeFragment extends Fragment {
         RecyclerView rv = view.findViewById(R.id.rv_continue_learning);
         rv.setLayoutManager(new LinearLayoutManager(
                 getContext(), LinearLayoutManager.HORIZONTAL, false));
-        rv.setAdapter(new ContinueLearningAdapter(getMockCourses()));
+
+        courseApi.getCourses().enqueue(new Callback<CourseListResponse>() {
+            @Override
+            public void onResponse(Call<CourseListResponse> call, retrofit2.Response<CourseListResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    CourseListResponse body = response.body();
+                    if (body.getListCourse() != null) {
+                        rv.setAdapter(new ContinueLearningAdapter(body.getListCourse(), HomeFragment.this::onCourseClick));
+                    }
+                } else {
+                    Log.e(TAG, "Failed to load continue learning courses: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<CourseListResponse> call, Throwable t) {
+                Log.e(TAG, "Network error loading continue learning courses: " + t.getMessage());
+            }
+        });
     }
 
     private void setupFeaturedCourses(View view) {
         RecyclerView rv = view.findViewById(R.id.rv_featured_courses);
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
-        rv.setAdapter(new CourseCardAdapter(getMockCourses()));
+
+        courseApi.getCourses().enqueue(new Callback<CourseListResponse>() {
+            @Override
+            public void onResponse(Call<CourseListResponse> call, retrofit2.Response<CourseListResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    CourseListResponse body = response.body();
+                    if (body.getListCourse() != null) {
+                        rv.setAdapter(new CourseCardAdapter(body.getListCourse(), HomeFragment.this::onCourseClick));
+                    }
+                } else {
+                    Log.e(TAG, "Failed to load featured courses: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<CourseListResponse> call, Throwable t) {
+                Log.e(TAG, "Network error loading featured courses: " + t.getMessage());
+            }
+        });
     }
 
     private void setupCategories(View view) {
         RecyclerView rv = view.findViewById(R.id.rv_categories);
         rv.setLayoutManager(new LinearLayoutManager(
                 getContext(), LinearLayoutManager.HORIZONTAL, false));
-        rv.setAdapter(new CategoryAdapter(getMockCategories()));
+
+        courseApi.getCategories().enqueue(new Callback<CategoryListResponse>() {
+            @Override
+            public void onResponse(Call<CategoryListResponse> call, Response<CategoryListResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    CategoryListResponse body = response.body();
+                    if (body.getListCategory() != null) {
+                        rv.setAdapter(new CategoryAdapter(body.getListCategory()));
+                    }
+                } else {
+                    Log.e(TAG, "Failed to load categories: " + response.code());
+                    // Optionally show fallback UI or error message
+                }
+            }
+
+            @Override
+            public void onFailure(Call<CategoryListResponse> call, Throwable t) {
+                Log.e(TAG, "Network error loading categories: " + t.getMessage());
+                // Optionally show fallback UI or error message
+            }
+        });
     }
 
-    private List<String> getMockCourses() {
-        return Arrays.asList(
-                "Introduction to Java",
-                "Android Development",
-                "Spring Boot Basics",
-                "Data Structures");
-    }
-
-    private List<String> getMockCategories() {
-        return Arrays.asList(
-                "Programming", "Design", "Business", "Marketing", "Data Science");
+    private void onCourseClick(Course course) {
+        String courseTitle = course.getTitle() != null ? course.getTitle() : "Untitled Course";
+        String description = "Learn about " + courseTitle + " with hands-on projects and interactive lessons.";
+        
+        Bundle args = new Bundle();
+        args.putString("courseId", course.getCourseID());
+        args.putString("courseTitle", courseTitle);
+        args.putString("courseDescription", description);
+        
+        NavController navController = NavHostFragment.findNavController(this);
+        navController.navigate(R.id.courseDetailFragment, args);
     }
 }

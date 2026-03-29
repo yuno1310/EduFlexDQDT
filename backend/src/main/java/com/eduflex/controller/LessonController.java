@@ -5,7 +5,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import java.util.UUID;
 
 import com.eduflex.dto.CreateLessonDTO.CreateLessonRequest;
 import com.eduflex.dto.CreateLessonDTO.CreateLessonResponse;
@@ -34,7 +36,8 @@ public class LessonController {
   }
 
   @GetMapping
-  public ResponseEntity<GetLessonResponse> getListLesson(GetLessonRequest request) {
+  public ResponseEntity<GetLessonResponse> getListLesson(@RequestParam("courseID") UUID courseID) {
+    var request = new GetLessonRequest(courseID);
     var response = getLessonUseCase.execute(request);
     if (response.success() == true) {
       return ResponseEntity.ok(response);

@@ -7,14 +7,21 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.eduflex.android.R;
+import com.eduflex.android.model.Course;
 import java.util.List;
 
 public class ContinueLearningAdapter extends RecyclerView.Adapter<ContinueLearningAdapter.ViewHolder> {
 
-    private final List<String> items;
+    public interface OnCourseClickListener {
+        void onCourseClick(Course course);
+    }
 
-    public ContinueLearningAdapter(List<String> items) {
+    private final List<Course> items;
+    private final OnCourseClickListener listener;
+
+    public ContinueLearningAdapter(List<Course> items, OnCourseClickListener listener) {
         this.items = items;
+        this.listener = listener;
     }
 
     @NonNull
@@ -27,7 +34,13 @@ public class ContinueLearningAdapter extends RecyclerView.Adapter<ContinueLearni
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.tvTitle.setText(items.get(position));
+        Course course = items.get(position);
+        holder.tvTitle.setText(course.getTitle());
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onCourseClick(course);
+            }
+        });
     }
 
     @Override
