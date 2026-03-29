@@ -65,6 +65,7 @@ public class HomeFragment extends Fragment {
         setupCategories(view);
 
         // Fetch gamification data
+        fetchGamificationStats();
     }
 
     // ── Gamification API ──
