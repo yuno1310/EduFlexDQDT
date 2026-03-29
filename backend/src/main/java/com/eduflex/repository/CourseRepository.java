@@ -27,6 +27,7 @@ public class CourseRepository {
 
   public List<CourseInfo> get_course() {
     var records = dsl.select(
+        Courses.COURSES.COURSE_ID,
         Courses.COURSES.TITLE,
         Courses.COURSES.LEARNING_MODEL,
         Courses.COURSES.STATUS)
@@ -35,7 +36,7 @@ public class CourseRepository {
     if (records != null) {
       List<CourseInfo> list = new ArrayList<CourseInfo>();
       for (var record : records) {
-        CourseInfo course = new CourseInfo(record.value1(), record.value2(), record.value3());
+        CourseInfo course = new CourseInfo(record.value1(), record.value2(), record.value3(), record.value4());
         list.add(course);
       }
       return list;
