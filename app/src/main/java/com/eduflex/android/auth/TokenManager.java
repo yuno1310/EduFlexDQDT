@@ -53,4 +53,25 @@ public class TokenManager {
             return null;
         }
     }
+
+    // ── Daily XP tracking ──
+
+    private static final String KEY_LAST_DAILY_XP_DATE = "last_daily_xp_date";
+
+    /**
+     * Returns true if daily XP has NOT been awarded yet today.
+     */
+    public boolean shouldAwardDailyXp() {
+        String lastDate = prefs.getString(KEY_LAST_DAILY_XP_DATE, "");
+        String today = java.time.LocalDate.now().toString(); // "2026-03-29"
+        return !today.equals(lastDate);
+    }
+
+    /**
+     * Mark that daily XP has been awarded for today.
+     */
+    public void markDailyXpAwarded() {
+        String today = java.time.LocalDate.now().toString();
+        prefs.edit().putString(KEY_LAST_DAILY_XP_DATE, today).apply();
+    }
 }
