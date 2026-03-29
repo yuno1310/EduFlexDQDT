@@ -28,4 +28,22 @@
         android:name="com.eduflex.android.ui.profile.ProfileFragment"
         android:label="Profile"/>
 
+    <fragment
+        android:id="@+id/courseDetailFragment"
+        android:name="com.eduflex.android.ui.course_detail.CourseDetailFragment"
+        android:label="Course Detail">
+        <argument
+            android:name="courseId"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
+            android:name="courseTitle"
+            app:argType="string"
+            android:defaultValue="Untitled Course" />
+        <argument
+            android:name="courseDescription"
+            app:argType="string"
+            android:defaultValue="No description" />
+    </fragment>
+
 </navigation>

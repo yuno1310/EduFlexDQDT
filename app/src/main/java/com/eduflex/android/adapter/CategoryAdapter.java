@@ -7,13 +7,14 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.eduflex.android.R;
+import com.eduflex.android.model.Category;
 import java.util.List;
 
 public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.ViewHolder> {
 
-    private final List<String> items;
+    private final List<Category> items;
 
-    public CategoryAdapter(List<String> items) {
+    public CategoryAdapter(List<Category> items) {
         this.items = items;
     }
 
@@ -27,7 +28,7 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.tvName.setText(items.get(position));
+        holder.tvName.setText(items.get(position).getName());
     }
 
     @Override
