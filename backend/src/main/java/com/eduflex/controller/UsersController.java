@@ -3,6 +3,7 @@ package com.eduflex.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,7 +26,7 @@ public class UsersController {
   private LogInUseCase logInUseCase;
 
   @PostMapping("/register")
-  public ResponseEntity<CreateUserResponse> createUser(@Valid CreateUserRequest request) {
+  public ResponseEntity<CreateUserResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
     var response = registerUserUseCase.execute(request);
     if (response.success() == true) {
       return ResponseEntity.ok(response);
@@ -35,7 +36,7 @@ public class UsersController {
   }
 
   @PostMapping("/login")
-  public ResponseEntity<LogInResponse> logInbyEmail(@Valid LogInRequest request) {
+  public ResponseEntity<LogInResponse> logInbyEmail(@Valid @RequestBody LogInRequest request) {
     var response = logInUseCase.execute(request);
     if (response.success() == true) {
       return ResponseEntity.ok(response);

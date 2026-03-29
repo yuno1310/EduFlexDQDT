@@ -17,6 +17,7 @@ import com.eduflex.android.adapter.ContinueLearningAdapter;
 import com.eduflex.android.adapter.CourseCardAdapter;
 import com.eduflex.android.api.ApiClient;
 import com.eduflex.android.api.GamificationApi;
+import com.eduflex.android.auth.TokenManager;
 import com.eduflex.android.model.GamificationStatsResponse;
 
 import java.util.Arrays;
@@ -30,13 +31,11 @@ public class HomeFragment extends Fragment {
 
     private static final String TAG = "HomeFragment";
 
-    // TODO: Replace with actual logged-in user ID from auth
-    private static final String MOCK_USER_ID = "48f57b58-f050-4655-abc6-09c60bdde7d7";
-
     private TextView tvStreak;
     private TextView tvXp;
     private TextView tvLevel;
     private GamificationApi gamificationApi;
+    private TokenManager tokenManager;
 
     public HomeFragment() {
         super(R.layout.fragment_home);
@@ -51,8 +50,9 @@ public class HomeFragment extends Fragment {
         tvXp = view.findViewById(R.id.tv_xp);
         tvLevel = view.findViewById(R.id.tv_level);
 
-        // Init API
-        gamificationApi = ApiClient.createService(GamificationApi.class);
+        // Init API (use authenticated client so the JWT is attached)
+        gamificationApi = ApiClient.createAuthenticatedService(GamificationApi.class);
+        tokenManager = new TokenManager(requireContext());
 
         // Setup UI
         setupContinueLearning(view);
@@ -66,7 +66,13 @@ public class HomeFragment extends Fragment {
     // ── Gamification API ──
 
     private void fetchGamificationStats() {
-        gamificationApi.getStats(MOCK_USER_ID).enqueue(new Callback<GamificationStatsResponse>() {
+        String userId = tokenManager.getUserId();
+        if (userId == null) {
+            Log.e(TAG, "No user ID available from token");
+            showFallbackBanner();
+            return;
+        }
+        gamificationApi.getStats(userId).enqueue(new Callback<GamificationStatsResponse>() {
             @Override
             public void onResponse(@NonNull Call<GamificationStatsResponse> call,
                     @NonNull Response<GamificationStatsResponse> response) {
