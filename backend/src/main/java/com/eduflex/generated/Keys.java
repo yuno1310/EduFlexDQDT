@@ -6,16 +6,26 @@ package com.eduflex.generated;
 
 import com.eduflex.generated.tables.Badges;
 import com.eduflex.generated.tables.Courses;
+import com.eduflex.generated.tables.Enrollments;
 import com.eduflex.generated.tables.FlywaySchemaHistory;
 import com.eduflex.generated.tables.GamificationStats;
 import com.eduflex.generated.tables.Lesson;
+import com.eduflex.generated.tables.LessonProgress;
+import com.eduflex.generated.tables.QuestionOptions;
+import com.eduflex.generated.tables.Questions;
+import com.eduflex.generated.tables.QuizAttempts;
 import com.eduflex.generated.tables.UserBadges;
 import com.eduflex.generated.tables.Users;
 import com.eduflex.generated.tables.records.BadgesRecord;
 import com.eduflex.generated.tables.records.CoursesRecord;
+import com.eduflex.generated.tables.records.EnrollmentsRecord;
 import com.eduflex.generated.tables.records.FlywaySchemaHistoryRecord;
 import com.eduflex.generated.tables.records.GamificationStatsRecord;
+import com.eduflex.generated.tables.records.LessonProgressRecord;
 import com.eduflex.generated.tables.records.LessonRecord;
+import com.eduflex.generated.tables.records.QuestionOptionsRecord;
+import com.eduflex.generated.tables.records.QuestionsRecord;
+import com.eduflex.generated.tables.records.QuizAttemptsRecord;
 import com.eduflex.generated.tables.records.UserBadgesRecord;
 import com.eduflex.generated.tables.records.UsersRecord;
 
@@ -40,10 +50,17 @@ public class Keys {
     public static final UniqueKey<BadgesRecord> BADGES_NAME_KEY = Internal.createUniqueKey(Badges.BADGES, DSL.name("badges_name_key"), new TableField[] { Badges.BADGES.NAME }, true);
     public static final UniqueKey<BadgesRecord> BADGES_PKEY = Internal.createUniqueKey(Badges.BADGES, DSL.name("badges_pkey"), new TableField[] { Badges.BADGES.ID }, true);
     public static final UniqueKey<CoursesRecord> COURSES_PKEY = Internal.createUniqueKey(Courses.COURSES, DSL.name("courses_pkey"), new TableField[] { Courses.COURSES.COURSE_ID }, true);
+    public static final UniqueKey<EnrollmentsRecord> ENROLLMENTS_PKEY = Internal.createUniqueKey(Enrollments.ENROLLMENTS, DSL.name("enrollments_pkey"), new TableField[] { Enrollments.ENROLLMENTS.ENROLLMENT_ID }, true);
+    public static final UniqueKey<EnrollmentsRecord> UQ_USER_COURSE = Internal.createUniqueKey(Enrollments.ENROLLMENTS, DSL.name("uq_user_course"), new TableField[] { Enrollments.ENROLLMENTS.USER_ID, Enrollments.ENROLLMENTS.COURSE_ID }, true);
     public static final UniqueKey<FlywaySchemaHistoryRecord> FLYWAY_SCHEMA_HISTORY_PK = Internal.createUniqueKey(FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY, DSL.name("flyway_schema_history_pk"), new TableField[] { FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY.INSTALLED_RANK }, true);
     public static final UniqueKey<GamificationStatsRecord> GAMIFICATION_STATS_PKEY = Internal.createUniqueKey(GamificationStats.GAMIFICATION_STATS, DSL.name("gamification_stats_pkey"), new TableField[] { GamificationStats.GAMIFICATION_STATS.ID }, true);
     public static final UniqueKey<GamificationStatsRecord> GAMIFICATION_STATS_USER_ID_KEY = Internal.createUniqueKey(GamificationStats.GAMIFICATION_STATS, DSL.name("gamification_stats_user_id_key"), new TableField[] { GamificationStats.GAMIFICATION_STATS.USER_ID }, true);
     public static final UniqueKey<LessonRecord> LESSON_PKEY = Internal.createUniqueKey(Lesson.LESSON, DSL.name("lesson_pkey"), new TableField[] { Lesson.LESSON.LESSON_ID }, true);
+    public static final UniqueKey<LessonProgressRecord> LESSON_PROGRESS_PKEY = Internal.createUniqueKey(LessonProgress.LESSON_PROGRESS, DSL.name("lesson_progress_pkey"), new TableField[] { LessonProgress.LESSON_PROGRESS.PROGRESS_ID }, true);
+    public static final UniqueKey<LessonProgressRecord> UQ_USER_LESSON = Internal.createUniqueKey(LessonProgress.LESSON_PROGRESS, DSL.name("uq_user_lesson"), new TableField[] { LessonProgress.LESSON_PROGRESS.USER_ID, LessonProgress.LESSON_PROGRESS.LESSON_ID }, true);
+    public static final UniqueKey<QuestionOptionsRecord> QUESTION_OPTIONS_PKEY = Internal.createUniqueKey(QuestionOptions.QUESTION_OPTIONS, DSL.name("question_options_pkey"), new TableField[] { QuestionOptions.QUESTION_OPTIONS.OPTION_ID }, true);
+    public static final UniqueKey<QuestionsRecord> QUESTIONS_PKEY = Internal.createUniqueKey(Questions.QUESTIONS, DSL.name("questions_pkey"), new TableField[] { Questions.QUESTIONS.QUESTION_ID }, true);
+    public static final UniqueKey<QuizAttemptsRecord> QUIZ_ATTEMPTS_PKEY = Internal.createUniqueKey(QuizAttempts.QUIZ_ATTEMPTS, DSL.name("quiz_attempts_pkey"), new TableField[] { QuizAttempts.QUIZ_ATTEMPTS.ATTEMPT_ID }, true);
     public static final UniqueKey<UserBadgesRecord> UQ_USER_BADGE = Internal.createUniqueKey(UserBadges.USER_BADGES, DSL.name("uq_user_badge"), new TableField[] { UserBadges.USER_BADGES.USER_ID, UserBadges.USER_BADGES.BADGE_ID }, true);
     public static final UniqueKey<UserBadgesRecord> USER_BADGES_PKEY = Internal.createUniqueKey(UserBadges.USER_BADGES, DSL.name("user_badges_pkey"), new TableField[] { UserBadges.USER_BADGES.ID }, true);
     public static final UniqueKey<UsersRecord> USERS_PKEY = Internal.createUniqueKey(Users.USERS, DSL.name("users_pkey"), new TableField[] { Users.USERS.USER_ID }, true);
@@ -52,8 +69,16 @@ public class Keys {
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
+    public static final ForeignKey<EnrollmentsRecord, CoursesRecord> ENROLLMENTS__FK_ENROLLMENT_COURSE = Internal.createForeignKey(Enrollments.ENROLLMENTS, DSL.name("fk_enrollment_course"), new TableField[] { Enrollments.ENROLLMENTS.COURSE_ID }, Keys.COURSES_PKEY, new TableField[] { Courses.COURSES.COURSE_ID }, true);
+    public static final ForeignKey<EnrollmentsRecord, UsersRecord> ENROLLMENTS__FK_ENROLLMENT_USER = Internal.createForeignKey(Enrollments.ENROLLMENTS, DSL.name("fk_enrollment_user"), new TableField[] { Enrollments.ENROLLMENTS.USER_ID }, Keys.USERS_PKEY, new TableField[] { Users.USERS.USER_ID }, true);
     public static final ForeignKey<GamificationStatsRecord, UsersRecord> GAMIFICATION_STATS__FK_GAMIFICATION_USER = Internal.createForeignKey(GamificationStats.GAMIFICATION_STATS, DSL.name("fk_gamification_user"), new TableField[] { GamificationStats.GAMIFICATION_STATS.USER_ID }, Keys.USERS_PKEY, new TableField[] { Users.USERS.USER_ID }, true);
     public static final ForeignKey<LessonRecord, CoursesRecord> LESSON__FK_LESSON_COURSE = Internal.createForeignKey(Lesson.LESSON, DSL.name("fk_lesson_course"), new TableField[] { Lesson.LESSON.COURSE_ID }, Keys.COURSES_PKEY, new TableField[] { Courses.COURSES.COURSE_ID }, true);
+    public static final ForeignKey<LessonProgressRecord, LessonRecord> LESSON_PROGRESS__FK_PROGRESS_LESSON = Internal.createForeignKey(LessonProgress.LESSON_PROGRESS, DSL.name("fk_progress_lesson"), new TableField[] { LessonProgress.LESSON_PROGRESS.LESSON_ID }, Keys.LESSON_PKEY, new TableField[] { Lesson.LESSON.LESSON_ID }, true);
+    public static final ForeignKey<LessonProgressRecord, UsersRecord> LESSON_PROGRESS__FK_PROGRESS_USER = Internal.createForeignKey(LessonProgress.LESSON_PROGRESS, DSL.name("fk_progress_user"), new TableField[] { LessonProgress.LESSON_PROGRESS.USER_ID }, Keys.USERS_PKEY, new TableField[] { Users.USERS.USER_ID }, true);
+    public static final ForeignKey<QuestionOptionsRecord, QuestionsRecord> QUESTION_OPTIONS__FK_OPTION_QUESTION = Internal.createForeignKey(QuestionOptions.QUESTION_OPTIONS, DSL.name("fk_option_question"), new TableField[] { QuestionOptions.QUESTION_OPTIONS.QUESTION_ID }, Keys.QUESTIONS_PKEY, new TableField[] { Questions.QUESTIONS.QUESTION_ID }, true);
+    public static final ForeignKey<QuestionsRecord, LessonRecord> QUESTIONS__FK_QUESTION_LESSON = Internal.createForeignKey(Questions.QUESTIONS, DSL.name("fk_question_lesson"), new TableField[] { Questions.QUESTIONS.LESSON_ID }, Keys.LESSON_PKEY, new TableField[] { Lesson.LESSON.LESSON_ID }, true);
+    public static final ForeignKey<QuizAttemptsRecord, LessonRecord> QUIZ_ATTEMPTS__FK_ATTEMPT_LESSON = Internal.createForeignKey(QuizAttempts.QUIZ_ATTEMPTS, DSL.name("fk_attempt_lesson"), new TableField[] { QuizAttempts.QUIZ_ATTEMPTS.LESSON_ID }, Keys.LESSON_PKEY, new TableField[] { Lesson.LESSON.LESSON_ID }, true);
+    public static final ForeignKey<QuizAttemptsRecord, UsersRecord> QUIZ_ATTEMPTS__FK_ATTEMPT_USER = Internal.createForeignKey(QuizAttempts.QUIZ_ATTEMPTS, DSL.name("fk_attempt_user"), new TableField[] { QuizAttempts.QUIZ_ATTEMPTS.USER_ID }, Keys.USERS_PKEY, new TableField[] { Users.USERS.USER_ID }, true);
     public static final ForeignKey<UserBadgesRecord, BadgesRecord> USER_BADGES__FK_USER_BADGE_BADGE = Internal.createForeignKey(UserBadges.USER_BADGES, DSL.name("fk_user_badge_badge"), new TableField[] { UserBadges.USER_BADGES.BADGE_ID }, Keys.BADGES_PKEY, new TableField[] { Badges.BADGES.ID }, true);
     public static final ForeignKey<UserBadgesRecord, UsersRecord> USER_BADGES__FK_USER_BADGE_USER = Internal.createForeignKey(UserBadges.USER_BADGES, DSL.name("fk_user_badge_user"), new TableField[] { UserBadges.USER_BADGES.USER_ID }, Keys.USERS_PKEY, new TableField[] { Users.USERS.USER_ID }, true);
 }

@@ -6,7 +6,9 @@ package com.eduflex.generated.tables;
 
 import com.eduflex.generated.Keys;
 import com.eduflex.generated.Public;
+import com.eduflex.generated.tables.Enrollments.EnrollmentsPath;
 import com.eduflex.generated.tables.Lesson.LessonPath;
+import com.eduflex.generated.tables.Users.UsersPath;
 import com.eduflex.generated.tables.records.CoursesRecord;
 
 import java.time.LocalDateTime;
@@ -153,6 +155,19 @@ public class Courses extends TableImpl<CoursesRecord> {
         return Keys.COURSES_PKEY;
     }
 
+    private transient EnrollmentsPath _enrollments;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.enrollments</code>
+     * table
+     */
+    public EnrollmentsPath enrollments() {
+        if (_enrollments == null)
+            _enrollments = new EnrollmentsPath(this, null, Keys.ENROLLMENTS__FK_ENROLLMENT_COURSE.getInverseKey());
+
+        return _enrollments;
+    }
+
     private transient LessonPath _lesson;
 
     /**
@@ -164,6 +179,14 @@ public class Courses extends TableImpl<CoursesRecord> {
             _lesson = new LessonPath(this, null, Keys.LESSON__FK_LESSON_COURSE.getInverseKey());
 
         return _lesson;
+    }
+
+    /**
+     * Get the implicit many-to-many join path to the <code>public.users</code>
+     * table
+     */
+    public UsersPath users() {
+        return enrollments().users();
     }
 
     @Override

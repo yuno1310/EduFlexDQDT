@@ -7,6 +7,10 @@ package com.eduflex.generated.tables;
 import com.eduflex.generated.Keys;
 import com.eduflex.generated.Public;
 import com.eduflex.generated.tables.Courses.CoursesPath;
+import com.eduflex.generated.tables.LessonProgress.LessonProgressPath;
+import com.eduflex.generated.tables.Questions.QuestionsPath;
+import com.eduflex.generated.tables.QuizAttempts.QuizAttemptsPath;
+import com.eduflex.generated.tables.Users.UsersPath;
 import com.eduflex.generated.tables.records.LessonRecord;
 
 import java.util.Arrays;
@@ -164,6 +168,53 @@ public class Lesson extends TableImpl<LessonRecord> {
             _courses = new CoursesPath(this, Keys.LESSON__FK_LESSON_COURSE, null);
 
         return _courses;
+    }
+
+    private transient QuizAttemptsPath _quizAttempts;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.quiz_attempts</code> table
+     */
+    public QuizAttemptsPath quizAttempts() {
+        if (_quizAttempts == null)
+            _quizAttempts = new QuizAttemptsPath(this, null, Keys.QUIZ_ATTEMPTS__FK_ATTEMPT_LESSON.getInverseKey());
+
+        return _quizAttempts;
+    }
+
+    private transient LessonProgressPath _lessonProgress;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.lesson_progress</code> table
+     */
+    public LessonProgressPath lessonProgress() {
+        if (_lessonProgress == null)
+            _lessonProgress = new LessonProgressPath(this, null, Keys.LESSON_PROGRESS__FK_PROGRESS_LESSON.getInverseKey());
+
+        return _lessonProgress;
+    }
+
+    private transient QuestionsPath _questions;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.questions</code>
+     * table
+     */
+    public QuestionsPath questions() {
+        if (_questions == null)
+            _questions = new QuestionsPath(this, null, Keys.QUESTIONS__FK_QUESTION_LESSON.getInverseKey());
+
+        return _questions;
+    }
+
+    /**
+     * Get the implicit many-to-many join path to the <code>public.users</code>
+     * table
+     */
+    public UsersPath users() {
+        return lessonProgress().users();
     }
 
     @Override

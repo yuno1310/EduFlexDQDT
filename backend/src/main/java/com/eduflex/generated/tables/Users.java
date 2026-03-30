@@ -7,7 +7,12 @@ package com.eduflex.generated.tables;
 import com.eduflex.generated.Keys;
 import com.eduflex.generated.Public;
 import com.eduflex.generated.tables.Badges.BadgesPath;
+import com.eduflex.generated.tables.Courses.CoursesPath;
+import com.eduflex.generated.tables.Enrollments.EnrollmentsPath;
 import com.eduflex.generated.tables.GamificationStats.GamificationStatsPath;
+import com.eduflex.generated.tables.Lesson.LessonPath;
+import com.eduflex.generated.tables.LessonProgress.LessonProgressPath;
+import com.eduflex.generated.tables.QuizAttempts.QuizAttemptsPath;
 import com.eduflex.generated.tables.UserBadges.UserBadgesPath;
 import com.eduflex.generated.tables.records.UsersRecord;
 
@@ -160,6 +165,32 @@ public class Users extends TableImpl<UsersRecord> {
         return Keys.USERS_PKEY;
     }
 
+    private transient QuizAttemptsPath _quizAttempts;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.quiz_attempts</code> table
+     */
+    public QuizAttemptsPath quizAttempts() {
+        if (_quizAttempts == null)
+            _quizAttempts = new QuizAttemptsPath(this, null, Keys.QUIZ_ATTEMPTS__FK_ATTEMPT_USER.getInverseKey());
+
+        return _quizAttempts;
+    }
+
+    private transient EnrollmentsPath _enrollments;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.enrollments</code>
+     * table
+     */
+    public EnrollmentsPath enrollments() {
+        if (_enrollments == null)
+            _enrollments = new EnrollmentsPath(this, null, Keys.ENROLLMENTS__FK_ENROLLMENT_USER.getInverseKey());
+
+        return _enrollments;
+    }
+
     private transient GamificationStatsPath _gamificationStats;
 
     /**
@@ -173,6 +204,19 @@ public class Users extends TableImpl<UsersRecord> {
         return _gamificationStats;
     }
 
+    private transient LessonProgressPath _lessonProgress;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.lesson_progress</code> table
+     */
+    public LessonProgressPath lessonProgress() {
+        if (_lessonProgress == null)
+            _lessonProgress = new LessonProgressPath(this, null, Keys.LESSON_PROGRESS__FK_PROGRESS_USER.getInverseKey());
+
+        return _lessonProgress;
+    }
+
     private transient UserBadgesPath _userBadges;
 
     /**
@@ -184,6 +228,22 @@ public class Users extends TableImpl<UsersRecord> {
             _userBadges = new UserBadgesPath(this, null, Keys.USER_BADGES__FK_USER_BADGE_USER.getInverseKey());
 
         return _userBadges;
+    }
+
+    /**
+     * Get the implicit many-to-many join path to the
+     * <code>public.courses</code> table
+     */
+    public CoursesPath courses() {
+        return enrollments().courses();
+    }
+
+    /**
+     * Get the implicit many-to-many join path to the <code>public.lesson</code>
+     * table
+     */
+    public LessonPath lesson() {
+        return lessonProgress().lesson();
     }
 
     /**

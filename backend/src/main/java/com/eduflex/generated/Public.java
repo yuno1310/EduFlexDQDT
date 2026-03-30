@@ -6,9 +6,14 @@ package com.eduflex.generated;
 
 import com.eduflex.generated.tables.Badges;
 import com.eduflex.generated.tables.Courses;
+import com.eduflex.generated.tables.Enrollments;
 import com.eduflex.generated.tables.FlywaySchemaHistory;
 import com.eduflex.generated.tables.GamificationStats;
 import com.eduflex.generated.tables.Lesson;
+import com.eduflex.generated.tables.LessonProgress;
+import com.eduflex.generated.tables.QuestionOptions;
+import com.eduflex.generated.tables.Questions;
+import com.eduflex.generated.tables.QuizAttempts;
 import com.eduflex.generated.tables.UserBadges;
 import com.eduflex.generated.tables.Users;
 
@@ -44,6 +49,11 @@ public class Public extends SchemaImpl {
     public final Courses COURSES = Courses.COURSES;
 
     /**
+     * The table <code>public.enrollments</code>.
+     */
+    public final Enrollments ENROLLMENTS = Enrollments.ENROLLMENTS;
+
+    /**
      * The table <code>public.flyway_schema_history</code>.
      */
     public final FlywaySchemaHistory FLYWAY_SCHEMA_HISTORY = FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY;
@@ -57,6 +67,26 @@ public class Public extends SchemaImpl {
      * The table <code>public.lesson</code>.
      */
     public final Lesson LESSON = Lesson.LESSON;
+
+    /**
+     * The table <code>public.lesson_progress</code>.
+     */
+    public final LessonProgress LESSON_PROGRESS = LessonProgress.LESSON_PROGRESS;
+
+    /**
+     * The table <code>public.question_options</code>.
+     */
+    public final QuestionOptions QUESTION_OPTIONS = QuestionOptions.QUESTION_OPTIONS;
+
+    /**
+     * The table <code>public.questions</code>.
+     */
+    public final Questions QUESTIONS = Questions.QUESTIONS;
+
+    /**
+     * The table <code>public.quiz_attempts</code>.
+     */
+    public final QuizAttempts QUIZ_ATTEMPTS = QuizAttempts.QUIZ_ATTEMPTS;
 
     /**
      * The table <code>public.user_badges</code>.
@@ -86,9 +116,14 @@ public class Public extends SchemaImpl {
         return Arrays.asList(
             Badges.BADGES,
             Courses.COURSES,
+            Enrollments.ENROLLMENTS,
             FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY,
             GamificationStats.GAMIFICATION_STATS,
             Lesson.LESSON,
+            LessonProgress.LESSON_PROGRESS,
+            QuestionOptions.QUESTION_OPTIONS,
+            Questions.QUESTIONS,
+            QuizAttempts.QUIZ_ATTEMPTS,
             UserBadges.USER_BADGES,
             Users.USERS
         );
