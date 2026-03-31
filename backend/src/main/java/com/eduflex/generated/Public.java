@@ -9,7 +9,6 @@ import com.eduflex.generated.tables.Courses;
 import com.eduflex.generated.tables.Enrollments;
 import com.eduflex.generated.tables.FlywaySchemaHistory;
 import com.eduflex.generated.tables.GamificationStats;
-import com.eduflex.generated.tables.LearnerProfile;
 import com.eduflex.generated.tables.Lesson;
 import com.eduflex.generated.tables.LessonProgress;
 import com.eduflex.generated.tables.QuestionOptions;
@@ -63,11 +62,6 @@ public class Public extends SchemaImpl {
      * The table <code>public.gamification_stats</code>.
      */
     public final GamificationStats GAMIFICATION_STATS = GamificationStats.GAMIFICATION_STATS;
-
-    /**
-     * The table <code>public.learner_profile</code>.
-     */
-    public final LearnerProfile LEARNER_PROFILE = LearnerProfile.LEARNER_PROFILE;
 
     /**
      * The table <code>public.lesson</code>.
@@ -125,7 +119,6 @@ public class Public extends SchemaImpl {
             Enrollments.ENROLLMENTS,
             FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY,
             GamificationStats.GAMIFICATION_STATS,
-            LearnerProfile.LEARNER_PROFILE,
             Lesson.LESSON,
             LessonProgress.LESSON_PROGRESS,
             QuestionOptions.QUESTION_OPTIONS,

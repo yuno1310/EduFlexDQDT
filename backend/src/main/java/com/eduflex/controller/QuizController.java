@@ -7,8 +7,11 @@ import org.springframework.web.bind.annotation.*;
 import com.eduflex.dto.QuizDTO.CreateQuizRequest;
 import com.eduflex.dto.QuizDTO.CreateQuizResponse;
 import com.eduflex.dto.QuizDTO.GetQuizResponse;
+import com.eduflex.dto.QuizDTO.SubmitQuizRequest;
+import com.eduflex.dto.QuizDTO.SubmitQuizResponse;
 import com.eduflex.service.CreateQuizUseCase;
 import com.eduflex.service.GetQuizUseCase;
+import com.eduflex.service.SubmitQuizUseCase;
 
 import java.util.UUID;
 
@@ -20,6 +23,8 @@ public class QuizController {
   private CreateQuizUseCase createQuizUseCase;
   @Autowired
   private GetQuizUseCase getQuizUseCase;
+  @Autowired
+  private SubmitQuizUseCase submitQuizUseCase;
 
   @PostMapping("/create")
   public ResponseEntity<CreateQuizResponse> createQuiz(@RequestBody CreateQuizRequest request) {
@@ -31,5 +36,11 @@ public class QuizController {
   public ResponseEntity<GetQuizResponse> getQuiz(@PathVariable UUID lessonId) {
     var response = getQuizUseCase.execute(lessonId);
     return response.success() ? ResponseEntity.ok(response) : ResponseEntity.badRequest().body(response);
+  }
+
+  @PostMapping("/submit")
+  public ResponseEntity<SubmitQuizResponse> submitQuiz(@RequestBody SubmitQuizRequest request) {
+    var response = submitQuizUseCase.execute(request);
+    return ResponseEntity.ok(response);
   }
 }

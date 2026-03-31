@@ -17,6 +17,17 @@ public class LessonProgressRepository {
   @Autowired
   private DSLContext dsl;
 
+  /**
+   * Check if lesson is already completed (for duplicate XP prevention).
+   */
+  public boolean isLessonCompleted(UUID userId, UUID lessonId) {
+    return dsl.fetchExists(
+        dsl.selectFrom(LessonProgress.LESSON_PROGRESS)
+            .where(LessonProgress.LESSON_PROGRESS.USER_ID.eq(userId))
+            .and(LessonProgress.LESSON_PROGRESS.LESSON_ID.eq(lessonId))
+            .and(LessonProgress.LESSON_PROGRESS.IS_COMPLETED.isTrue()));
+  }
+
   public void upsertLessonProgress(UUID userId, UUID lessonId) {
     dsl.insertInto(LessonProgress.LESSON_PROGRESS,
         LessonProgress.LESSON_PROGRESS.USER_ID,
