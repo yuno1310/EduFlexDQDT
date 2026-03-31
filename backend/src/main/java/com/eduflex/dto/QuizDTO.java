@@ -8,19 +8,31 @@ import java.util.UUID;
 
 public class QuizDTO {
 
-  public record SubmitQuizRequest(
-      @NotNull UUID userId,
-      @NotNull UUID lessonId,
+  // === Submit Quiz (batch) ===
+
+  public record AnswerItem(
+      @NotNull Long questionId,
       @NotNull Long selectedOptionId) {
   }
 
+  public record SubmitQuizRequest(
+      @NotNull UUID userId,
+      @NotNull UUID lessonId,
+      @NotEmpty List<AnswerItem> answers) {
+  }
+
   public record SubmitQuizResponse(
-      boolean isCorrect,
+      boolean passed,
       String message,
+      int correctCount,
+      int totalQuestions,
+      double scorePercent,
       Double courseProgress,
       boolean isCourseCompleted,
-      Integer xpRewarded) {
+      int xpRewarded) {
   }
+
+  // === Create Quiz (CRUD) ===
 
   public record OptionRequest(@NotEmpty String optionText, @NotNull Boolean isCorrect) {
   }
@@ -34,6 +46,8 @@ public class QuizDTO {
 
   public record CreateQuizResponse(boolean success, String message) {
   }
+
+  // === Get Quiz ===
 
   public record OptionResponse(Long optionId, String optionText) {
   }

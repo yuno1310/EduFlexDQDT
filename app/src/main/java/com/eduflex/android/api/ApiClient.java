@@ -15,13 +15,16 @@ public class ApiClient {
     // TODO: Update this to your backend URL
     // Emulator: "http://10.0.2.2:8080"
     // Physical device (same WiFi): "http://<PC_IP>:8080"
-    private static final String BASE_URL = "http://192.168.1.15:8080";
+    private static final String BASE_URL = "http://192.168.1.8:8080";
 
     private static Retrofit retrofit;
     private static Retrofit authenticatedRetrofit;
     private static TokenManager tokenManager;
 
-    /** Initialise with application context so the auth interceptor can read the stored JWT. */
+    /**
+     * Initialise with application context so the auth interceptor can read the
+     * stored JWT.
+     */
     public static void init(Context context) {
         tokenManager = new TokenManager(context.getApplicationContext());
     }
@@ -45,7 +48,10 @@ public class ApiClient {
         return retrofit;
     }
 
-    /** Returns a Retrofit instance that attaches the JWT Bearer token to every request. */
+    /**
+     * Returns a Retrofit instance that attaches the JWT Bearer token to every
+     * request.
+     */
     public static Retrofit getAuthenticatedInstance() {
         if (authenticatedRetrofit == null) {
             HttpLoggingInterceptor logging = new HttpLoggingInterceptor();

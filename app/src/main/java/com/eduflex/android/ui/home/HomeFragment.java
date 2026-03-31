@@ -3,7 +3,10 @@ package com.eduflex.android.ui.home;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.core.content.ContextCompat;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -34,6 +37,7 @@ public class HomeFragment extends Fragment {
 
     private static final String TAG = "HomeFragment";
 
+    private ImageView ivFireIcon;
     private TextView tvStreak;
     private TextView tvXp;
     private TextView tvLevel;
@@ -50,6 +54,7 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         // Bind banner views
+        ivFireIcon = view.findViewById(R.id.iv_fire_icon);
         tvStreak = view.findViewById(R.id.tv_streak);
         tvXp = view.findViewById(R.id.tv_xp);
         tvLevel = view.findViewById(R.id.tv_level);
@@ -105,10 +110,21 @@ public class HomeFragment extends Fragment {
         int streak = stats.getStreakDays();
         int xp = stats.getXp();
         int level = stats.getLevel();
+        String lastStudyDate = stats.getLastStudyDate();
+
+        // Check if user studied today → orange fire, else → gray fire
+        String today = java.time.LocalDate.now().toString(); // "2026-03-31"
+        boolean studiedToday = today.equals(lastStudyDate);
+
+        if (studiedToday) {
+            ivFireIcon.setColorFilter(ContextCompat.getColor(requireContext(), R.color.fire_active));
+        } else {
+            ivFireIcon.setColorFilter(ContextCompat.getColor(requireContext(), R.color.fire_inactive));
+        }
 
         tvStreak.setText(streak > 0
-                ? "🔥 " + streak + "-day streak!"
-                : "🔥 Start your streak today!");
+                ? streak + "-day streak!"
+                : "Start your streak today!");
         tvXp.setText("You have " + xp + " XP — keep it up!");
         tvLevel.setText("Lv." + level);
     }
@@ -116,7 +132,8 @@ public class HomeFragment extends Fragment {
     private void showFallbackBanner() {
         if (!isAdded())
             return;
-        tvStreak.setText("🔥 Welcome!");
+        ivFireIcon.setColorFilter(ContextCompat.getColor(requireContext(), R.color.fire_inactive));
+        tvStreak.setText("Welcome!");
         tvXp.setText("Connect to see your XP");
         tvLevel.setText("Lv.–");
     }

@@ -71,4 +71,25 @@ public class QuizRepository {
         .where(QuestionOptions.QUESTION_OPTIONS.QUESTION_ID.eq(questionId))
         .fetch();
   }
+
+  /**
+   * Check if user already passed this quiz (for duplicate XP prevention).
+   */
+  public boolean hasPassedQuiz(UUID userId, UUID lessonId) {
+    return dsl.fetchExists(
+        dsl.selectFrom(QuizAttempts.QUIZ_ATTEMPTS)
+            .where(QuizAttempts.QUIZ_ATTEMPTS.USER_ID.eq(userId))
+            .and(QuizAttempts.QUIZ_ATTEMPTS.LESSON_ID.eq(lessonId))
+            .and(QuizAttempts.QUIZ_ATTEMPTS.IS_PASSED.isTrue()));
+  }
+
+  /**
+   * Count total questions for a lesson.
+   */
+  public int countQuestionsByLessonId(UUID lessonId) {
+    return dsl.selectCount()
+        .from(Questions.QUESTIONS)
+        .where(Questions.QUESTIONS.LESSON_ID.eq(lessonId))
+        .fetchOne(0, int.class);
+  }
 }
