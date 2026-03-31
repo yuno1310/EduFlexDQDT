@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fire icon colors for streak -->
+    <color name="fire_active">#FF6B35</color>
+    <color name="fire_inactive">#9E9E9E</color>
+</resources>
