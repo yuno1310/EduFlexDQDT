@@ -1,15 +1,21 @@
 package com.eduflex.repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import com.eduflex.generated.tables.LearnerProfile;
+import com.eduflex.entity.QuestionDbO;
+import com.eduflex.entity.QuestionOptionDbO;
+import com.eduflex.generated.tables.GamificationStats;
 import com.eduflex.generated.tables.QuestionOptions;
+import com.eduflex.generated.tables.Questions;
 import com.eduflex.generated.tables.QuizAttempts;
+import com.eduflex.generated.tables.records.QuestionOptionsRecord;
+import com.eduflex.generated.tables.records.QuestionsRecord;
 
 @Repository
 public class QuizRepository {
@@ -37,9 +43,32 @@ public class QuizRepository {
   }
 
   public void rewardXP(UUID userId, int xpAmount) {
-    dsl.update(LearnerProfile.LEARNER_PROFILE)
-        .set(LearnerProfile.LEARNER_PROFILE.TOTAL_XP, LearnerProfile.LEARNER_PROFILE.TOTAL_XP.add(xpAmount))
-        .where(LearnerProfile.LEARNER_PROFILE.LEARNER_ID.eq(userId))
+    dsl.update(GamificationStats.GAMIFICATION_STATS)
+        .set(GamificationStats.GAMIFICATION_STATS.XP, GamificationStats.GAMIFICATION_STATS.XP.add(xpAmount))
+        .where(GamificationStats.GAMIFICATION_STATS.USER_ID.eq(userId))
         .execute();
+  }
+
+  public Long saveQuestionAndGetId(QuestionDbO question) {
+    question.record.attach(dsl.configuration());
+    question.record.store();
+    return question.record.getQuestionId();
+  }
+
+  public void saveOption(QuestionOptionDbO option) {
+    option.record.attach(dsl.configuration());
+    option.record.store();
+  }
+
+  public QuestionsRecord getQuestionByLessonId(UUID lessonId) {
+    return dsl.selectFrom(Questions.QUESTIONS)
+        .where(Questions.QUESTIONS.LESSON_ID.eq(lessonId))
+        .fetchOne();
+  }
+
+  public List<QuestionOptionsRecord> getOptionsByQuestionId(Long questionId) {
+    return dsl.selectFrom(QuestionOptions.QUESTION_OPTIONS)
+        .where(QuestionOptions.QUESTION_OPTIONS.QUESTION_ID.eq(questionId))
+        .fetch();
   }
 }
