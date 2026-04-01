@@ -6,7 +6,6 @@ import com.eduflex.dto.ProgressDTO.SaveLessonResponse;
 import com.eduflex.service.GetCourseProgressUseCase;
 import com.eduflex.service.SaveLessonProgressUseCase;
 
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.validation.Valid;
 
 import java.util.UUID;
@@ -30,7 +29,7 @@ public class ProgressController {
   private GetCourseProgressUseCase getCourseProgressUseCase;
 
   @PostMapping("/lesson")
-  public ResponseEntity<SaveLessonResponse> saveLessonProgress(@Valid @RequestBody SaveLessonRequest request) {
+  public ResponseEntity<SaveLessonResponse> saveLessonProgress(@Valid SaveLessonRequest request) {
     var response = saveLessonProgressUseCase.execute(request);
 
     if (response.success()) {

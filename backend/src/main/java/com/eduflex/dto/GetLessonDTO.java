@@ -10,6 +10,6 @@ public class GetLessonDTO {
   public record GetLessonResponse(boolean success, String message, List<LessonInfo> listLesson) {
   }
 
-  public record LessonInfo(String title, String contentType) {
+  public record LessonInfo(UUID lessonID, String title, String contentType) {
   }
 }

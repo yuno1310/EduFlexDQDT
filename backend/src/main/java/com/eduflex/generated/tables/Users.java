@@ -10,7 +10,6 @@ import com.eduflex.generated.tables.Badges.BadgesPath;
 import com.eduflex.generated.tables.Courses.CoursesPath;
 import com.eduflex.generated.tables.Enrollments.EnrollmentsPath;
 import com.eduflex.generated.tables.GamificationStats.GamificationStatsPath;
-import com.eduflex.generated.tables.LearnerProfile.LearnerProfilePath;
 import com.eduflex.generated.tables.Lesson.LessonPath;
 import com.eduflex.generated.tables.LessonProgress.LessonProgressPath;
 import com.eduflex.generated.tables.QuizAttempts.QuizAttemptsPath;
@@ -203,19 +202,6 @@ public class Users extends TableImpl<UsersRecord> {
             _gamificationStats = new GamificationStatsPath(this, null, Keys.GAMIFICATION_STATS__FK_GAMIFICATION_USER.getInverseKey());
 
         return _gamificationStats;
-    }
-
-    private transient LearnerProfilePath _learnerProfile;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>public.learner_profile</code> table
-     */
-    public LearnerProfilePath learnerProfile() {
-        if (_learnerProfile == null)
-            _learnerProfile = new LearnerProfilePath(this, null, Keys.LEARNER_PROFILE__FK_LEARNER_USER.getInverseKey());
-
-        return _learnerProfile;
     }
 
     private transient LessonProgressPath _lessonProgress;
