@@ -27,12 +27,13 @@ public class LessonRepository {
   }
 
   public List<LessonInfo> getLesson(UUID courseID) {
-    var records = dsl.select(Lesson.LESSON.TITLE, Lesson.LESSON.CONTENT_TYPE).from(Lesson.LESSON)
+    var records = dsl.select(Lesson.LESSON.LESSON_ID, Lesson.LESSON.TITLE, Lesson.LESSON.CONTENT_TYPE)
+        .from(Lesson.LESSON)
         .where(Lesson.LESSON.COURSE_ID.eq(courseID)).fetch();
     if (records != null) {
       List<LessonInfo> listLesson = new ArrayList<LessonInfo>();
       for (var record : records) {
-        LessonInfo lesson = new LessonInfo(record.value1(), record.value2());
+        LessonInfo lesson = new LessonInfo(record.value1(), record.value2(), record.value3());
         listLesson.add(lesson);
       }
       return listLesson;

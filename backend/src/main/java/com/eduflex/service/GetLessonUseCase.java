@@ -23,7 +23,7 @@ public class GetLessonUseCase {
     if (lessons != null && lessons.isEmpty() != true) {
       var listLessons = new ArrayList<LessonInfo>();
       for (var record : lessons) {
-        var lesson = new LessonInfo(record.title(), record.contentType());
+        var lesson = new LessonInfo(record.lessonID(), record.title(), record.contentType());
         listLessons.add(lesson);
       }
       return new GetLessonResponse(true, "Loading list lessons successfuly", listLessons);
