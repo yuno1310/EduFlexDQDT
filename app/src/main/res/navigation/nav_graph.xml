@@ -46,4 +46,36 @@
             android:defaultValue="No description" />
     </fragment>
 
+    <fragment
+        android:id="@+id/lessonStudyFragment"
+        android:name="com.eduflex.android.ui.lesson.LessonStudyFragment"
+        android:label="Lesson Study">
+        <argument
+            android:name="lessonTitle"
+            app:argType="string"
+            android:defaultValue="Untitled Lesson" />
+        <argument
+            android:name="contentType"
+            app:argType="string"
+            android:defaultValue="reading" />
+        <argument
+            android:name="lessonContent"
+            app:argType="string"
+            android:defaultValue="" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/quizFragment"
+        android:name="com.eduflex.android.ui.quiz.QuizFragment"
+        android:label="Lesson Quiz">
+        <argument
+            android:name="lessonId"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
+            android:name="lessonTitle"
+            app:argType="string"
+            android:defaultValue="Quiz" />
+    </fragment>
+
 </navigation>

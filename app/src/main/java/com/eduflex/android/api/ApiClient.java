@@ -15,7 +15,7 @@ public class ApiClient {
     // TODO: Update this to your backend URL
     // Emulator: "http://10.0.2.2:8080"
     // Physical device (same WiFi): "http://<PC_IP>:8080"
-    private static final String BASE_URL = "http://192.168.1.8:8080";
+    private static final String BASE_URL = "http://192.168.1.15:8080";
 
     private static Retrofit retrofit;
     private static Retrofit authenticatedRetrofit;

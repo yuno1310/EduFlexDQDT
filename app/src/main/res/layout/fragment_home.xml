@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5">
+    android:background="@color/surface_bg">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -37,7 +37,7 @@
                     android:id="@+id/tv_username"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Student 👋"
+                    android:text="Student"
                     android:textSize="20sp"
                     android:textStyle="bold"
                     android:textColor="#1A1A1A"/>
@@ -48,7 +48,9 @@
                 android:id="@+id/iv_avatar"
                 android:layout_width="44dp"
                 android:layout_height="44dp"
-                android:background="#DDDDDD"
+                android:background="@color/cyan_surface"
+                android:padding="8dp"
+                android:src="@android:drawable/ic_menu_myplaces"
                 android:scaleType="centerCrop"/>
 
         </LinearLayout>
@@ -60,7 +62,7 @@
             android:layout_marginBottom="24dp"
             app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
-            app:cardBackgroundColor="#6C63FF">
+            app:cardBackgroundColor="@color/cyan_primary_dark">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -84,7 +86,7 @@
                             android:id="@+id/iv_fire_icon"
                             android:layout_width="24dp"
                             android:layout_height="24dp"
-                            android:src="@drawable/ic_fire"
+                            android:src="@android:drawable/ic_menu_today"
                             android:layout_marginEnd="6dp"/>
 
                         <TextView
@@ -103,9 +105,16 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Loading XP..."
-                        android:textColor="#E0DDFF"
+                        android:textColor="@color/cyan_text_light"
                         android:textSize="13sp"
                         android:layout_marginTop="4dp"/>
+
+                    <LinearLayout
+                        android:id="@+id/ll_streak_days"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="horizontal" />
 
                 </LinearLayout>
 
@@ -161,7 +170,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="See all"
-                android:textColor="#6C63FF"
+                android:textColor="@color/cyan_primary_dark"
                 android:textSize="13sp"/>
 
         </LinearLayout>

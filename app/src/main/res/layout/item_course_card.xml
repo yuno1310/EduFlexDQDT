@@ -18,7 +18,7 @@
             android:id="@+id/iv_thumbnail"
             android:layout_width="72dp"
             android:layout_height="72dp"
-            android:background="#D0C9FF"/>
+            android:background="@color/cyan_surface"/>
 
         <LinearLayout
             android:layout_width="0dp"
@@ -52,7 +52,7 @@
                 android:layout_height="wrap_content"
                 android:text="$29.99"
                 android:textSize="14sp"
-                android:textColor="#6C63FF"
+                android:textColor="@color/cyan_primary_dark"
                 android:textStyle="bold"
                 android:layout_marginTop="6dp"/>
 

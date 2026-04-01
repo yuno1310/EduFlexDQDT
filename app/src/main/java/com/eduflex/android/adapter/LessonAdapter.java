@@ -13,9 +13,15 @@ import java.util.List;
 public class LessonAdapter extends RecyclerView.Adapter<LessonAdapter.ViewHolder> {
 
     private final List<Lesson> lessons;
+    private final OnLessonClickListener onLessonClickListener;
 
-    public LessonAdapter(List<Lesson> lessons) {
+    public interface OnLessonClickListener {
+        void onLessonClick(Lesson lesson);
+    }
+
+    public LessonAdapter(List<Lesson> lessons, OnLessonClickListener onLessonClickListener) {
         this.lessons = lessons;
+        this.onLessonClickListener = onLessonClickListener;
     }
 
     @NonNull
@@ -32,6 +38,7 @@ public class LessonAdapter extends RecyclerView.Adapter<LessonAdapter.ViewHolder
         holder.tvLessonOrder.setText("Lesson " + (position + 1));
         holder.tvTitle.setText(lesson.getTitle());
         holder.tvContentType.setText(lesson.getContentType());
+        holder.itemView.setOnClickListener(v -> onLessonClickListener.onLessonClick(lesson));
     }
 
     @Override

@@ -1,10 +1,14 @@
 package com.eduflex.android.ui.home;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.graphics.drawable.GradientDrawable;
 
 import androidx.core.content.ContextCompat;
 
@@ -16,6 +20,7 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.eduflex.android.LoginActivity;
 import com.eduflex.android.R;
 import com.eduflex.android.adapter.CategoryAdapter;
 import com.eduflex.android.adapter.ContinueLearningAdapter;
@@ -41,6 +46,7 @@ public class HomeFragment extends Fragment {
     private TextView tvStreak;
     private TextView tvXp;
     private TextView tvLevel;
+    private LinearLayout llStreakDays;
     private GamificationApi gamificationApi;
     private TokenManager tokenManager;
     private CourseApi courseApi;
@@ -58,6 +64,7 @@ public class HomeFragment extends Fragment {
         tvStreak = view.findViewById(R.id.tv_streak);
         tvXp = view.findViewById(R.id.tv_xp);
         tvLevel = view.findViewById(R.id.tv_level);
+        llStreakDays = view.findViewById(R.id.ll_streak_days);
 
         // Init API (use authenticated client so the JWT is attached)
         gamificationApi = ApiClient.createAuthenticatedService(GamificationApi.class);
@@ -89,6 +96,10 @@ public class HomeFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null) {
                     updateBanner(response.body());
                 } else {
+                    if (isUnauthorized(response.code())) {
+                        handleUnauthorized();
+                        return;
+                    }
                     Log.e(TAG, "Failed to load stats: " + response.code());
                     showFallbackBanner();
                 }
@@ -123,10 +134,11 @@ public class HomeFragment extends Fragment {
         }
 
         tvStreak.setText(streak > 0
-                ? streak + "-day streak!"
-                : "Start your streak today!");
-        tvXp.setText("You have " + xp + " XP — keep it up!");
+            ? streak + " day streak"
+            : "Start your streak today");
+        tvXp.setText("XP: " + xp + " | Keep going");
         tvLevel.setText("Lv." + level);
+        renderStreakDays(streak, studiedToday);
     }
 
     private void showFallbackBanner() {
@@ -136,6 +148,40 @@ public class HomeFragment extends Fragment {
         tvStreak.setText("Welcome!");
         tvXp.setText("Connect to see your XP");
         tvLevel.setText("Lv.–");
+        renderStreakDays(0, false);
+    }
+
+    private void renderStreakDays(int streakDays, boolean studiedToday) {
+        if (llStreakDays == null || !isAdded()) {
+            return;
+        }
+
+        llStreakDays.removeAllViews();
+        int activeDays = studiedToday ? Math.min(streakDays, 7) : Math.max(0, Math.min(streakDays - 1, 7));
+
+        for (int i = 0; i < 7; i++) {
+            View cell = new View(requireContext());
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(14), dp(14));
+            if (i < 6) {
+                params.rightMargin = dp(6);
+            }
+            cell.setLayoutParams(params);
+
+            GradientDrawable bg = new GradientDrawable();
+            bg.setShape(GradientDrawable.RECTANGLE);
+            bg.setCornerRadius(dp(4));
+            bg.setColor(ContextCompat.getColor(requireContext(), i < activeDays ? R.color.fire_active : R.color.fire_inactive));
+            cell.setBackground(bg);
+
+            llStreakDays.addView(cell);
+        }
+    }
+
+    private int dp(int value) {
+        return (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                value,
+                getResources().getDisplayMetrics());
     }
 
     // ── RecyclerView setup ──
@@ -154,6 +200,10 @@ public class HomeFragment extends Fragment {
                         rv.setAdapter(new ContinueLearningAdapter(body.getListCourse(), HomeFragment.this::onCourseClick));
                     }
                 } else {
+                    if (isUnauthorized(response.code())) {
+                        handleUnauthorized();
+                        return;
+                    }
                     Log.e(TAG, "Failed to load continue learning courses: " + response.code());
                 }
             }
@@ -178,6 +228,10 @@ public class HomeFragment extends Fragment {
                         rv.setAdapter(new CourseCardAdapter(body.getListCourse(), HomeFragment.this::onCourseClick));
                     }
                 } else {
+                    if (isUnauthorized(response.code())) {
+                        handleUnauthorized();
+                        return;
+                    }
                     Log.e(TAG, "Failed to load featured courses: " + response.code());
                 }
             }
@@ -203,6 +257,10 @@ public class HomeFragment extends Fragment {
                         rv.setAdapter(new CategoryAdapter(body.getListCategory()));
                     }
                 } else {
+                    if (isUnauthorized(response.code())) {
+                        handleUnauthorized();
+                        return;
+                    }
                     Log.e(TAG, "Failed to load categories: " + response.code());
                     // Optionally show fallback UI or error message
                 }
@@ -227,5 +285,20 @@ public class HomeFragment extends Fragment {
         
         NavController navController = NavHostFragment.findNavController(this);
         navController.navigate(R.id.courseDetailFragment, args);
+    }
+
+    private boolean isUnauthorized(int code) {
+        return code == 401 || code == 403;
+    }
+
+    private void handleUnauthorized() {
+        if (!isAdded()) {
+            return;
+        }
+        tokenManager.clearToken();
+        Intent intent = new Intent(requireContext(), LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        requireActivity().finish();
     }
 }

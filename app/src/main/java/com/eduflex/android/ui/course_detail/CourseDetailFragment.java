@@ -85,11 +85,11 @@ public class CourseDetailFragment extends Fragment {
         if (courseId == null || courseId.isEmpty()) {
             // Fallback to mock lessons if no courseId available
             List<Lesson> mockLessons = Arrays.asList(
-                    new Lesson("Introduction", "video"),
-                    new Lesson("Core Concepts", "reading"),
-                    new Lesson("Practice Quiz", "quiz"),
-                    new Lesson("Mini Project", "assignment"));
-            rvLessons.setAdapter(new LessonAdapter(mockLessons));
+                    new Lesson("00000000-0000-0000-0000-000000000001", "Introduction", "video"),
+                    new Lesson("00000000-0000-0000-0000-000000000002", "Core Concepts", "reading"),
+                    new Lesson("00000000-0000-0000-0000-000000000003", "Practice Quiz", "quiz"),
+                    new Lesson("00000000-0000-0000-0000-000000000004", "Mini Project", "assignment"));
+            rvLessons.setAdapter(new LessonAdapter(mockLessons, this::openLesson));
             return;
         }
 
@@ -100,7 +100,7 @@ public class CourseDetailFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null) {
                     LessonListResponse lessonResponse = response.body();
                     if (lessonResponse.isSuccess() && lessonResponse.getListLesson() != null) {
-                        rvLessons.setAdapter(new LessonAdapter(lessonResponse.getListLesson()));
+                        rvLessons.setAdapter(new LessonAdapter(lessonResponse.getListLesson(), CourseDetailFragment.this::openLesson));
                     } else {
                         showError("Failed to load lessons: " + lessonResponse.getMessage());
                     }
@@ -120,10 +120,38 @@ public class CourseDetailFragment extends Fragment {
         Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
         // Fallback to mock lessons on error
         List<Lesson> mockLessons = Arrays.asList(
-                new Lesson("Introduction", "video"),
-                new Lesson("Core Concepts", "reading"),
-                new Lesson("Practice Quiz", "quiz"),
-                new Lesson("Mini Project", "assignment"));
-        rvLessons.setAdapter(new LessonAdapter(mockLessons));
+            new Lesson("00000000-0000-0000-0000-000000000001", "Introduction", "video"),
+            new Lesson("00000000-0000-0000-0000-000000000002", "Core Concepts", "reading"),
+            new Lesson("00000000-0000-0000-0000-000000000003", "Practice Quiz", "quiz"),
+            new Lesson("00000000-0000-0000-0000-000000000004", "Mini Project", "assignment"));
+        rvLessons.setAdapter(new LessonAdapter(mockLessons, this::openLesson));
+    }
+
+    private void openLesson(Lesson lesson) {
+        Bundle args = new Bundle();
+        args.putString("lessonId", lesson.getLessonID());
+        args.putString("lessonTitle", lesson.getTitle());
+        args.putString("contentType", lesson.getContentType());
+        NavController navController = NavHostFragment.findNavController(this);
+
+        String type = lesson.getContentType() == null ? "" : lesson.getContentType().toLowerCase();
+        if ("quiz".equals(type)) {
+            navController.navigate(R.id.quizFragment, args);
+            return;
+        }
+
+        args.putString("lessonContent", getMockContent(lesson.getTitle(), type));
+        navController.navigate(R.id.lessonStudyFragment, args);
+    }
+
+    private String getMockContent(String lessonTitle, String contentType) {
+        if ("video".equals(contentType)) {
+            return "VIDEO_PLACEHOLDER";
+        }
+        return "This is lesson content for: " + lessonTitle
+                + "\n\nIn this lesson, you will learn key concepts and practical examples."
+                + "\n\n- Topic overview"
+                + "\n- Main ideas"
+                + "\n- Practical notes";
     }
 }
