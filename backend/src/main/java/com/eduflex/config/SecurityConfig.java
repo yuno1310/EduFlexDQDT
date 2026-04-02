@@ -28,6 +28,11 @@ public class SecurityConfig {
         .csrf(csrf -> csrf.disable())
         .sessionManagement(session -> session
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .exceptionHandling(exceptions -> exceptions
+            .authenticationEntryPoint((request, response, authException) -> {
+              response.sendError(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED,
+                  "Token is not true or expired");
+            }))
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/api/user/login", "/api/user/register").permitAll()
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
