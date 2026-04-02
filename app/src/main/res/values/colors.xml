@@ -1,10 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Brand colors -->
     <color name="cyan_primary">#00BCD4</color>
     <color name="cyan_primary_dark">#0097A7</color>
     <color name="cyan_surface">#E7FAFC</color>
     <color name="cyan_text_light">#D8F8FC</color>
     <color name="surface_bg">#F3FCFD</color>
+
+    <!-- Semantic UI colors -->
+    <color name="brand_primary">@color/cyan_primary</color>
+    <color name="brand_primary_dark">@color/cyan_primary_dark</color>
+    <color name="brand_surface">@color/cyan_surface</color>
+
+    <color name="text_primary">#1A1A1A</color>
+    <color name="text_title">#0F172A</color>
+    <color name="text_body">#334155</color>
+    <color name="text_secondary">#6B7280</color>
+    <color name="text_muted">#888888</color>
+    <color name="text_support">#607D8B</color>
+    <color name="text_on_brand">#FFFFFF</color>
+
+    <color name="card_background">#FFFFFF</color>
+    <color name="app_bg_soft">#F5F5F5</color>
+    <color name="nav_item_unselected">#7A8A99</color>
+    <color name="cyan_accent">#0EA5B7</color>
 
     <!-- Streak cell colors -->
     <color name="fire_active">#00BCD4</color>

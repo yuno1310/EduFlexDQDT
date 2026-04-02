@@ -31,7 +31,7 @@
                     android:layout_height="wrap_content"
                     android:text="Good morning,"
                     android:textSize="14sp"
-                    android:textColor="#888888"/>
+                    android:textColor="@color/text_muted"/>
 
                 <TextView
                     android:id="@+id/tv_username"
@@ -40,7 +40,7 @@
                     android:text="Student"
                     android:textSize="20sp"
                     android:textStyle="bold"
-                    android:textColor="#1A1A1A"/>
+                    android:textColor="@color/text_primary"/>
 
             </LinearLayout>
 
@@ -94,7 +94,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Loading..."
-                            android:textColor="#FFFFFF"
+                            android:textColor="@color/text_on_brand"
                             android:textSize="16sp"
                             android:textStyle="bold"/>
 
@@ -123,7 +123,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Lv.–"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/text_on_brand"
                     android:textSize="22sp"
                     android:textStyle="bold"
                     android:layout_gravity="center_vertical"/>
@@ -138,7 +138,7 @@
             android:text="Continue learning"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:textColor="#1A1A1A"
+            android:textColor="@color/text_primary"
             android:layout_marginBottom="12dp"/>
 
         <androidx.recyclerview.widget.RecyclerView
@@ -163,7 +163,7 @@
                 android:text="Featured courses"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#1A1A1A"/>
+                android:textColor="@color/text_primary"/>
 
             <TextView
                 android:id="@+id/tv_see_all"
@@ -189,7 +189,7 @@
             android:text="Browse categories"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:textColor="#1A1A1A"
+            android:textColor="@color/text_primary"
             android:layout_marginBottom="12dp"/>
 
         <androidx.recyclerview.widget.RecyclerView

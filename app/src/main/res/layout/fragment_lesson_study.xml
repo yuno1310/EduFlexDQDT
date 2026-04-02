@@ -15,10 +15,13 @@
             android:id="@+id/btn_back_lesson"
             android:layout_width="wrap_content"
             android:layout_height="36dp"
-            android:backgroundTint="@color/cyan_surface"
+            android:background="@drawable/bg_button_primary_rounded"
+            android:minHeight="0dp"
+            android:paddingLeft="14dp"
+            android:paddingRight="14dp"
             android:text="Back"
             android:textAllCaps="false"
-            android:textColor="@color/cyan_primary_dark" />
+            android:textColor="@color/text_on_brand" />
 
         <TextView
             android:id="@+id/tv_lesson_study_title"
@@ -26,7 +29,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="Lesson Title"
-            android:textColor="#0F172A"
+            android:textColor="@color/text_title"
             android:textSize="24sp"
             android:textStyle="bold" />
 
@@ -48,7 +51,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
-            app:cardBackgroundColor="#FFFFFF"
+            app:cardBackgroundColor="@color/card_background"
             app:cardCornerRadius="14dp"
             app:cardElevation="2dp">
 
@@ -76,7 +79,7 @@
                     android:layout_marginTop="4dp"
                     android:lineSpacingExtra="7dp"
                     android:text="Lesson content goes here"
-                    android:textColor="#334155"
+                    android:textColor="@color/text_body"
                     android:textSize="16sp" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>

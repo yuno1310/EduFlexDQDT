@@ -23,7 +23,6 @@ import com.eduflex.android.model.LessonListResponse;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import java.util.Arrays;
 import java.util.List;
 
 public class CourseDetailFragment extends Fragment {
@@ -33,6 +32,7 @@ public class CourseDetailFragment extends Fragment {
     private String courseDescription;
     private LessonApi lessonApi;
     private RecyclerView rvLessons;
+    private TextView tvLessonsEmpty;
 
     public CourseDetailFragment() {
         super(R.layout.fragment_course_detail);
@@ -75,6 +75,7 @@ public class CourseDetailFragment extends Fragment {
         tvDescription.setText(courseDescription);
 
         rvLessons = view.findViewById(R.id.rv_lessons);
+        tvLessonsEmpty = view.findViewById(R.id.tv_lessons_empty);
         rvLessons.setLayoutManager(new LinearLayoutManager(getContext()));
         
         // Load lessons from API
@@ -83,13 +84,7 @@ public class CourseDetailFragment extends Fragment {
 
     private void loadLessons() {
         if (courseId == null || courseId.isEmpty()) {
-            // Fallback to mock lessons if no courseId available
-            List<Lesson> mockLessons = Arrays.asList(
-                    new Lesson("00000000-0000-0000-0000-000000000001", "Introduction", "video"),
-                    new Lesson("00000000-0000-0000-0000-000000000002", "Core Concepts", "reading"),
-                    new Lesson("00000000-0000-0000-0000-000000000003", "Practice Quiz", "quiz"),
-                    new Lesson("00000000-0000-0000-0000-000000000004", "Mini Project", "assignment"));
-            rvLessons.setAdapter(new LessonAdapter(mockLessons, this::openLesson));
+            showEmptyState("Lessons are being updated. Please check back later.");
             return;
         }
 
@@ -99,8 +94,15 @@ public class CourseDetailFragment extends Fragment {
             public void onResponse(Call<LessonListResponse> call, Response<LessonListResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     LessonListResponse lessonResponse = response.body();
-                    if (lessonResponse.isSuccess() && lessonResponse.getListLesson() != null) {
-                        rvLessons.setAdapter(new LessonAdapter(lessonResponse.getListLesson(), CourseDetailFragment.this::openLesson));
+                    if (lessonResponse.isSuccess()) {
+                        List<Lesson> lessons = lessonResponse.getListLesson();
+                        if (lessons == null || lessons.isEmpty()) {
+                            showEmptyState("Lessons are being updated. Please check back later.");
+                        } else {
+                            rvLessons.setVisibility(View.VISIBLE);
+                            tvLessonsEmpty.setVisibility(View.GONE);
+                            rvLessons.setAdapter(new LessonAdapter(lessons, CourseDetailFragment.this::openLesson));
+                        }
                     } else {
                         showError("Failed to load lessons: " + lessonResponse.getMessage());
                     }
@@ -118,13 +120,12 @@ public class CourseDetailFragment extends Fragment {
 
     private void showError(String message) {
         Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
-        // Fallback to mock lessons on error
-        List<Lesson> mockLessons = Arrays.asList(
-            new Lesson("00000000-0000-0000-0000-000000000001", "Introduction", "video"),
-            new Lesson("00000000-0000-0000-0000-000000000002", "Core Concepts", "reading"),
-            new Lesson("00000000-0000-0000-0000-000000000003", "Practice Quiz", "quiz"),
-            new Lesson("00000000-0000-0000-0000-000000000004", "Mini Project", "assignment"));
-        rvLessons.setAdapter(new LessonAdapter(mockLessons, this::openLesson));
+    }
+
+    private void showEmptyState(String message) {
+        rvLessons.setVisibility(View.GONE);
+        tvLessonsEmpty.setText(message);
+        tvLessonsEmpty.setVisibility(View.VISIBLE);
     }
 
     private void openLesson(Lesson lesson) {

@@ -7,14 +7,14 @@
     android:layout_marginEnd="10dp"
     app:cardCornerRadius="20dp"
     app:cardElevation="0dp"
-    app:cardBackgroundColor="#EEF0FF">
+    app:cardBackgroundColor="@color/cyan_surface">
 
     <TextView
         android:id="@+id/tv_category_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Category"
-        android:textColor="#6C63FF"
+        android:textColor="@color/cyan_primary_dark"
         android:textSize="13sp"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"

@@ -1,6 +1,5 @@
 package com.eduflex.android.ui.home;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.TypedValue;
@@ -20,7 +19,6 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.eduflex.android.LoginActivity;
 import com.eduflex.android.R;
 import com.eduflex.android.adapter.CategoryAdapter;
 import com.eduflex.android.adapter.ContinueLearningAdapter;
@@ -96,10 +94,6 @@ public class HomeFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null) {
                     updateBanner(response.body());
                 } else {
-                    if (isUnauthorized(response.code())) {
-                        handleUnauthorized();
-                        return;
-                    }
                     Log.e(TAG, "Failed to load stats: " + response.code());
                     showFallbackBanner();
                 }
@@ -200,10 +194,6 @@ public class HomeFragment extends Fragment {
                         rv.setAdapter(new ContinueLearningAdapter(body.getListCourse(), HomeFragment.this::onCourseClick));
                     }
                 } else {
-                    if (isUnauthorized(response.code())) {
-                        handleUnauthorized();
-                        return;
-                    }
                     Log.e(TAG, "Failed to load continue learning courses: " + response.code());
                 }
             }
@@ -228,10 +218,6 @@ public class HomeFragment extends Fragment {
                         rv.setAdapter(new CourseCardAdapter(body.getListCourse(), HomeFragment.this::onCourseClick));
                     }
                 } else {
-                    if (isUnauthorized(response.code())) {
-                        handleUnauthorized();
-                        return;
-                    }
                     Log.e(TAG, "Failed to load featured courses: " + response.code());
                 }
             }
@@ -257,10 +243,6 @@ public class HomeFragment extends Fragment {
                         rv.setAdapter(new CategoryAdapter(body.getListCategory()));
                     }
                 } else {
-                    if (isUnauthorized(response.code())) {
-                        handleUnauthorized();
-                        return;
-                    }
                     Log.e(TAG, "Failed to load categories: " + response.code());
                     // Optionally show fallback UI or error message
                 }
@@ -285,20 +267,5 @@ public class HomeFragment extends Fragment {
         
         NavController navController = NavHostFragment.findNavController(this);
         navController.navigate(R.id.courseDetailFragment, args);
-    }
-
-    private boolean isUnauthorized(int code) {
-        return code == 401 || code == 403;
-    }
-
-    private void handleUnauthorized() {
-        if (!isAdded()) {
-            return;
-        }
-        tokenManager.clearToken();
-        Intent intent = new Intent(requireContext(), LoginActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        requireActivity().finish();
     }
 }

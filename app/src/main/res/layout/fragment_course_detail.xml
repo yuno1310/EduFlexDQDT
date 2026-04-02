@@ -9,9 +9,14 @@
     <Button
         android:id="@+id/btn_back"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="← Back"
-        style="?attr/buttonBarButtonStyle" />
+        android:layout_height="36dp"
+        android:background="@drawable/bg_button_primary_rounded"
+        android:minHeight="0dp"
+        android:paddingLeft="14dp"
+        android:paddingRight="14dp"
+        android:text="Back"
+        android:textAllCaps="false"
+        android:textColor="@color/text_on_brand" />
 
     <!-- Course Title -->
     <TextView
@@ -19,6 +24,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Course Title"
+        android:textColor="@color/text_title"
         android:textSize="24sp"
         android:textStyle="bold"
         android:layout_marginTop="16dp"
@@ -30,6 +36,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Course Description"
+        android:textColor="@color/text_body"
         android:textSize="14sp"
         android:layout_marginBottom="24dp" />
 
@@ -38,15 +45,35 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Lessons"
+        android:textColor="@color/text_primary"
         android:textSize="18sp"
         android:textStyle="bold"
         android:layout_marginBottom="12dp" />
 
-    <!-- Lessons List -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_lessons"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1">
+
+        <!-- Lessons List -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_lessons"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <!-- Empty state when course has no lessons yet -->
+        <TextView
+            android:id="@+id/tv_lessons_empty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:paddingHorizontal="24dp"
+            android:text="Lessons are being updated. Please check back later."
+            android:textColor="@color/text_secondary"
+            android:textSize="15sp"
+            android:visibility="gone" />
+
+    </FrameLayout>
 
 </LinearLayout>

@@ -15,10 +15,13 @@
             android:id="@+id/btn_back_quiz"
             android:layout_width="wrap_content"
             android:layout_height="36dp"
-            android:backgroundTint="@color/cyan_surface"
+            android:background="@drawable/bg_button_primary_rounded"
+            android:minHeight="0dp"
+            android:paddingLeft="14dp"
+            android:paddingRight="14dp"
             android:text="Back"
             android:textAllCaps="false"
-            android:textColor="@color/cyan_primary_dark" />
+            android:textColor="@color/text_on_brand" />
 
         <TextView
             android:id="@+id/tv_quiz_title"
@@ -26,7 +29,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="Quiz"
-            android:textColor="#0F172A"
+            android:textColor="@color/text_title"
             android:textSize="24sp"
             android:textStyle="bold" />
 
@@ -34,7 +37,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            app:cardBackgroundColor="#FFFFFF"
+            app:cardBackgroundColor="@color/card_background"
             app:cardCornerRadius="14dp"
             app:cardElevation="2dp">
 
@@ -49,7 +52,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Loading question..."
-                    android:textColor="#1F2937"
+                    android:textColor="@color/text_primary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
@@ -68,7 +71,7 @@
                         android:buttonTint="@color/cyan_primary_dark"
                         android:padding="12dp"
                         android:text="Option 1"
-                        android:textColor="#0F172A"
+                        android:textColor="@color/text_title"
                         android:textSize="15sp" />
 
                     <RadioButton
@@ -80,7 +83,7 @@
                         android:buttonTint="@color/cyan_primary_dark"
                         android:padding="12dp"
                         android:text="Option 2"
-                        android:textColor="#0F172A"
+                        android:textColor="@color/text_title"
                         android:textSize="15sp" />
 
                     <RadioButton
@@ -92,7 +95,7 @@
                         android:buttonTint="@color/cyan_primary_dark"
                         android:padding="12dp"
                         android:text="Option 3"
-                        android:textColor="#0F172A"
+                        android:textColor="@color/text_title"
                         android:textSize="15sp" />
 
                     <RadioButton
@@ -103,7 +106,7 @@
                         android:buttonTint="@color/cyan_primary_dark"
                         android:padding="12dp"
                         android:text="Option 4"
-                        android:textColor="#0F172A"
+                        android:textColor="@color/text_title"
                         android:textSize="15sp" />
                 </RadioGroup>
 
@@ -112,9 +115,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:layout_marginTop="18dp"
-                    android:backgroundTint="@color/cyan_primary_dark"
+                    android:background="@drawable/bg_button_primary_rounded"
                     android:text="Submit"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/text_on_brand"
                     android:textStyle="bold" />
 
                 <TextView
