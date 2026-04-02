@@ -26,6 +26,6 @@
     <color name="cyan_accent">#0EA5B7</color>
 
     <!-- Streak cell colors -->
-    <color name="fire_active">#00BCD4</color>
+    <color name="fire_active">#FF8A00</color>
     <color name="fire_inactive">#B0BEC5</color>
 </resources>

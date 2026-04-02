@@ -1,6 +1,7 @@
 package com.eduflex.android.ui.home;
 
 import android.os.Bundle;
+import android.content.res.ColorStateList;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
@@ -10,6 +11,7 @@ import android.widget.TextView;
 import android.graphics.drawable.GradientDrawable;
 
 import androidx.core.content.ContextCompat;
+import androidx.core.widget.ImageViewCompat;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -122,9 +124,9 @@ public class HomeFragment extends Fragment {
         boolean studiedToday = today.equals(lastStudyDate);
 
         if (studiedToday) {
-            ivFireIcon.setColorFilter(ContextCompat.getColor(requireContext(), R.color.fire_active));
+            setFireIconColor(R.color.fire_active);
         } else {
-            ivFireIcon.setColorFilter(ContextCompat.getColor(requireContext(), R.color.fire_inactive));
+            setFireIconColor(R.color.fire_inactive);
         }
 
         tvStreak.setText(streak > 0
@@ -138,11 +140,16 @@ public class HomeFragment extends Fragment {
     private void showFallbackBanner() {
         if (!isAdded())
             return;
-        ivFireIcon.setColorFilter(ContextCompat.getColor(requireContext(), R.color.fire_inactive));
+        setFireIconColor(R.color.fire_inactive);
         tvStreak.setText("Welcome!");
         tvXp.setText("Connect to see your XP");
         tvLevel.setText("Lv.–");
         renderStreakDays(0, false);
+    }
+
+    private void setFireIconColor(int colorResId) {
+        int color = ContextCompat.getColor(requireContext(), colorResId);
+        ImageViewCompat.setImageTintList(ivFireIcon, ColorStateList.valueOf(color));
     }
 
     private void renderStreakDays(int streakDays, boolean studiedToday) {

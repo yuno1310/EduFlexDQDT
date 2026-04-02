@@ -86,7 +86,7 @@
                             android:id="@+id/iv_fire_icon"
                             android:layout_width="24dp"
                             android:layout_height="24dp"
-                            android:src="@android:drawable/ic_menu_today"
+                            android:src="@drawable/ic_fire"
                             android:layout_marginEnd="6dp"/>
 
                         <TextView
