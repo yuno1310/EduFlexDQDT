@@ -10,6 +10,11 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.os.Build;
 import android.util.Log;
+import android.view.View;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import com.eduflex.android.api.ApiClient;
 import com.eduflex.android.api.GamificationApi;
 import com.eduflex.android.auth.TokenManager;
@@ -29,7 +34,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         setContentView(R.layout.activity_main);
+        applyEdgeToEdgeInsets();
 
         // Initialise API client so the auth interceptor can read the stored JWT
         ApiClient.init(this);
@@ -51,6 +58,37 @@ public class MainActivity extends AppCompatActivity {
 
         // Award daily XP (once per day, covers both auto-login and manual login)
         awardDailyXpIfNeeded();
+    }
+
+    private void applyEdgeToEdgeInsets() {
+        View root = findViewById(R.id.root_main);
+        View navHost = findViewById(R.id.nav_host_fragment);
+        View bottomNav = findViewById(R.id.bottom_nav);
+
+        final int navHostTopPadding = navHost.getPaddingTop();
+        final int bottomNavBottomPadding = bottomNav.getPaddingBottom();
+
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+
+            navHost.setPadding(
+                navHost.getPaddingLeft(),
+                navHostTopPadding + systemBars.top,
+                navHost.getPaddingRight(),
+                navHost.getPaddingBottom()
+            );
+
+            bottomNav.setPadding(
+                bottomNav.getPaddingLeft(),
+                bottomNav.getPaddingTop(),
+                bottomNav.getPaddingRight(),
+                bottomNavBottomPadding + systemBars.bottom
+            );
+
+            return insets;
+        });
+
+        ViewCompat.requestApplyInsets(root);
     }
 
     /**

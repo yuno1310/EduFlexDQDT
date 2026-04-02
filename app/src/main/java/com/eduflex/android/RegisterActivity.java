@@ -10,6 +10,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.eduflex.android.api.ApiClient;
 import com.eduflex.android.api.AuthApi;
@@ -30,7 +34,9 @@ public class RegisterActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         setContentView(R.layout.activity_register);
+        applyEdgeToEdgeInsets();
 
         etName = findViewById(R.id.et_name);
         etEmail = findViewById(R.id.et_email);
@@ -88,5 +94,24 @@ public class RegisterActivity extends AppCompatActivity {
     private void setLoading(boolean loading) {
         progressBar.setVisibility(loading ? View.VISIBLE : View.GONE);
         btnRegister.setEnabled(!loading);
+    }
+
+    private void applyEdgeToEdgeInsets() {
+        View root = findViewById(R.id.root_register);
+        final int originalTop = root.getPaddingTop();
+        final int originalBottom = root.getPaddingBottom();
+
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            root.setPadding(
+                root.getPaddingLeft(),
+                originalTop + systemBars.top,
+                root.getPaddingRight(),
+                originalBottom + systemBars.bottom
+            );
+            return insets;
+        });
+
+        ViewCompat.requestApplyInsets(root);
     }
 }
