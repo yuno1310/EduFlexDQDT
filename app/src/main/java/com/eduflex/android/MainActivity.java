@@ -3,6 +3,7 @@ package com.eduflex.android;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.navigation.NavController;
+import androidx.navigation.NavDestination;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -47,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
 
         BottomNavigationView bottomNav = findViewById(R.id.bottom_nav);
         NavigationUI.setupWithNavController(bottomNav, navController);
+        syncBottomNavSelection(bottomNav, navController);
 
         FirebaseMessaging.getInstance().getToken()
                 .addOnCompleteListener(task -> {
@@ -89,6 +91,31 @@ public class MainActivity extends AppCompatActivity {
         });
 
         ViewCompat.requestApplyInsets(root);
+    }
+
+    private void syncBottomNavSelection(BottomNavigationView bottomNav, NavController navController) {
+        navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+            int selectedItemId = resolveBottomNavItem(destination);
+            if (selectedItemId != 0) {
+                bottomNav.getMenu().findItem(selectedItemId).setChecked(true);
+            }
+        });
+    }
+
+    private int resolveBottomNavItem(NavDestination destination) {
+        int id = destination.getId();
+
+        if (id == R.id.homeFragment || id == R.id.courseDetailFragment
+            || id == R.id.lessonStudyFragment || id == R.id.quizFragment) {
+            return R.id.homeFragment;
+        }
+
+        if (id == R.id.coursesFragment || id == R.id.searchFragment
+            || id == R.id.cartFragment || id == R.id.profileFragment) {
+            return id;
+        }
+
+        return 0;
     }
 
     /**
