@@ -2,6 +2,7 @@ package com.eduflex.repository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,5 +44,12 @@ public class CourseRepository {
     } else {
       return null;
     }
+  }
+
+  public boolean existsById(UUID courseId) {
+    return dsl.fetchExists(
+        dsl.selectOne()
+            .from(Courses.COURSES)
+            .where(Courses.COURSES.COURSE_ID.eq(courseId)));
   }
 }
