@@ -21,6 +21,7 @@ import com.eduflex.android.model.SubmitQuizRequest;
 import com.eduflex.android.model.SubmitQuizResponse;
 
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.List;
 
 import retrofit2.Call;
@@ -69,6 +70,7 @@ public class QuizFragment extends Fragment {
         rbOption4 = view.findViewById(R.id.rb_option_4);
         btnSubmit = view.findViewById(R.id.btn_submit_quiz);
         tvResult = view.findViewById(R.id.tv_quiz_result);
+        tvResult.setText("");
 
         tvQuizTitle.setText(lessonTitle + " - Quiz");
 
@@ -103,6 +105,9 @@ public class QuizFragment extends Fragment {
     }
 
     private void loadQuiz() {
+        tvQuizQuestion.setText("Loading quiz...");
+        btnSubmit.setEnabled(false);
+
         quizApi.getQuiz(lessonId).enqueue(new Callback<QuizGetResponse>() {
             @Override
             public void onResponse(@NonNull Call<QuizGetResponse> call, @NonNull Response<QuizGetResponse> response) {
@@ -113,10 +118,22 @@ public class QuizFragment extends Fragment {
                     QuizGetResponse quiz = response.body();
                     questionId = quiz.getQuestionId();
                     options = quiz.getOptions() != null ? quiz.getOptions() : new ArrayList<>();
-                    tvQuizQuestion.setText(quiz.getQuestionText());
-                    bindOptions(options);
+                    String questionText = quiz.getQuestionText();
+                    if (questionText == null || questionText.trim().isEmpty()) {
+                        tvQuizQuestion.setText("No quiz question found for this lesson.");
+                        btnSubmit.setEnabled(false);
+                        bindOptions(new ArrayList<>());
+                    } else {
+                        tvQuizQuestion.setText(questionText);
+                        bindOptions(options);
+                    }
                 } else {
-                    tvQuizQuestion.setText("Failed to load quiz.");
+                    String message = "Failed to load quiz.";
+                    if (response.body() != null && response.body().getMessage() != null
+                        && !response.body().getMessage().trim().isEmpty()) {
+                        message = response.body().getMessage();
+                    }
+                    tvQuizQuestion.setText(message);
                     btnSubmit.setEnabled(false);
                 }
             }
@@ -187,7 +204,17 @@ public class QuizFragment extends Fragment {
                 btnSubmit.setEnabled(true);
                 if (response.isSuccessful() && response.body() != null) {
                     SubmitQuizResponse result = response.body();
-                    tvResult.setText(result.getMessage());
+                    String message = result.getMessage() == null ? "Quiz submitted." : result.getMessage();
+                    String details = String.format(
+                        Locale.US,
+                        "%s\nScore: %.0f%% (%d/%d)\nXP rewarded: %d",
+                        message,
+                        result.getScorePercent(),
+                        result.getCorrectCount(),
+                        result.getTotalQuestions(),
+                        result.getXpRewarded()
+                    );
+                    tvResult.setText(details);
                 } else {
                     tvResult.setText("Failed to submit quiz.");
                 }
