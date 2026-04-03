@@ -28,4 +28,12 @@
     <!-- Streak cell colors -->
     <color name="fire_active">#FF8A00</color>
     <color name="fire_inactive">#B0BEC5</color>
+
+    <!-- Profile & Payment -->
+    <color name="danger">#E53935</color>
+    <color name="danger_light">#FFEBEE</color>
+    <color name="success">#43A047</color>
+    <color name="success_light">#E8F5E9</color>
+    <color name="divider">#E0E0E0</color>
+    <color name="icon_secondary">#90A4AE</color>
 </resources>
