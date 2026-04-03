@@ -273,7 +273,7 @@
                         android:paddingEnd="12dp"
                         android:gravity="center"
                         android:background="@drawable/bg_goal_chip"
-                        android:text="🎯 Career"
+                        android:text="Career"
                         android:textSize="12sp"
                         android:textColor="@color/cyan_primary_dark"
                         android:layout_marginEnd="8dp" />
@@ -286,7 +286,7 @@
                         android:paddingEnd="12dp"
                         android:gravity="center"
                         android:background="@drawable/bg_goal_chip"
-                        android:text="💪 Skill"
+                        android:text="Skill"
                         android:textSize="12sp"
                         android:textColor="@color/cyan_primary_dark"
                         android:layout_marginEnd="8dp" />
@@ -299,7 +299,7 @@
                         android:paddingEnd="12dp"
                         android:gravity="center"
                         android:background="@drawable/bg_goal_chip"
-                        android:text="🎨 Hobby"
+                        android:text="Hobby"
                         android:textSize="12sp"
                         android:textColor="@color/cyan_primary_dark"
                         android:layout_marginEnd="8dp" />
@@ -312,7 +312,7 @@
                         android:paddingEnd="12dp"
                         android:gravity="center"
                         android:background="@drawable/bg_goal_chip"
-                        android:text="📚 Study"
+                        android:text="Study"
                         android:textSize="12sp"
                         android:textColor="@color/cyan_primary_dark" />
                 </LinearLayout>

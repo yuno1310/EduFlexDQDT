@@ -123,7 +123,7 @@ public class PaymentFragment extends Fragment {
         btnPayNow.postDelayed(() -> {
             if (!isAdded()) return;
             setLoading(false);
-            Toast.makeText(requireContext(), "Payment successful! 🎉", Toast.LENGTH_LONG).show();
+            Toast.makeText(requireContext(), "Payment successful!", Toast.LENGTH_LONG).show();
             NavHostFragment.findNavController(this).popBackStack();
         }, 2000);
     }
