@@ -10,9 +10,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.eduflex.android.api.ApiClient;
 import com.eduflex.android.api.AuthApi;
+import com.eduflex.android.auth.SessionManager;
 import com.eduflex.android.auth.TokenManager;
 import com.eduflex.android.model.LoginRequest;
 import com.eduflex.android.model.LoginResponse;
@@ -41,7 +46,9 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         setContentView(R.layout.activity_login);
+        applyEdgeToEdgeInsets();
 
         etEmail = findViewById(R.id.et_email);
         etPassword = findViewById(R.id.et_password);
@@ -74,6 +81,7 @@ public class LoginActivity extends AppCompatActivity {
                 setLoading(false);
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                     tokenManager.saveToken(response.body().getToken());
+                    SessionManager.resetLogoutState();
                     Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
                     navigateToMain();
                 } else {
@@ -100,5 +108,24 @@ public class LoginActivity extends AppCompatActivity {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
+    }
+
+    private void applyEdgeToEdgeInsets() {
+        View root = findViewById(R.id.root_login);
+        final int originalTop = root.getPaddingTop();
+        final int originalBottom = root.getPaddingBottom();
+
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            root.setPadding(
+                root.getPaddingLeft(),
+                originalTop + systemBars.top,
+                root.getPaddingRight(),
+                originalBottom + systemBars.bottom
+            );
+            return insets;
+        });
+
+        ViewCompat.requestApplyInsets(root);
     }
 }

@@ -2,10 +2,12 @@ package com.eduflex.android.api;
 
 import android.content.Context;
 
+import com.eduflex.android.auth.SessionManager;
 import com.eduflex.android.auth.TokenManager;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -15,18 +17,20 @@ public class ApiClient {
     // TODO: Update this to your backend URL
     // Emulator: "http://10.0.2.2:8080"
     // Physical device (same WiFi): "http://<PC_IP>:8080"
-    private static final String BASE_URL = "http://192.168.1.8:8080";
+    private static final String BASE_URL = "http://192.168.1.15:8080";
 
     private static Retrofit retrofit;
     private static Retrofit authenticatedRetrofit;
     private static TokenManager tokenManager;
+    private static Context appContext;
 
     /**
      * Initialise with application context so the auth interceptor can read the
      * stored JWT.
      */
     public static void init(Context context) {
-        tokenManager = new TokenManager(context.getApplicationContext());
+        appContext = context.getApplicationContext();
+        tokenManager = new TokenManager(appContext);
     }
 
     /** Returns a Retrofit instance without auth headers (for login/register). */
@@ -67,6 +71,13 @@ public class ApiClient {
                             }
                         }
                         return chain.proceed(builder.build());
+                    })
+                    .addInterceptor(chain -> {
+                        Response response = chain.proceed(chain.request());
+                        if (response.code() == 401 && appContext != null) {
+                            SessionManager.forceLogout(appContext, "Session expired. Please log in again.");
+                        }
+                        return response;
                     })
                     .addInterceptor(logging)
                     .build();

@@ -1,12 +1,17 @@
 package com.eduflex.android.ui.home;
 
 import android.os.Bundle;
+import android.content.res.ColorStateList;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.graphics.drawable.GradientDrawable;
 
 import androidx.core.content.ContextCompat;
+import androidx.core.widget.ImageViewCompat;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -41,6 +46,7 @@ public class HomeFragment extends Fragment {
     private TextView tvStreak;
     private TextView tvXp;
     private TextView tvLevel;
+    private LinearLayout llStreakDays;
     private GamificationApi gamificationApi;
     private TokenManager tokenManager;
     private CourseApi courseApi;
@@ -58,6 +64,7 @@ public class HomeFragment extends Fragment {
         tvStreak = view.findViewById(R.id.tv_streak);
         tvXp = view.findViewById(R.id.tv_xp);
         tvLevel = view.findViewById(R.id.tv_level);
+        llStreakDays = view.findViewById(R.id.ll_streak_days);
 
         // Init API (use authenticated client so the JWT is attached)
         gamificationApi = ApiClient.createAuthenticatedService(GamificationApi.class);
@@ -117,25 +124,65 @@ public class HomeFragment extends Fragment {
         boolean studiedToday = today.equals(lastStudyDate);
 
         if (studiedToday) {
-            ivFireIcon.setColorFilter(ContextCompat.getColor(requireContext(), R.color.fire_active));
+            setFireIconColor(R.color.fire_active);
         } else {
-            ivFireIcon.setColorFilter(ContextCompat.getColor(requireContext(), R.color.fire_inactive));
+            setFireIconColor(R.color.fire_inactive);
         }
 
         tvStreak.setText(streak > 0
-                ? streak + "-day streak!"
-                : "Start your streak today!");
-        tvXp.setText("You have " + xp + " XP — keep it up!");
+            ? streak + " day streak"
+            : "Start your streak today");
+        tvXp.setText("XP: " + xp + " | Keep going");
         tvLevel.setText("Lv." + level);
+        renderStreakDays(streak, studiedToday);
     }
 
     private void showFallbackBanner() {
         if (!isAdded())
             return;
-        ivFireIcon.setColorFilter(ContextCompat.getColor(requireContext(), R.color.fire_inactive));
+        setFireIconColor(R.color.fire_inactive);
         tvStreak.setText("Welcome!");
         tvXp.setText("Connect to see your XP");
         tvLevel.setText("Lv.–");
+        renderStreakDays(0, false);
+    }
+
+    private void setFireIconColor(int colorResId) {
+        int color = ContextCompat.getColor(requireContext(), colorResId);
+        ImageViewCompat.setImageTintList(ivFireIcon, ColorStateList.valueOf(color));
+    }
+
+    private void renderStreakDays(int streakDays, boolean studiedToday) {
+        if (llStreakDays == null || !isAdded()) {
+            return;
+        }
+
+        llStreakDays.removeAllViews();
+        int activeDays = studiedToday ? Math.min(streakDays, 7) : Math.max(0, Math.min(streakDays - 1, 7));
+
+        for (int i = 0; i < 7; i++) {
+            View cell = new View(requireContext());
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(14), dp(14));
+            if (i < 6) {
+                params.rightMargin = dp(6);
+            }
+            cell.setLayoutParams(params);
+
+            GradientDrawable bg = new GradientDrawable();
+            bg.setShape(GradientDrawable.RECTANGLE);
+            bg.setCornerRadius(dp(4));
+            bg.setColor(ContextCompat.getColor(requireContext(), i < activeDays ? R.color.fire_active : R.color.fire_inactive));
+            cell.setBackground(bg);
+
+            llStreakDays.addView(cell);
+        }
+    }
+
+    private int dp(int value) {
+        return (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                value,
+                getResources().getDisplayMetrics());
     }
 
     // ── RecyclerView setup ──

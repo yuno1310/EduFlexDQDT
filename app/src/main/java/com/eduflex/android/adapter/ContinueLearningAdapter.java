@@ -3,6 +3,7 @@ package com.eduflex.android.adapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -36,6 +37,19 @@ public class ContinueLearningAdapter extends RecyclerView.Adapter<ContinueLearni
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Course course = items.get(position);
         holder.tvTitle.setText(course.getTitle());
+
+        int completedLessons = (position % 10) + 1;
+        int progressPercent = completedLessons * 10;
+        String status = course.getStatus();
+        if (status != null && "completed".equalsIgnoreCase(status)) {
+            completedLessons = 10;
+            progressPercent = 100;
+        }
+
+        holder.tvLessonCount.setText("Lesson " + completedLessons + " / 10");
+        holder.progressBar.setProgress(progressPercent);
+        holder.tvPercent.setText(progressPercent + "% complete");
+
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onCourseClick(course);
@@ -48,9 +62,16 @@ public class ContinueLearningAdapter extends RecyclerView.Adapter<ContinueLearni
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvTitle;
+        TextView tvLessonCount;
+        TextView tvPercent;
+        ProgressBar progressBar;
+
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvTitle = itemView.findViewById(R.id.tv_course_title);
+            tvLessonCount = itemView.findViewById(R.id.tv_lesson_count);
+            tvPercent = itemView.findViewById(R.id.tv_percent);
+            progressBar = itemView.findViewById(R.id.progress_bar);
         }
     }
 }

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface_bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <Button
+            android:id="@+id/btn_back_lesson"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:background="@drawable/bg_button_primary_rounded"
+            android:minHeight="0dp"
+            android:paddingLeft="14dp"
+            android:paddingRight="14dp"
+            android:text="Back"
+            android:textAllCaps="false"
+            android:textColor="@color/text_on_brand" />
+
+        <TextView
+            android:id="@+id/tv_lesson_study_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Lesson Title"
+            android:textColor="@color/text_title"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_lesson_study_type"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@color/cyan_surface"
+            android:paddingLeft="10dp"
+            android:paddingTop="4dp"
+            android:paddingRight="10dp"
+            android:paddingBottom="4dp"
+            android:text="VIDEO"
+            android:textColor="@color/cyan_primary_dark"
+            android:textStyle="bold" />
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            app:cardBackgroundColor="@color/card_background"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="2dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <ImageView
+                    android:id="@+id/iv_video_placeholder"
+                    android:layout_width="match_parent"
+                    android:layout_height="220dp"
+                    android:background="@color/cyan_surface"
+                    android:contentDescription="Video placeholder"
+                    android:padding="24dp"
+                    android:scaleType="center"
+                    android:src="@android:drawable/ic_media_play"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/tv_lesson_text_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:lineSpacingExtra="7dp"
+                    android:text="Lesson content goes here"
+                    android:textColor="@color/text_body"
+                    android:textSize="16sp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+    </LinearLayout>
+
+</ScrollView>
