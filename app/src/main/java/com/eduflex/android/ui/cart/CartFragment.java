@@ -37,7 +37,7 @@ public class CartFragment extends Fragment {
 
         btnCheckout.setOnClickListener(v -> {
             NavController navController = NavHostFragment.findNavController(this);
-            navController.navigate(R.id.paymentFragment);
+            navController.navigate(R.id.action_cart_to_payment);
         });
 
         // Remove item button
