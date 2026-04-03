@@ -21,12 +21,21 @@
     <fragment
         android:id="@+id/cartFragment"
         android:name="com.eduflex.android.ui.cart.CartFragment"
-        android:label="Cart"/>
+        android:label="Cart">
+        <action
+            android:id="@+id/action_cart_to_payment"
+            app:destination="@id/paymentFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/profileFragment"
         android:name="com.eduflex.android.ui.profile.ProfileFragment"
         android:label="Profile"/>
+
+    <fragment
+        android:id="@+id/paymentFragment"
+        android:name="com.eduflex.android.ui.payment.PaymentFragment"
+        android:label="Payment" />
 
     <fragment
         android:id="@+id/courseDetailFragment"

@@ -115,6 +115,10 @@ public class MainActivity extends AppCompatActivity {
             return id;
         }
 
+        if (id == R.id.paymentFragment) {
+            return R.id.cartFragment;
+        }
+
         return 0;
     }
 

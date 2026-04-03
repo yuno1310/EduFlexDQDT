@@ -6,4 +6,50 @@
     <string name="password_hint">Password</string>
     <string name="login">Login</string>
     <string name="register">Register</string>
+
+    <!-- Profile -->
+    <string name="profile_title">My Profile</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="save_profile">Save</string>
+    <string name="learning_goal">Learning Goal</string>
+    <string name="set_your_goal">Set your learning goal…</string>
+    <string name="xp_label">XP</string>
+    <string name="level_label">Level</string>
+    <string name="streak_label">Streak</string>
+    <string name="logout">Log Out</string>
+    <string name="logout_confirm">Are you sure you want to log out?</string>
+    <string name="change_photo">Change Photo</string>
+    <string name="full_name_hint">Full Name</string>
+
+    <!-- Payment -->
+    <string name="payment_title">Payment</string>
+    <string name="order_summary">Order Summary</string>
+    <string name="payment_method">Payment Method</string>
+    <string name="credit_card">Credit Card</string>
+    <string name="paypal">PayPal</string>
+    <string name="bank_transfer">Bank Transfer</string>
+    <string name="card_number_hint">Card Number</string>
+    <string name="expiry_hint">MM/YY</string>
+    <string name="cvv_hint">CVV</string>
+    <string name="cardholder_hint">Cardholder Name</string>
+    <string name="pay_now">Pay Now</string>
+    <string name="total">Total</string>
+    <string name="subtotal">Subtotal</string>
+    <string name="discount">Discount</string>
+    <string name="checkout">Checkout</string>
+    <string name="your_cart">Your Cart</string>
+    <string name="cart_empty">Your cart is empty</string>
+    <string name="cart_empty_subtitle">Browse courses and add them to your cart</string>
+
+    <!-- Registration -->
+    <string name="create_account">Create Account</string>
+    <string name="signup_subtitle">Sign up to start your learning journey</string>
+    <string name="confirm_password_hint">Confirm Password</string>
+    <string name="select_goal">Select your learning goal</string>
+    <string name="goal_career">Career Growth</string>
+    <string name="goal_skill">Skill Building</string>
+    <string name="goal_hobby">Personal Hobby</string>
+    <string name="goal_academic">Academic Study</string>
+    <string name="already_have_account">Already have an account? </string>
+    <string name="agree_terms">By signing up, you agree to our Terms &amp; Privacy Policy</string>
 </resources>
