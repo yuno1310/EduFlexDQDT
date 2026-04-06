@@ -105,6 +105,20 @@ public class GamificationStatsRecord extends UpdatableRecordImpl<GamificationSta
         return (LocalDate) get(5);
     }
 
+    /**
+     * Setter for <code>public.gamification_stats.last_login_xp_date</code>.
+     */
+    public void setLastLoginXpDate(LocalDate value) {
+        set(6, value);
+    }
+
+    /**
+     * Getter for <code>public.gamification_stats.last_login_xp_date</code>.
+     */
+    public LocalDate getLastLoginXpDate() {
+        return (LocalDate) get(6);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -128,7 +142,7 @@ public class GamificationStatsRecord extends UpdatableRecordImpl<GamificationSta
     /**
      * Create a detached, initialised GamificationStatsRecord
      */
-    public GamificationStatsRecord(Long id, UUID userId, Integer xp, Integer level, Integer streakDays, LocalDate lastStudyDate) {
+    public GamificationStatsRecord(Long id, UUID userId, Integer xp, Integer level, Integer streakDays, LocalDate lastStudyDate, LocalDate lastLoginXpDate) {
         super(GamificationStats.GAMIFICATION_STATS);
 
         setId(id);
@@ -137,6 +151,7 @@ public class GamificationStatsRecord extends UpdatableRecordImpl<GamificationSta
         setLevel(level);
         setStreakDays(streakDays);
         setLastStudyDate(lastStudyDate);
+        setLastLoginXpDate(lastLoginXpDate);
         resetChangedOnNotNull();
     }
 
@@ -153,6 +168,7 @@ public class GamificationStatsRecord extends UpdatableRecordImpl<GamificationSta
             setLevel(value.getLevel());
             setStreakDays(value.getStreakDays());
             setLastStudyDate(value.getLastStudyDate());
+            setLastLoginXpDate(value.getLastLoginXpDate());
             resetChangedOnNotNull();
         }
     }

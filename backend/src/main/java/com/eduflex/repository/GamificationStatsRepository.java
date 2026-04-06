@@ -44,4 +44,18 @@ public class GamificationStatsRepository {
                 .where(GamificationStats.GAMIFICATION_STATS.USER_ID.eq(userId))
                 .execute();
     }
+
+    public LocalDate getLastLoginXpDate(UUID userId) {
+        return dsl.select(GamificationStats.GAMIFICATION_STATS.LAST_LOGIN_XP_DATE)
+                .from(GamificationStats.GAMIFICATION_STATS)
+                .where(GamificationStats.GAMIFICATION_STATS.USER_ID.eq(userId))
+                .fetchOneInto(LocalDate.class);
+    }
+
+    public void setLastLoginXpDate(UUID userId, LocalDate date) {
+        dsl.update(GamificationStats.GAMIFICATION_STATS)
+                .set(GamificationStats.GAMIFICATION_STATS.LAST_LOGIN_XP_DATE, date)
+                .where(GamificationStats.GAMIFICATION_STATS.USER_ID.eq(userId))
+                .execute();
+    }
 }
