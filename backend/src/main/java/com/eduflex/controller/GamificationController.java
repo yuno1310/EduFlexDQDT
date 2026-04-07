@@ -4,21 +4,18 @@ import com.eduflex.dto.AddXpDTO;
 import com.eduflex.dto.GetGamificationStatsDTO;
 import com.eduflex.dto.UpdateStreakDTO;
 import com.eduflex.service.AddXpUseCase;
+import com.eduflex.service.DailyCheckinUseCase;
 import com.eduflex.service.GetGamificationStatsUseCase;
 import com.eduflex.service.UpdateStreakUseCase;
-import com.eduflex.repository.GamificationStatsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users/{userId}")
 public class GamificationController {
-
-    private static final int DAILY_LOGIN_XP = 10;
 
     @Autowired
     private GetGamificationStatsUseCase getGamificationStatsUseCase;
@@ -30,7 +27,7 @@ public class GamificationController {
     private UpdateStreakUseCase updateStreakUseCase;
 
     @Autowired
-    private GamificationStatsRepository gamificationStatsRepository;
+    private DailyCheckinUseCase dailyCheckinUseCase;
 
     @GetMapping("/stats")
     public ResponseEntity<GetGamificationStatsDTO.GetGamificationStatsResponse> getStats(
@@ -51,24 +48,10 @@ public class GamificationController {
         return ResponseEntity.ok(updateStreakUseCase.execute(userId));
     }
 
-    /**
-     * Daily check-in: awards +10 XP once per calendar day.
-     * Can be called safely multiple times — only awards once.
-     */
     @PostMapping("/daily-checkin")
     public ResponseEntity<GetGamificationStatsDTO.GetGamificationStatsResponse> dailyCheckin(
             @PathVariable UUID userId) {
-        // Ensure stats exist
-        getGamificationStatsUseCase.execute(userId);
-
-        LocalDate today = LocalDate.now();
-        LocalDate lastDate = gamificationStatsRepository.getLastLoginXpDate(userId);
-
-        if (lastDate == null || !lastDate.equals(today)) {
-            gamificationStatsRepository.updateXpAndLevel(userId, DAILY_LOGIN_XP);
-            gamificationStatsRepository.setLastLoginXpDate(userId, today);
-        }
-
-        return ResponseEntity.ok(getGamificationStatsUseCase.execute(userId));
+        return ResponseEntity.ok(dailyCheckinUseCase.execute(userId));
     }
 }
+
