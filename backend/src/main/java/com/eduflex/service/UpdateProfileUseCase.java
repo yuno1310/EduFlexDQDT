@@ -23,7 +23,7 @@ public class UpdateProfileUseCase {
     UsersRecord record = userRepository.find_by_id_record(userID);
 
     if (record == null) {
-      return new UpdateProfileResponse(false, "Failed to finding user, user was not existed");
+      return new UpdateProfileResponse(false, "Failed to find user, user does not exist");
     }
 
     boolean isAdjust = false;
