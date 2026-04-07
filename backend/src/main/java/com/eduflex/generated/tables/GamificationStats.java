@@ -89,6 +89,11 @@ public class GamificationStats extends TableImpl<GamificationStatsRecord> {
      */
     public final TableField<GamificationStatsRecord, LocalDate> LAST_STUDY_DATE = createField(DSL.name("last_study_date"), SQLDataType.LOCALDATE, this, "");
 
+    /**
+     * The column <code>public.gamification_stats.last_login_xp_date</code>.
+     */
+    public final TableField<GamificationStatsRecord, LocalDate> LAST_LOGIN_XP_DATE = createField(DSL.name("last_login_xp_date"), SQLDataType.LOCALDATE, this, "");
+
     private GamificationStats(Name alias, Table<GamificationStatsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

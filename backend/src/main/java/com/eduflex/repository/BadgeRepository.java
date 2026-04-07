@@ -26,4 +26,11 @@ public class BadgeRepository {
                 .fetchOne();
         return record != null ? new BadgesDbO(record) : null;
     }
+
+    public BadgesDbO findByConditionType(String conditionType) {
+        var record = dsl.selectFrom(Badges.BADGES)
+                .where(Badges.BADGES.CONDITION_TYPE.eq(conditionType))
+                .fetchOne();
+        return record != null ? new BadgesDbO(record) : null;
+    }
 }

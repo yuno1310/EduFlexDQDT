@@ -17,6 +17,9 @@ public class AddXpUseCase {
     @Autowired
     private GetGamificationStatsUseCase getGamificationStatsUseCase;
 
+    @Autowired
+    private CheckAndAwardBadgesUseCase checkAndAwardBadgesUseCase;
+
     @Transactional
     public AddXpDTO.AddXpResponse execute(UUID userId, AddXpDTO.AddXpRequest request) {
         if (request.amount() <= 0) {
@@ -28,6 +31,10 @@ public class AddXpUseCase {
         gamificationStatsRepository.updateXpAndLevel(userId, request.amount());
 
         var updated = gamificationStatsRepository.findByUserId(userId);
+
+        // Check XP badges (500, 1000)
+        checkAndAwardBadgesUseCase.checkXpBadges(userId);
+
         return new AddXpDTO.AddXpResponse(
                 updated.record.getId(),
                 updated.record.getUserId(),

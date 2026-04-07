@@ -4,6 +4,7 @@ import com.eduflex.dto.AddXpDTO;
 import com.eduflex.dto.GetGamificationStatsDTO;
 import com.eduflex.dto.UpdateStreakDTO;
 import com.eduflex.service.AddXpUseCase;
+import com.eduflex.service.DailyCheckinUseCase;
 import com.eduflex.service.GetGamificationStatsUseCase;
 import com.eduflex.service.UpdateStreakUseCase;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,9 @@ public class GamificationController {
     @Autowired
     private UpdateStreakUseCase updateStreakUseCase;
 
+    @Autowired
+    private DailyCheckinUseCase dailyCheckinUseCase;
+
     @GetMapping("/stats")
     public ResponseEntity<GetGamificationStatsDTO.GetGamificationStatsResponse> getStats(
             @PathVariable UUID userId) {
@@ -43,4 +47,11 @@ public class GamificationController {
             @PathVariable UUID userId) {
         return ResponseEntity.ok(updateStreakUseCase.execute(userId));
     }
+
+    @PostMapping("/daily-checkin")
+    public ResponseEntity<GetGamificationStatsDTO.GetGamificationStatsResponse> dailyCheckin(
+            @PathVariable UUID userId) {
+        return ResponseEntity.ok(dailyCheckinUseCase.execute(userId));
+    }
 }
+

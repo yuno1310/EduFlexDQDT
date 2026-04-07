@@ -21,4 +21,7 @@ public interface GamificationApi {
 
     @POST("/api/users/{userId}/streak")
     Call<GamificationStatsResponse> updateStreak(@Path("userId") String userId);
+
+    @POST("/api/users/{userId}/daily-checkin")
+    Call<GamificationStatsResponse> dailyCheckin(@Path("userId") String userId);
 }
