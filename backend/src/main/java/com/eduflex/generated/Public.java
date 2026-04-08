@@ -14,6 +14,7 @@ import com.eduflex.generated.tables.LessonProgress;
 import com.eduflex.generated.tables.QuestionOptions;
 import com.eduflex.generated.tables.Questions;
 import com.eduflex.generated.tables.QuizAttempts;
+import com.eduflex.generated.tables.Transactions;
 import com.eduflex.generated.tables.UserBadges;
 import com.eduflex.generated.tables.Users;
 
@@ -89,6 +90,11 @@ public class Public extends SchemaImpl {
     public final QuizAttempts QUIZ_ATTEMPTS = QuizAttempts.QUIZ_ATTEMPTS;
 
     /**
+     * The table <code>public.transactions</code>.
+     */
+    public final Transactions TRANSACTIONS = Transactions.TRANSACTIONS;
+
+    /**
      * The table <code>public.user_badges</code>.
      */
     public final UserBadges USER_BADGES = UserBadges.USER_BADGES;
@@ -124,6 +130,7 @@ public class Public extends SchemaImpl {
             QuestionOptions.QUESTION_OPTIONS,
             Questions.QUESTIONS,
             QuizAttempts.QUIZ_ATTEMPTS,
+            Transactions.TRANSACTIONS,
             UserBadges.USER_BADGES,
             Users.USERS
         );

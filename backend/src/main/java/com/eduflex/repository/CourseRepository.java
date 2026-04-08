@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import com.eduflex.dto.GetCourseDTO.CourseInfo;
 import com.eduflex.entity.CourseDbO;
 import com.eduflex.generated.tables.Courses;
+import com.eduflex.generated.tables.records.CoursesRecord;
 
 @Repository
 public class CourseRepository {
@@ -51,5 +52,12 @@ public class CourseRepository {
         dsl.selectOne()
             .from(Courses.COURSES)
             .where(Courses.COURSES.COURSE_ID.eq(courseId)));
+  }
+
+  public CoursesRecord find_by_id_course(UUID courseId) {
+    var result = dsl.selectFrom(Courses.COURSES)
+        .where(Courses.COURSES.COURSE_ID.eq(courseId))
+        .fetchOne();
+    return result;
   }
 }
