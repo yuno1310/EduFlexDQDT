@@ -55,7 +55,7 @@ public class UsersController {
     }
   }
 
-  @PutMapping("/profile/update")
+  @PutMapping("/profile/{userID}/update")
   public ResponseEntity<UpdateProfileResponse> updateProfile(@PathVariable UUID userID,
       @RequestBody UpdateProfileRequest request) {
     System.out.println(request);
