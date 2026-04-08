@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.UUID;
 
 public class LeaderBoardDTO {
+  public record LeaderBoardUserInfo(UUID userID, String fullName, int xp, int level) {
+  }
+
   public record LeaderBoardItem(int rank, UUID userID, String fullName, int xp, int level) {
   }
 

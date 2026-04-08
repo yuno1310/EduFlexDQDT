@@ -55,9 +55,9 @@ public class UsersController {
     }
   }
 
-  @PutMapping("/update-profile")
+  @PutMapping("/profile/update")
   public ResponseEntity<UpdateProfileResponse> updateProfile(@PathVariable UUID userID,
-      @Valid @RequestBody UpdateProfileRequest request) {
+      @RequestBody UpdateProfileRequest request) {
     System.out.println(request);
     var response = updateProfileUseCase.execute(userID, request);
     if (response.success() == true) {
