@@ -91,6 +91,20 @@ public class CoursesRecord extends UpdatableRecordImpl<CoursesRecord> {
         return (LocalDateTime) get(4);
     }
 
+    /**
+     * Setter for <code>public.courses.price</code>.
+     */
+    public void setPrice(Long value) {
+        set(5, value);
+    }
+
+    /**
+     * Getter for <code>public.courses.price</code>.
+     */
+    public Long getPrice() {
+        return (Long) get(5);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -114,7 +128,7 @@ public class CoursesRecord extends UpdatableRecordImpl<CoursesRecord> {
     /**
      * Create a detached, initialised CoursesRecord
      */
-    public CoursesRecord(UUID courseId, String title, String learningModel, String status, LocalDateTime createdAt) {
+    public CoursesRecord(UUID courseId, String title, String learningModel, String status, LocalDateTime createdAt, Long price) {
         super(Courses.COURSES);
 
         setCourseId(courseId);
@@ -122,6 +136,7 @@ public class CoursesRecord extends UpdatableRecordImpl<CoursesRecord> {
         setLearningModel(learningModel);
         setStatus(status);
         setCreatedAt(createdAt);
+        setPrice(price);
         resetChangedOnNotNull();
     }
 
@@ -137,6 +152,7 @@ public class CoursesRecord extends UpdatableRecordImpl<CoursesRecord> {
             setLearningModel(value.getLearningModel());
             setStatus(value.getStatus());
             setCreatedAt(value.getCreatedAt());
+            setPrice(value.getPrice());
             resetChangedOnNotNull();
         }
     }

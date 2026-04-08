@@ -22,6 +22,7 @@ public class Courses implements Serializable {
     private String learningModel;
     private String status;
     private LocalDateTime createdAt;
+    private Long price;
 
     public Courses() {}
 
@@ -31,6 +32,7 @@ public class Courses implements Serializable {
         this.learningModel = value.learningModel;
         this.status = value.status;
         this.createdAt = value.createdAt;
+        this.price = value.price;
     }
 
     public Courses(
@@ -38,13 +40,15 @@ public class Courses implements Serializable {
         String title,
         String learningModel,
         String status,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        Long price
     ) {
         this.courseId = courseId;
         this.title = title;
         this.learningModel = learningModel;
         this.status = status;
         this.createdAt = createdAt;
+        this.price = price;
     }
 
     /**
@@ -117,6 +121,20 @@ public class Courses implements Serializable {
         this.createdAt = createdAt;
     }
 
+    /**
+     * Getter for <code>public.courses.price</code>.
+     */
+    public Long getPrice() {
+        return this.price;
+    }
+
+    /**
+     * Setter for <code>public.courses.price</code>.
+     */
+    public void setPrice(Long price) {
+        this.price = price;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -156,6 +174,12 @@ public class Courses implements Serializable {
         }
         else if (!this.createdAt.equals(other.createdAt))
             return false;
+        if (this.price == null) {
+            if (other.price != null)
+                return false;
+        }
+        else if (!this.price.equals(other.price))
+            return false;
         return true;
     }
 
@@ -168,6 +192,7 @@ public class Courses implements Serializable {
         result = prime * result + ((this.learningModel == null) ? 0 : this.learningModel.hashCode());
         result = prime * result + ((this.status == null) ? 0 : this.status.hashCode());
         result = prime * result + ((this.createdAt == null) ? 0 : this.createdAt.hashCode());
+        result = prime * result + ((this.price == null) ? 0 : this.price.hashCode());
         return result;
     }
 
@@ -180,6 +205,7 @@ public class Courses implements Serializable {
         sb.append(", ").append(learningModel);
         sb.append(", ").append(status);
         sb.append(", ").append(createdAt);
+        sb.append(", ").append(price);
 
         sb.append(")");
         return sb.toString();

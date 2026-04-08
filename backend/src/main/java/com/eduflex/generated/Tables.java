@@ -14,6 +14,7 @@ import com.eduflex.generated.tables.LessonProgress;
 import com.eduflex.generated.tables.QuestionOptions;
 import com.eduflex.generated.tables.Questions;
 import com.eduflex.generated.tables.QuizAttempts;
+import com.eduflex.generated.tables.Transactions;
 import com.eduflex.generated.tables.UserBadges;
 import com.eduflex.generated.tables.Users;
 
@@ -73,6 +74,11 @@ public class Tables {
      * The table <code>public.quiz_attempts</code>.
      */
     public static final QuizAttempts QUIZ_ATTEMPTS = QuizAttempts.QUIZ_ATTEMPTS;
+
+    /**
+     * The table <code>public.transactions</code>.
+     */
+    public static final Transactions TRANSACTIONS = Transactions.TRANSACTIONS;
 
     /**
      * The table <code>public.user_badges</code>.

@@ -13,6 +13,7 @@ import com.eduflex.generated.tables.GamificationStats.GamificationStatsPath;
 import com.eduflex.generated.tables.Lesson.LessonPath;
 import com.eduflex.generated.tables.LessonProgress.LessonProgressPath;
 import com.eduflex.generated.tables.QuizAttempts.QuizAttemptsPath;
+import com.eduflex.generated.tables.Transactions.TransactionsPath;
 import com.eduflex.generated.tables.UserBadges.UserBadgesPath;
 import com.eduflex.generated.tables.records.UsersRecord;
 
@@ -228,6 +229,19 @@ public class Users extends TableImpl<UsersRecord> {
             _userBadges = new UserBadgesPath(this, null, Keys.USER_BADGES__FK_USER_BADGE_USER.getInverseKey());
 
         return _userBadges;
+    }
+
+    private transient TransactionsPath _transactions;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.transactions</code> table
+     */
+    public TransactionsPath transactions() {
+        if (_transactions == null)
+            _transactions = new TransactionsPath(this, null, Keys.TRANSACTIONS__TRANSACTIONS_USER_ID_FKEY.getInverseKey());
+
+        return _transactions;
     }
 
     /**

@@ -8,6 +8,7 @@ import com.eduflex.generated.Keys;
 import com.eduflex.generated.Public;
 import com.eduflex.generated.tables.Enrollments.EnrollmentsPath;
 import com.eduflex.generated.tables.Lesson.LessonPath;
+import com.eduflex.generated.tables.Transactions.TransactionsPath;
 import com.eduflex.generated.tables.Users.UsersPath;
 import com.eduflex.generated.tables.records.CoursesRecord;
 
@@ -82,6 +83,11 @@ public class Courses extends TableImpl<CoursesRecord> {
      * The column <code>public.courses.created_at</code>.
      */
     public final TableField<CoursesRecord, LocalDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.LOCALDATETIME(6).defaultValue(DSL.field(DSL.raw("CURRENT_TIMESTAMP"), SQLDataType.LOCALDATETIME)), this, "");
+
+    /**
+     * The column <code>public.courses.price</code>.
+     */
+    public final TableField<CoursesRecord, Long> PRICE = createField(DSL.name("price"), SQLDataType.BIGINT.defaultValue(DSL.field(DSL.raw("0"), SQLDataType.BIGINT)), this, "");
 
     private Courses(Name alias, Table<CoursesRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -179,6 +185,19 @@ public class Courses extends TableImpl<CoursesRecord> {
             _lesson = new LessonPath(this, null, Keys.LESSON__FK_LESSON_COURSE.getInverseKey());
 
         return _lesson;
+    }
+
+    private transient TransactionsPath _transactions;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.transactions</code> table
+     */
+    public TransactionsPath transactions() {
+        if (_transactions == null)
+            _transactions = new TransactionsPath(this, null, Keys.TRANSACTIONS__TRANSACTIONS_COURSE_ID_FKEY.getInverseKey());
+
+        return _transactions;
     }
 
     /**
