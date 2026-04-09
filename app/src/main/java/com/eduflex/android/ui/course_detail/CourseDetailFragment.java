@@ -1,10 +1,13 @@
 package com.eduflex.android.ui.course_detail;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -27,12 +30,16 @@ import java.util.List;
 
 public class CourseDetailFragment extends Fragment {
 
+    private static final String PREF_COURSE_PROGRESS = "course_progress";
+
     private String courseId;
     private String courseTitle;
     private String courseDescription;
     private LessonApi lessonApi;
     private RecyclerView rvLessons;
     private TextView tvLessonsEmpty;
+    private ProgressBar progressCourse;
+    private TextView tvCourseProgressValue;
 
     public CourseDetailFragment() {
         super(R.layout.fragment_course_detail);
@@ -76,10 +83,20 @@ public class CourseDetailFragment extends Fragment {
 
         rvLessons = view.findViewById(R.id.rv_lessons);
         tvLessonsEmpty = view.findViewById(R.id.tv_lessons_empty);
+        progressCourse = view.findViewById(R.id.progress_course);
+        tvCourseProgressValue = view.findViewById(R.id.tv_course_progress_value);
         rvLessons.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        updateCourseProgressUi();
         
         // Load lessons from API
         loadLessons();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateCourseProgressUi();
     }
 
     private void loadLessons() {
@@ -132,6 +149,7 @@ public class CourseDetailFragment extends Fragment {
         Bundle args = new Bundle();
         args.putString("lessonId", lesson.getLessonID());
         args.putString("lessonTitle", lesson.getTitle());
+        args.putString("courseId", courseId);
         args.putString("contentType", lesson.getContentType());
         NavController navController = NavHostFragment.findNavController(this);
 
@@ -143,6 +161,21 @@ public class CourseDetailFragment extends Fragment {
 
         args.putString("lessonContent", getMockContent(lesson.getTitle(), type));
         navController.navigate(R.id.lessonStudyFragment, args);
+    }
+
+    private void updateCourseProgressUi() {
+        if (progressCourse == null || tvCourseProgressValue == null) {
+            return;
+        }
+
+        int progress = 0;
+        if (courseId != null && !courseId.isEmpty()) {
+            SharedPreferences prefs = requireContext().getSharedPreferences(PREF_COURSE_PROGRESS, Context.MODE_PRIVATE);
+            progress = Math.max(0, Math.min(100, prefs.getInt(courseId, 0)));
+        }
+
+        progressCourse.setProgress(progress);
+        tvCourseProgressValue.setText(progress + "%");
     }
 
     private String getMockContent(String lessonTitle, String contentType) {

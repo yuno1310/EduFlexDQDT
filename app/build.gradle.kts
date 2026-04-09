@@ -3,6 +3,31 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+val dotenvFile = rootProject.file(".env")
+val dotenvApiBaseUrl: String? = if (dotenvFile.exists()) {
+    dotenvFile.readLines()
+        .asSequence()
+        .map { it.trim() }
+        .filter { it.isNotEmpty() && !it.startsWith("#") && it.contains("=") }
+        .map { line ->
+            val key = line.substringBefore("=").trim()
+            val value = line.substringAfter("=")
+                .trim()
+                .removeSurrounding("\"")
+                .removeSurrounding("'")
+            key to value
+        }
+        .firstOrNull { (key, _) -> key == "API_BASE_URL" }
+        ?.second
+} else {
+    null
+}
+
+val apiBaseUrl = dotenvApiBaseUrl
+    ?: providers.gradleProperty("API_BASE_URL").orNull
+    ?: providers.environmentVariable("API_BASE_URL").orNull
+    ?: "http://10.0.2.2:8080/"
+
 android {
     namespace = "com.eduflex.android"
     compileSdk = 35
@@ -13,6 +38,8 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
+
+        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -34,6 +61,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 
