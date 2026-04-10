@@ -87,4 +87,9 @@
             android:defaultValue="Quiz" />
     </fragment>
 
+    <fragment
+        android:id="@+id/leaderboardFragment"
+        android:name="com.eduflex.android.ui.leaderboard.LeaderboardFragment"
+        android:label="Leaderboard" />
+
 </navigation>
