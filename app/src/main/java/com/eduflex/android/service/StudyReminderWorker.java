@@ -27,11 +27,11 @@ public class StudyReminderWorker extends Worker {
 
     // Randomized motivational messages
     private static final String[] MESSAGES = {
-            "📚 Time to learn something new today!",
-            "🔥 Keep your streak alive — study now!",
-            "💡 Just 10 minutes of study can make a difference!",
-            "🏆 Top learners study every day. Join them!",
-            "🎯 Your daily learning goal is waiting!"
+            "Time to learn something new today!",
+            "Keep your streak alive — study now!",
+            "Just 10 minutes of study can make a difference!",
+            "Top learners study every day. Join them!",
+            "Your daily learning goal is waiting!"
     };
 
     public StudyReminderWorker(@NonNull Context context, @NonNull WorkerParameters params) {
@@ -51,12 +51,10 @@ public class StudyReminderWorker extends Worker {
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID,
                     "Study Reminders",
-                    NotificationManager.IMPORTANCE_HIGH
-            );
+                    NotificationManager.IMPORTANCE_HIGH);
             channel.setDescription("Daily reminders to keep learning");
 
-            NotificationManager manager =
-                    getApplicationContext().getSystemService(NotificationManager.class);
+            NotificationManager manager = getApplicationContext().getSystemService(NotificationManager.class);
             if (manager != null) {
                 manager.createNotificationChannel(channel);
             }
@@ -85,8 +83,7 @@ public class StudyReminderWorker extends Worker {
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true);
 
-        NotificationManager manager =
-                (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager manager = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager != null) {
             manager.notify(NOTIFICATION_ID, builder.build());
         }
