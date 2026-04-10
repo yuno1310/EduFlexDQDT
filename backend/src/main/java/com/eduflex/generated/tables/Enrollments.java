@@ -90,6 +90,16 @@ public class Enrollments extends TableImpl<EnrollmentsRecord> {
      */
     public final TableField<EnrollmentsRecord, LocalDateTime> ENROLLED_AT = createField(DSL.name("enrolled_at"), SQLDataType.LOCALDATETIME(6).defaultValue(DSL.field(DSL.raw("CURRENT_TIMESTAMP"), SQLDataType.LOCALDATETIME)), this, "");
 
+    /**
+     * The column <code>public.enrollments.is_completed</code>.
+     */
+    public final TableField<EnrollmentsRecord, Boolean> IS_COMPLETED = createField(DSL.name("is_completed"), SQLDataType.BOOLEAN.defaultValue(DSL.field(DSL.raw("false"), SQLDataType.BOOLEAN)), this, "");
+
+    /**
+     * The column <code>public.enrollments.completed_at</code>.
+     */
+    public final TableField<EnrollmentsRecord, LocalDateTime> COMPLETED_AT = createField(DSL.name("completed_at"), SQLDataType.LOCALDATETIME(6), this, "");
+
     private Enrollments(Name alias, Table<EnrollmentsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

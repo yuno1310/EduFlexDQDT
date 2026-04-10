@@ -22,7 +22,7 @@ public class GetCourseProgressUseCase {
     List<LessonProgressItem> lessonList = new ArrayList<>();
 
     if (records == null) {
-      return new GetCourseProgressResponse(true, "Chưa có bài học nào trong khóa này", lessonList);
+      return new GetCourseProgressResponse(true, "There are no lessons in this course yet", lessonList);
     }
 
     boolean previousCompleted = true;
@@ -41,6 +41,6 @@ public class GetCourseProgressUseCase {
       previousCompleted = isCompleted;
     }
 
-    return new GetCourseProgressResponse(true, "Lấy lộ trình học thành công", lessonList);
+    return new GetCourseProgressResponse(true, "Successfully retrieved course progress", lessonList);
   }
 }
