@@ -92,6 +92,24 @@
     </fragment>
 
     <fragment
+        android:id="@+id/fillBlankQuizMockFragment"
+        android:name="com.eduflex.android.ui.quiz.FillBlankQuizMockFragment"
+        android:label="Fill Blank Quiz Mock">
+        <argument
+            android:name="courseId"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
+            android:name="lessonId"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
+            android:name="lessonTitle"
+            app:argType="string"
+            android:defaultValue="Quiz điền từ" />
+    </fragment>
+
+    <fragment
         android:id="@+id/leaderboardFragment"
         android:name="com.eduflex.android.ui.leaderboard.LeaderboardFragment"
         android:label="Leaderboard" />

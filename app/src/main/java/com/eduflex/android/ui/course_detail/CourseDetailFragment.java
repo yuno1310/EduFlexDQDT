@@ -81,6 +81,9 @@ public class CourseDetailFragment extends Fragment {
         tvTitle.setText(courseTitle);
         tvDescription.setText(courseDescription);
 
+        Button btnTestFillBlankQuiz = view.findViewById(R.id.btn_test_fill_blank_quiz);
+        btnTestFillBlankQuiz.setOnClickListener(v -> openFillBlankQuizMock());
+
         rvLessons = view.findViewById(R.id.rv_lessons);
         tvLessonsEmpty = view.findViewById(R.id.tv_lessons_empty);
         progressCourse = view.findViewById(R.id.progress_course);
@@ -154,6 +157,12 @@ public class CourseDetailFragment extends Fragment {
         NavController navController = NavHostFragment.findNavController(this);
 
         String type = lesson.getContentType() == null ? "" : lesson.getContentType().toLowerCase();
+        if ("quiz_fill_blank".equals(type) || "quiz_dien_tu".equals(type)
+                || "quiz_new".equals(type) || "quiz_new_type".equals(type)) {
+            navController.navigate(R.id.fillBlankQuizMockFragment, args);
+            return;
+        }
+
         if ("quiz".equals(type)) {
             navController.navigate(R.id.quizFragment, args);
             return;
@@ -161,6 +170,16 @@ public class CourseDetailFragment extends Fragment {
 
         args.putString("lessonContent", getMockContent(lesson.getTitle(), type));
         navController.navigate(R.id.lessonStudyFragment, args);
+    }
+
+    private void openFillBlankQuizMock() {
+        Bundle args = new Bundle();
+        args.putString("courseId", courseId == null ? "" : courseId);
+        args.putString("lessonId", "mock_fill_blank_lesson");
+        args.putString("lessonTitle", "Quiz điền từ");
+
+        NavController navController = NavHostFragment.findNavController(this);
+        navController.navigate(R.id.fillBlankQuizMockFragment, args);
     }
 
     private void updateCourseProgressUi() {

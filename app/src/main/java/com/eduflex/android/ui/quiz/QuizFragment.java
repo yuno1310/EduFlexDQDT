@@ -23,7 +23,6 @@ import com.eduflex.android.model.SubmitQuizRequest;
 import com.eduflex.android.model.SubmitQuizResponse;
 
 import java.util.ArrayList;
-import java.util.Locale;
 import java.util.List;
 
 import retrofit2.Call;
@@ -49,7 +48,6 @@ public class QuizFragment extends Fragment {
     private RadioButton rbOption3;
     private RadioButton rbOption4;
     private Button btnSubmit;
-    private TextView tvResult;
 
     public QuizFragment() {
         super(R.layout.fragment_quiz);
@@ -75,8 +73,6 @@ public class QuizFragment extends Fragment {
         rbOption3 = view.findViewById(R.id.rb_option_3);
         rbOption4 = view.findViewById(R.id.rb_option_4);
         btnSubmit = view.findViewById(R.id.btn_submit_quiz);
-        tvResult = view.findViewById(R.id.tv_quiz_result);
-        tvResult.setText("");
 
         tvQuizTitle.setText(lessonTitle + " - Quiz");
 
@@ -96,13 +92,13 @@ public class QuizFragment extends Fragment {
         btnSubmit.setOnClickListener(v -> {
             int selectedId = rgOptions.getCheckedRadioButtonId();
             if (selectedId == -1) {
-                tvResult.setText("Please choose one answer before submitting.");
+                Toast.makeText(requireContext(), "Please choose one answer before submitting.", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             long selectedOptionId = getSelectedOptionId(selectedId);
             if (selectedOptionId <= 0 || questionId <= 0) {
-                tvResult.setText("Quiz data is invalid. Please reload.");
+                Toast.makeText(requireContext(), "Quiz data is invalid. Please reload.", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -192,7 +188,7 @@ public class QuizFragment extends Fragment {
     private void submitQuiz(long selectedOptionId) {
         String userId = tokenManager.getUserId();
         if (userId == null || userId.isEmpty()) {
-            tvResult.setText("Please login again to submit quiz.");
+            Toast.makeText(requireContext(), "Please login again to submit quiz.", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -213,7 +209,7 @@ public class QuizFragment extends Fragment {
                     saveCourseProgress(result.getCourseProgress());
                     navigateToResultScreen(result);
                 } else {
-                    tvResult.setText("Failed to submit quiz.");
+                    Toast.makeText(requireContext(), "Failed to submit quiz.", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -223,7 +219,6 @@ public class QuizFragment extends Fragment {
                     return;
                 }
                 btnSubmit.setEnabled(true);
-                tvResult.setText("Network error while submitting quiz.");
                 Toast.makeText(requireContext(), "Submit failed", Toast.LENGTH_SHORT).show();
             }
         });
