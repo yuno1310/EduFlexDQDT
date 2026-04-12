@@ -75,12 +75,16 @@ public class ProfileFragment extends Fragment {
                             && result.getData() != null) {
                         Uri imageUri = result.getData().getData();
                         if (imageUri != null) {
+                        try {
                             requireContext().getContentResolver()
                                     .takePersistableUriPermission(imageUri,
                                             Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                            profilePrefs.edit().putString(KEY_PHOTO_URI, imageUri.toString()).apply();
-                            ivProfileAvatar.setImageURI(imageUri);
+                        } catch (SecurityException e) {
+                            Log.w(TAG, "Could not persist URI permission: " + e.getMessage());
                         }
+                        profilePrefs.edit().putString(KEY_PHOTO_URI, imageUri.toString()).apply();
+                        ivProfileAvatar.setImageURI(imageUri);
+                    }
                     }
                 });
     }
