@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import com.eduflex.entity.UsersDbO;
 import com.eduflex.generated.tables.Users;
+import com.eduflex.generated.tables.records.UsersRecord;
 
 import java.util.UUID;
 
@@ -34,11 +35,20 @@ public class UserRepository {
 
   public UsersDbO find_by_id(UUID userId) {
     var record = dsl.selectFrom(Users.USERS)
-            .where(Users.USERS.USER_ID.eq(userId))
-            .limit(1)
-            .fetchOne();
+        .where(Users.USERS.USER_ID.eq(userId))
+        .limit(1)
+        .fetchOne();
     return record != null ? new UsersDbO(record) : null;
-}
+  }
 
+  public UsersRecord find_by_id_record(UUID userID) {
+    return dsl.selectFrom(Users.USERS).where(Users.USERS.USER_ID.eq(userID)).fetchOne();
+  }
 
+  public boolean updateInfoUser(UsersRecord record) {
+    int updateRow = dsl.update(Users.USERS).set(Users.USERS.FULL_NAME, record.getFullName())
+        .set(Users.USERS.PASSWORD_HASH, record.getPasswordHash()).where(Users.USERS.USER_ID.eq(record.getUserId()))
+        .execute();
+    return updateRow > 0;
+  }
 }

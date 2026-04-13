@@ -1,5 +1,7 @@
 package com.eduflex.android.ui.quiz;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -21,7 +23,6 @@ import com.eduflex.android.model.SubmitQuizRequest;
 import com.eduflex.android.model.SubmitQuizResponse;
 
 import java.util.ArrayList;
-import java.util.Locale;
 import java.util.List;
 
 import retrofit2.Call;
@@ -30,9 +31,12 @@ import retrofit2.Response;
 
 public class QuizFragment extends Fragment {
 
+    private static final String PREF_COURSE_PROGRESS = "course_progress";
+
     private QuizApi quizApi;
     private TokenManager tokenManager;
     private String lessonId;
+    private String courseId;
     private long questionId;
     private List<QuizGetResponse.OptionResponse> options = new ArrayList<>();
 
@@ -44,7 +48,6 @@ public class QuizFragment extends Fragment {
     private RadioButton rbOption3;
     private RadioButton rbOption4;
     private Button btnSubmit;
-    private TextView tvResult;
 
     public QuizFragment() {
         super(R.layout.fragment_quiz);
@@ -59,6 +62,7 @@ public class QuizFragment extends Fragment {
 
         Bundle args = getArguments();
         lessonId = args != null ? args.getString("lessonId", "") : "";
+        courseId = args != null ? args.getString("courseId", "") : "";
         String lessonTitle = args != null ? args.getString("lessonTitle", "Quiz") : "Quiz";
 
         tvQuizTitle = view.findViewById(R.id.tv_quiz_title);
@@ -69,8 +73,6 @@ public class QuizFragment extends Fragment {
         rbOption3 = view.findViewById(R.id.rb_option_3);
         rbOption4 = view.findViewById(R.id.rb_option_4);
         btnSubmit = view.findViewById(R.id.btn_submit_quiz);
-        tvResult = view.findViewById(R.id.tv_quiz_result);
-        tvResult.setText("");
 
         tvQuizTitle.setText(lessonTitle + " - Quiz");
 
@@ -90,13 +92,13 @@ public class QuizFragment extends Fragment {
         btnSubmit.setOnClickListener(v -> {
             int selectedId = rgOptions.getCheckedRadioButtonId();
             if (selectedId == -1) {
-                tvResult.setText("Please choose one answer before submitting.");
+                Toast.makeText(requireContext(), "Please choose one answer before submitting.", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             long selectedOptionId = getSelectedOptionId(selectedId);
             if (selectedOptionId <= 0 || questionId <= 0) {
-                tvResult.setText("Quiz data is invalid. Please reload.");
+                Toast.makeText(requireContext(), "Quiz data is invalid. Please reload.", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -186,7 +188,7 @@ public class QuizFragment extends Fragment {
     private void submitQuiz(long selectedOptionId) {
         String userId = tokenManager.getUserId();
         if (userId == null || userId.isEmpty()) {
-            tvResult.setText("Please login again to submit quiz.");
+            Toast.makeText(requireContext(), "Please login again to submit quiz.", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -204,19 +206,10 @@ public class QuizFragment extends Fragment {
                 btnSubmit.setEnabled(true);
                 if (response.isSuccessful() && response.body() != null) {
                     SubmitQuizResponse result = response.body();
-                    String message = result.getMessage() == null ? "Quiz submitted." : result.getMessage();
-                    String details = String.format(
-                        Locale.US,
-                        "%s\nScore: %.0f%% (%d/%d)\nXP rewarded: %d",
-                        message,
-                        result.getScorePercent(),
-                        result.getCorrectCount(),
-                        result.getTotalQuestions(),
-                        result.getXpRewarded()
-                    );
-                    tvResult.setText(details);
+                    saveCourseProgress(result.getCourseProgress());
+                    navigateToResultScreen(result);
                 } else {
-                    tvResult.setText("Failed to submit quiz.");
+                    Toast.makeText(requireContext(), "Failed to submit quiz.", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -226,9 +219,39 @@ public class QuizFragment extends Fragment {
                     return;
                 }
                 btnSubmit.setEnabled(true);
-                tvResult.setText("Network error while submitting quiz.");
                 Toast.makeText(requireContext(), "Submit failed", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void saveCourseProgress(Double courseProgress) {
+        if (courseProgress == null || courseId == null || courseId.isEmpty() || !isAdded()) {
+            return;
+        }
+
+        int progress = (int) Math.round(courseProgress);
+        progress = Math.max(0, Math.min(100, progress));
+
+        SharedPreferences prefs = requireContext().getSharedPreferences(PREF_COURSE_PROGRESS, Context.MODE_PRIVATE);
+        prefs.edit().putInt(courseId, progress).apply();
+    }
+
+    private void navigateToResultScreen(SubmitQuizResponse result) {
+        if (!isAdded()) {
+            return;
+        }
+
+        String message = result.getMessage() == null ? "Quiz submitted." : result.getMessage();
+        Bundle args = new Bundle();
+        args.putString("lessonTitle", tvQuizTitle.getText().toString().replace(" - Quiz", ""));
+        args.putString("message", message);
+        args.putInt("correctCount", result.getCorrectCount());
+        args.putInt("totalQuestions", result.getTotalQuestions());
+        args.putFloat("scorePercent", (float) result.getScorePercent());
+        args.putInt("xpRewarded", result.getXpRewarded());
+        args.putBoolean("passed", result.isPassed());
+
+        NavController navController = NavHostFragment.findNavController(this);
+        navController.navigate(R.id.quizResultFragment, args);
     }
 }

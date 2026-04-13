@@ -1,4 +1,3 @@
-// app/src/main/java/com/eduflex/android/service/MyFirebaseMessagingService.java
 package com.eduflex.android.service;
 
 import android.app.NotificationManager;

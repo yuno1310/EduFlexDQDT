@@ -76,6 +76,12 @@ public class HomeFragment extends Fragment {
         setupFeaturedCourses(view);
         setupCategories(view);
 
+        // Leaderboard button
+        view.findViewById(R.id.btn_leaderboard).setOnClickListener(v -> {
+            NavController navController = NavHostFragment.findNavController(this);
+            navController.navigate(R.id.leaderboardFragment);
+        });
+
         // Fetch gamification data
         fetchGamificationStats();
     }

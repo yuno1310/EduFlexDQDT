@@ -148,4 +148,34 @@ public class EnrollmentsDao extends DAOImpl<EnrollmentsRecord, com.eduflex.gener
     public List<com.eduflex.generated.tables.pojos.Enrollments> fetchByEnrolledAt(LocalDateTime... values) {
         return fetch(Enrollments.ENROLLMENTS.ENROLLED_AT, values);
     }
+
+    /**
+     * Fetch records that have <code>is_completed BETWEEN lowerInclusive AND
+     * upperInclusive</code>
+     */
+    public List<com.eduflex.generated.tables.pojos.Enrollments> fetchRangeOfIsCompleted(Boolean lowerInclusive, Boolean upperInclusive) {
+        return fetchRange(Enrollments.ENROLLMENTS.IS_COMPLETED, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * Fetch records that have <code>is_completed IN (values)</code>
+     */
+    public List<com.eduflex.generated.tables.pojos.Enrollments> fetchByIsCompleted(Boolean... values) {
+        return fetch(Enrollments.ENROLLMENTS.IS_COMPLETED, values);
+    }
+
+    /**
+     * Fetch records that have <code>completed_at BETWEEN lowerInclusive AND
+     * upperInclusive</code>
+     */
+    public List<com.eduflex.generated.tables.pojos.Enrollments> fetchRangeOfCompletedAt(LocalDateTime lowerInclusive, LocalDateTime upperInclusive) {
+        return fetchRange(Enrollments.ENROLLMENTS.COMPLETED_AT, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * Fetch records that have <code>completed_at IN (values)</code>
+     */
+    public List<com.eduflex.generated.tables.pojos.Enrollments> fetchByCompletedAt(LocalDateTime... values) {
+        return fetch(Enrollments.ENROLLMENTS.COMPLETED_AT, values);
+    }
 }

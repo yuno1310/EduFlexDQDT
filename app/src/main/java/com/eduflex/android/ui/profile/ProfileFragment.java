@@ -20,14 +20,24 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.eduflex.android.LoginActivity;
 import com.eduflex.android.R;
+import com.eduflex.android.adapter.BadgeAdapter;
 import com.eduflex.android.api.ApiClient;
+import com.eduflex.android.api.BadgeApi;
 import com.eduflex.android.api.GamificationApi;
 import com.eduflex.android.auth.TokenManager;
+import com.eduflex.android.model.BadgeResponse;
 import com.eduflex.android.model.GamificationStatsResponse;
+import com.eduflex.android.model.UserBadgeResponse;
 import com.google.android.material.textfield.TextInputLayout;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -44,6 +54,7 @@ public class ProfileFragment extends Fragment {
 
     private TokenManager tokenManager;
     private GamificationApi gamificationApi;
+    private BadgeApi badgeApi;
     private SharedPreferences profilePrefs;
 
     // Views
@@ -58,6 +69,10 @@ public class ProfileFragment extends Fragment {
     private Button btnEditProfile, btnSaveName, btnCancelEdit, btnLogout;
     private View llGoalChips;
     private TextView chipCareer, chipSkill, chipHobby, chipAcademic;
+
+    // Badge views
+    private RecyclerView rvBadges;
+    private TextView tvBadgeCount;
 
     private ActivityResultLauncher<Intent> imagePickerLauncher;
 
@@ -75,16 +90,16 @@ public class ProfileFragment extends Fragment {
                             && result.getData() != null) {
                         Uri imageUri = result.getData().getData();
                         if (imageUri != null) {
-                        try {
-                            requireContext().getContentResolver()
-                                    .takePersistableUriPermission(imageUri,
-                                            Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        } catch (SecurityException e) {
-                            Log.w(TAG, "Could not persist URI permission: " + e.getMessage());
+                            try {
+                                requireContext().getContentResolver()
+                                        .takePersistableUriPermission(imageUri,
+                                                Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            } catch (SecurityException e) {
+                                Log.w(TAG, "Could not persist URI permission: " + e.getMessage());
+                            }
+                            profilePrefs.edit().putString(KEY_PHOTO_URI, imageUri.toString()).apply();
+                            ivProfileAvatar.setImageURI(imageUri);
                         }
-                        profilePrefs.edit().putString(KEY_PHOTO_URI, imageUri.toString()).apply();
-                        ivProfileAvatar.setImageURI(imageUri);
-                    }
                     }
                 });
     }
@@ -95,11 +110,13 @@ public class ProfileFragment extends Fragment {
 
         tokenManager = new TokenManager(requireContext());
         gamificationApi = ApiClient.createAuthenticatedService(GamificationApi.class);
+        badgeApi = ApiClient.createAuthenticatedService(BadgeApi.class);
         profilePrefs = requireContext().getSharedPreferences(PREF_PROFILE, Context.MODE_PRIVATE);
 
         bindViews(view);
         loadProfile();
         fetchStats();
+        fetchBadges();
         setupListeners();
     }
 
@@ -124,6 +141,12 @@ public class ProfileFragment extends Fragment {
         chipSkill = view.findViewById(R.id.chip_skill);
         chipHobby = view.findViewById(R.id.chip_hobby);
         chipAcademic = view.findViewById(R.id.chip_academic);
+
+        // Badge views
+        rvBadges = view.findViewById(R.id.rv_badges);
+        tvBadgeCount = view.findViewById(R.id.tv_badge_count);
+        rvBadges.setLayoutManager(new LinearLayoutManager(
+                getContext(), LinearLayoutManager.HORIZONTAL, false));
     }
 
     private void loadProfile() {
@@ -179,6 +202,65 @@ public class ProfileFragment extends Fragment {
             }
         });
     }
+
+    // ── Badge Display ──
+
+    private void fetchBadges() {
+        String userId = tokenManager.getUserId();
+        if (userId == null) return;
+
+        // Step 1: Fetch all badges
+        badgeApi.getAllBadges().enqueue(new Callback<List<BadgeResponse>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<BadgeResponse>> call,
+                                   @NonNull Response<List<BadgeResponse>> response) {
+                if (!isAdded()) return;
+                if (response.isSuccessful() && response.body() != null) {
+                    List<BadgeResponse> allBadges = response.body();
+                    fetchUserBadgesAndRender(userId, allBadges);
+                } else {
+                    Log.e(TAG, "Badge load failed: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<BadgeResponse>> call, @NonNull Throwable t) {
+                Log.e(TAG, "Badge network error: " + t.getMessage());
+            }
+        });
+    }
+
+    private void fetchUserBadgesAndRender(String userId, List<BadgeResponse> allBadges) {
+        badgeApi.getUserBadges(userId).enqueue(new Callback<List<UserBadgeResponse>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<UserBadgeResponse>> call,
+                                   @NonNull Response<List<UserBadgeResponse>> response) {
+                if (!isAdded()) return;
+
+                Set<Long> earnedIds = new HashSet<>();
+                if (response.isSuccessful() && response.body() != null) {
+                    for (UserBadgeResponse ub : response.body()) {
+                        earnedIds.add(ub.getBadgeId());
+                    }
+                }
+
+                // Update UI
+                tvBadgeCount.setText(earnedIds.size() + "/" + allBadges.size());
+                rvBadges.setAdapter(new BadgeAdapter(allBadges, earnedIds));
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<UserBadgeResponse>> call, @NonNull Throwable t) {
+                if (!isAdded()) return;
+                Log.e(TAG, "User badges network error: " + t.getMessage());
+                // Still show all badges as locked
+                tvBadgeCount.setText("0/" + allBadges.size());
+                rvBadges.setAdapter(new BadgeAdapter(allBadges, new HashSet<>()));
+            }
+        });
+    }
+
+    // ── Listeners ──
 
     private void setupListeners() {
         btnEditProfile.setOnClickListener(v -> toggleEditMode(true));

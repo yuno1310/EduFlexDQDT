@@ -9,11 +9,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.eduflex.dto.PaymentDTO.PaymentRequest;
-import com.eduflex.dto.PaymentDTO.PaymentResponse;
+import com.eduflex.dto.PaymentDTO.ProcessPaymentRequest;
+import com.eduflex.dto.PaymentDTO.ProcessPaymentResponse;
 import com.eduflex.service.ProcessPaymentUseCase;
-
-import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("api/payment")
@@ -23,7 +21,8 @@ public class PaymentController {
   private ProcessPaymentUseCase processPaymentUseCase;
 
   @PostMapping
-  public ResponseEntity<PaymentResponse> processPayment(@Valid @RequestBody PaymentRequest request) {
+  public ResponseEntity<ProcessPaymentResponse> processPayment(
+      @RequestBody ProcessPaymentRequest request) {
     var response = processPaymentUseCase.execute(request);
     if (response.success()) {
       return ResponseEntity.ok(response);

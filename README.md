@@ -7,6 +7,8 @@ EduFlex is a mobile learning app that offers flexible and personalized courses w
 # Setup
 - Create backend/.env from backend/.env.example
 - Fill in Supabase keys in backend/.env
+- Create .env in root folder.
+- Fill in BASE_URL for backend.
 
 # Run backend
 - cd backend

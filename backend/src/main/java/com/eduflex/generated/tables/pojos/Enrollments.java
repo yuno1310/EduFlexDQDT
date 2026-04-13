@@ -23,6 +23,8 @@ public class Enrollments implements Serializable {
     private Double progressPercent;
     private Double aiDropoutRiskScore;
     private LocalDateTime enrolledAt;
+    private Boolean isCompleted;
+    private LocalDateTime completedAt;
 
     public Enrollments() {}
 
@@ -33,6 +35,8 @@ public class Enrollments implements Serializable {
         this.progressPercent = value.progressPercent;
         this.aiDropoutRiskScore = value.aiDropoutRiskScore;
         this.enrolledAt = value.enrolledAt;
+        this.isCompleted = value.isCompleted;
+        this.completedAt = value.completedAt;
     }
 
     public Enrollments(
@@ -41,7 +45,9 @@ public class Enrollments implements Serializable {
         UUID courseId,
         Double progressPercent,
         Double aiDropoutRiskScore,
-        LocalDateTime enrolledAt
+        LocalDateTime enrolledAt,
+        Boolean isCompleted,
+        LocalDateTime completedAt
     ) {
         this.enrollmentId = enrollmentId;
         this.userId = userId;
@@ -49,6 +55,8 @@ public class Enrollments implements Serializable {
         this.progressPercent = progressPercent;
         this.aiDropoutRiskScore = aiDropoutRiskScore;
         this.enrolledAt = enrolledAt;
+        this.isCompleted = isCompleted;
+        this.completedAt = completedAt;
     }
 
     /**
@@ -135,6 +143,34 @@ public class Enrollments implements Serializable {
         this.enrolledAt = enrolledAt;
     }
 
+    /**
+     * Getter for <code>public.enrollments.is_completed</code>.
+     */
+    public Boolean getIsCompleted() {
+        return this.isCompleted;
+    }
+
+    /**
+     * Setter for <code>public.enrollments.is_completed</code>.
+     */
+    public void setIsCompleted(Boolean isCompleted) {
+        this.isCompleted = isCompleted;
+    }
+
+    /**
+     * Getter for <code>public.enrollments.completed_at</code>.
+     */
+    public LocalDateTime getCompletedAt() {
+        return this.completedAt;
+    }
+
+    /**
+     * Setter for <code>public.enrollments.completed_at</code>.
+     */
+    public void setCompletedAt(LocalDateTime completedAt) {
+        this.completedAt = completedAt;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -180,6 +216,18 @@ public class Enrollments implements Serializable {
         }
         else if (!this.enrolledAt.equals(other.enrolledAt))
             return false;
+        if (this.isCompleted == null) {
+            if (other.isCompleted != null)
+                return false;
+        }
+        else if (!this.isCompleted.equals(other.isCompleted))
+            return false;
+        if (this.completedAt == null) {
+            if (other.completedAt != null)
+                return false;
+        }
+        else if (!this.completedAt.equals(other.completedAt))
+            return false;
         return true;
     }
 
@@ -193,6 +241,8 @@ public class Enrollments implements Serializable {
         result = prime * result + ((this.progressPercent == null) ? 0 : this.progressPercent.hashCode());
         result = prime * result + ((this.aiDropoutRiskScore == null) ? 0 : this.aiDropoutRiskScore.hashCode());
         result = prime * result + ((this.enrolledAt == null) ? 0 : this.enrolledAt.hashCode());
+        result = prime * result + ((this.isCompleted == null) ? 0 : this.isCompleted.hashCode());
+        result = prime * result + ((this.completedAt == null) ? 0 : this.completedAt.hashCode());
         return result;
     }
 
@@ -206,6 +256,8 @@ public class Enrollments implements Serializable {
         sb.append(", ").append(progressPercent);
         sb.append(", ").append(aiDropoutRiskScore);
         sb.append(", ").append(enrolledAt);
+        sb.append(", ").append(isCompleted);
+        sb.append(", ").append(completedAt);
 
         sb.append(")");
         return sb.toString();

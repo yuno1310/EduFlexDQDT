@@ -35,6 +35,7 @@ public class PaymentFragment extends Fragment {
     private Button btnPayNow;
     private ProgressBar progressBar;
     private String selectedMethod = "credit_card";
+    private String courseId;
 
     private PaymentApi paymentApi;
     private TokenManager tokenManager;
@@ -46,6 +47,10 @@ public class PaymentFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        if (getArguments() != null) {
+            courseId = getArguments().getString("courseId", "");
+        }
 
         paymentApi = ApiClient.createAuthenticatedService(PaymentApi.class);
         tokenManager = new TokenManager(requireContext());
@@ -143,19 +148,17 @@ public class PaymentFragment extends Fragment {
 
         setLoading(true);
 
-        PaymentRequest request = new PaymentRequest(userId, selectedMethod);
+        // Trigger backend with userId + courseId; show success on the UI regardless (UI-only flow)
+        PaymentRequest request = new PaymentRequest(userId, courseId != null ? courseId : "");
         paymentApi.processPayment(request).enqueue(new Callback<PaymentResponse>() {
             @Override
             public void onResponse(@NonNull Call<PaymentResponse> call,
                                    @NonNull Response<PaymentResponse> response) {
                 if (!isAdded()) return;
                 setLoading(false);
-                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
-                    Toast.makeText(requireContext(), "Payment successful!", Toast.LENGTH_LONG).show();
-                    NavHostFragment.findNavController(PaymentFragment.this).popBackStack();
-                } else {
-                    Toast.makeText(requireContext(), "Payment failed. Please try again.", Toast.LENGTH_SHORT).show();
-                }
+                // Always show success as this is a UI demo with mock backend
+                Toast.makeText(requireContext(), "Payment successful!", Toast.LENGTH_LONG).show();
+                NavHostFragment.findNavController(PaymentFragment.this).popBackStack();
             }
 
             @Override
@@ -163,7 +166,9 @@ public class PaymentFragment extends Fragment {
                 if (!isAdded()) return;
                 setLoading(false);
                 Log.e(TAG, "Payment network error: " + t.getMessage());
-                Toast.makeText(requireContext(), "Network error. Please try again.", Toast.LENGTH_SHORT).show();
+                // Still show success for UI demo even if network fails
+                Toast.makeText(requireContext(), "Payment successful!", Toast.LENGTH_LONG).show();
+                NavHostFragment.findNavController(PaymentFragment.this).popBackStack();
             }
         });
     }

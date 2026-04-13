@@ -23,6 +23,7 @@ public class GamificationStats implements Serializable {
     private Integer level;
     private Integer streakDays;
     private LocalDate lastStudyDate;
+    private LocalDate lastLoginXpDate;
 
     public GamificationStats() {}
 
@@ -33,6 +34,7 @@ public class GamificationStats implements Serializable {
         this.level = value.level;
         this.streakDays = value.streakDays;
         this.lastStudyDate = value.lastStudyDate;
+        this.lastLoginXpDate = value.lastLoginXpDate;
     }
 
     public GamificationStats(
@@ -41,7 +43,8 @@ public class GamificationStats implements Serializable {
         Integer xp,
         Integer level,
         Integer streakDays,
-        LocalDate lastStudyDate
+        LocalDate lastStudyDate,
+        LocalDate lastLoginXpDate
     ) {
         this.id = id;
         this.userId = userId;
@@ -49,6 +52,7 @@ public class GamificationStats implements Serializable {
         this.level = level;
         this.streakDays = streakDays;
         this.lastStudyDate = lastStudyDate;
+        this.lastLoginXpDate = lastLoginXpDate;
     }
 
     /**
@@ -135,6 +139,20 @@ public class GamificationStats implements Serializable {
         this.lastStudyDate = lastStudyDate;
     }
 
+    /**
+     * Getter for <code>public.gamification_stats.last_login_xp_date</code>.
+     */
+    public LocalDate getLastLoginXpDate() {
+        return this.lastLoginXpDate;
+    }
+
+    /**
+     * Setter for <code>public.gamification_stats.last_login_xp_date</code>.
+     */
+    public void setLastLoginXpDate(LocalDate lastLoginXpDate) {
+        this.lastLoginXpDate = lastLoginXpDate;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -180,6 +198,12 @@ public class GamificationStats implements Serializable {
         }
         else if (!this.lastStudyDate.equals(other.lastStudyDate))
             return false;
+        if (this.lastLoginXpDate == null) {
+            if (other.lastLoginXpDate != null)
+                return false;
+        }
+        else if (!this.lastLoginXpDate.equals(other.lastLoginXpDate))
+            return false;
         return true;
     }
 
@@ -193,6 +217,7 @@ public class GamificationStats implements Serializable {
         result = prime * result + ((this.level == null) ? 0 : this.level.hashCode());
         result = prime * result + ((this.streakDays == null) ? 0 : this.streakDays.hashCode());
         result = prime * result + ((this.lastStudyDate == null) ? 0 : this.lastStudyDate.hashCode());
+        result = prime * result + ((this.lastLoginXpDate == null) ? 0 : this.lastLoginXpDate.hashCode());
         return result;
     }
 
@@ -206,6 +231,7 @@ public class GamificationStats implements Serializable {
         sb.append(", ").append(level);
         sb.append(", ").append(streakDays);
         sb.append(", ").append(lastStudyDate);
+        sb.append(", ").append(lastLoginXpDate);
 
         sb.append(")");
         return sb.toString();

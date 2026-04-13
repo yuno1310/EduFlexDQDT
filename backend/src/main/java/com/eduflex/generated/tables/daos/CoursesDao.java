@@ -133,4 +133,19 @@ public class CoursesDao extends DAOImpl<CoursesRecord, com.eduflex.generated.tab
     public List<com.eduflex.generated.tables.pojos.Courses> fetchByCreatedAt(LocalDateTime... values) {
         return fetch(Courses.COURSES.CREATED_AT, values);
     }
+
+    /**
+     * Fetch records that have <code>price BETWEEN lowerInclusive AND
+     * upperInclusive</code>
+     */
+    public List<com.eduflex.generated.tables.pojos.Courses> fetchRangeOfPrice(Long lowerInclusive, Long upperInclusive) {
+        return fetchRange(Courses.COURSES.PRICE, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * Fetch records that have <code>price IN (values)</code>
+     */
+    public List<com.eduflex.generated.tables.pojos.Courses> fetchByPrice(Long... values) {
+        return fetch(Courses.COURSES.PRICE, values);
+    }
 }

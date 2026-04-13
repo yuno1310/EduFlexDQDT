@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="88dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:padding="8dp">
+
+    <!-- Badge icon circle -->
+    <FrameLayout
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_marginBottom="6dp">
+
+        <ImageView
+            android:id="@+id/iv_badge_icon"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:padding="12dp"
+            android:scaleType="centerInside" />
+
+        <!-- Lock overlay for unearned badges -->
+        <ImageView
+            android:id="@+id/iv_badge_lock"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="bottom|end"
+            android:src="@android:drawable/ic_lock_idle_lock"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <!-- Badge name -->
+    <TextView
+        android:id="@+id/tv_badge_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Badge"
+        android:textSize="11sp"
+        android:textColor="@color/text_body"
+        android:gravity="center"
+        android:maxLines="2"
+        android:ellipsize="end" />
+
+</LinearLayout>

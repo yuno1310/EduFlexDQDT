@@ -51,4 +51,13 @@ public class EnrollmentRepository {
     }
     return list;
   }
+
+  public void markCourseAsCompleted(UUID userId, UUID courseId) {
+    dsl.update(Enrollments.ENROLLMENTS)
+        .set(Enrollments.ENROLLMENTS.IS_COMPLETED, true)
+        .set(Enrollments.ENROLLMENTS.COMPLETED_AT, java.time.LocalDateTime.now())
+        .where(Enrollments.ENROLLMENTS.USER_ID.eq(userId))
+        .and(Enrollments.ENROLLMENTS.COURSE_ID.eq(courseId))
+        .execute();
+  }
 }

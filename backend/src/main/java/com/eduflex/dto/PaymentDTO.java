@@ -2,13 +2,18 @@ package com.eduflex.dto;
 
 import java.util.UUID;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
 public class PaymentDTO {
-  public record PaymentRequest(@NotNull UUID userId, @NotBlank String paymentMethod) {
+
+  public record ProcessPaymentRequest(
+      @JsonAlias( {
+          "userId", "user_id", "userid" }) UUID userId,
+      @JsonAlias({ "courseId", "course_id", "courseid" }) UUID courseId){
   }
 
-  public record PaymentResponse(boolean success, String message) {
+  public record ProcessPaymentResponse(
+      boolean success,
+      String message) {
   }
 }

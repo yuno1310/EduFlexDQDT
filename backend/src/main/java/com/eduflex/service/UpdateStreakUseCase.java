@@ -18,6 +18,9 @@ public class UpdateStreakUseCase {
     @Autowired
     private GetGamificationStatsUseCase getGamificationStatsUseCase;
 
+    @Autowired
+    private CheckAndAwardBadgesUseCase checkAndAwardBadgesUseCase;
+
     @Transactional
     public UpdateStreakDTO.UpdateStreakResponse execute(UUID userId) {
         var stats = getGamificationStatsUseCase.execute(userId);
@@ -39,6 +42,9 @@ public class UpdateStreakUseCase {
         }
 
         gamificationStatsRepository.updateStreak(userId, newStreak, today);
+
+        // Check streak badges (7-day, 30-day)
+        checkAndAwardBadgesUseCase.checkStreakBadges(userId, newStreak);
 
         return new UpdateStreakDTO.UpdateStreakResponse(
                 stats.id(), stats.userId(), stats.xp(), stats.level(), newStreak, today

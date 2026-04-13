@@ -2,6 +2,7 @@ package com.eduflex.android.api;
 
 import android.content.Context;
 
+import com.eduflex.android.BuildConfig;
 import com.eduflex.android.auth.SessionManager;
 import com.eduflex.android.auth.TokenManager;
 
@@ -14,10 +15,9 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ApiClient {
 
-    // TODO: Update this to your backend URL
-    // Emulator: "http://10.0.2.2:8080"
-    // Physical device (same WiFi): "http://<PC_IP>:8080"
-    private static final String BASE_URL = "http://192.168.1.15:8080";
+    private static final String BASE_URL = BuildConfig.API_BASE_URL.endsWith("/")
+            ? BuildConfig.API_BASE_URL
+            : BuildConfig.API_BASE_URL + "/";
 
     private static Retrofit retrofit;
     private static Retrofit authenticatedRetrofit;

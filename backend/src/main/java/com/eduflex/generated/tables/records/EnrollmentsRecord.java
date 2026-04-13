@@ -105,6 +105,34 @@ public class EnrollmentsRecord extends UpdatableRecordImpl<EnrollmentsRecord> {
         return (LocalDateTime) get(5);
     }
 
+    /**
+     * Setter for <code>public.enrollments.is_completed</code>.
+     */
+    public void setIsCompleted(Boolean value) {
+        set(6, value);
+    }
+
+    /**
+     * Getter for <code>public.enrollments.is_completed</code>.
+     */
+    public Boolean getIsCompleted() {
+        return (Boolean) get(6);
+    }
+
+    /**
+     * Setter for <code>public.enrollments.completed_at</code>.
+     */
+    public void setCompletedAt(LocalDateTime value) {
+        set(7, value);
+    }
+
+    /**
+     * Getter for <code>public.enrollments.completed_at</code>.
+     */
+    public LocalDateTime getCompletedAt() {
+        return (LocalDateTime) get(7);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -128,7 +156,7 @@ public class EnrollmentsRecord extends UpdatableRecordImpl<EnrollmentsRecord> {
     /**
      * Create a detached, initialised EnrollmentsRecord
      */
-    public EnrollmentsRecord(Long enrollmentId, UUID userId, UUID courseId, Double progressPercent, Double aiDropoutRiskScore, LocalDateTime enrolledAt) {
+    public EnrollmentsRecord(Long enrollmentId, UUID userId, UUID courseId, Double progressPercent, Double aiDropoutRiskScore, LocalDateTime enrolledAt, Boolean isCompleted, LocalDateTime completedAt) {
         super(Enrollments.ENROLLMENTS);
 
         setEnrollmentId(enrollmentId);
@@ -137,6 +165,8 @@ public class EnrollmentsRecord extends UpdatableRecordImpl<EnrollmentsRecord> {
         setProgressPercent(progressPercent);
         setAiDropoutRiskScore(aiDropoutRiskScore);
         setEnrolledAt(enrolledAt);
+        setIsCompleted(isCompleted);
+        setCompletedAt(completedAt);
         resetChangedOnNotNull();
     }
 
@@ -153,6 +183,8 @@ public class EnrollmentsRecord extends UpdatableRecordImpl<EnrollmentsRecord> {
             setProgressPercent(value.getProgressPercent());
             setAiDropoutRiskScore(value.getAiDropoutRiskScore());
             setEnrolledAt(value.getEnrolledAt());
+            setIsCompleted(value.getIsCompleted());
+            setCompletedAt(value.getCompletedAt());
             resetChangedOnNotNull();
         }
     }

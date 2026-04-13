@@ -162,4 +162,19 @@ public class GamificationStatsDao extends DAOImpl<GamificationStatsRecord, com.e
     public List<com.eduflex.generated.tables.pojos.GamificationStats> fetchByLastStudyDate(LocalDate... values) {
         return fetch(GamificationStats.GAMIFICATION_STATS.LAST_STUDY_DATE, values);
     }
+
+    /**
+     * Fetch records that have <code>last_login_xp_date BETWEEN lowerInclusive
+     * AND upperInclusive</code>
+     */
+    public List<com.eduflex.generated.tables.pojos.GamificationStats> fetchRangeOfLastLoginXpDate(LocalDate lowerInclusive, LocalDate upperInclusive) {
+        return fetchRange(GamificationStats.GAMIFICATION_STATS.LAST_LOGIN_XP_DATE, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * Fetch records that have <code>last_login_xp_date IN (values)</code>
+     */
+    public List<com.eduflex.generated.tables.pojos.GamificationStats> fetchByLastLoginXpDate(LocalDate... values) {
+        return fetch(GamificationStats.GAMIFICATION_STATS.LAST_LOGIN_XP_DATE, values);
+    }
 }
