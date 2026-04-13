@@ -41,6 +41,10 @@
     <string name="cart_empty">Your cart is empty</string>
     <string name="cart_empty_subtitle">Browse courses and add them to your cart</string>
 
+    <!-- Courses -->
+    <string name="my_courses_title">My Courses</string>
+    <string name="no_enrolled_courses">You haven\'t enrolled in any courses yet.</string>
+
     <!-- Registration -->
     <string name="create_account">Create Account</string>
     <string name="signup_subtitle">Sign up to start your learning journey</string>

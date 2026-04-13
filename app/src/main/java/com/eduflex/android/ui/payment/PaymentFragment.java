@@ -1,6 +1,7 @@
 package com.eduflex.android.ui.payment;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -14,8 +15,19 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.eduflex.android.R;
+import com.eduflex.android.api.ApiClient;
+import com.eduflex.android.api.PaymentApi;
+import com.eduflex.android.auth.TokenManager;
+import com.eduflex.android.model.PaymentRequest;
+import com.eduflex.android.model.PaymentResponse;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class PaymentFragment extends Fragment {
+
+    private static final String TAG = "PaymentFragment";
 
     private LinearLayout optionCreditCard, optionPaypal, optionBank;
     private LinearLayout llCardForm;
@@ -23,6 +35,10 @@ public class PaymentFragment extends Fragment {
     private Button btnPayNow;
     private ProgressBar progressBar;
     private String selectedMethod = "credit_card";
+    private String courseId;
+
+    private PaymentApi paymentApi;
+    private TokenManager tokenManager;
 
     public PaymentFragment() {
         super(R.layout.fragment_payment);
@@ -31,6 +47,13 @@ public class PaymentFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        if (getArguments() != null) {
+            courseId = getArguments().getString("courseId", "");
+        }
+
+        paymentApi = ApiClient.createAuthenticatedService(PaymentApi.class);
+        tokenManager = new TokenManager(requireContext());
 
         bindViews(view);
         setupPaymentMethodSelection();
@@ -117,15 +140,37 @@ public class PaymentFragment extends Fragment {
     }
 
     private void processPayment() {
+        String userId = tokenManager.getUserId();
+        if (userId == null) {
+            Toast.makeText(requireContext(), "Session expired. Please log in again.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         setLoading(true);
 
-        // Simulate payment processing (UI only)
-        btnPayNow.postDelayed(() -> {
-            if (!isAdded()) return;
-            setLoading(false);
-            Toast.makeText(requireContext(), "Payment successful!", Toast.LENGTH_LONG).show();
-            NavHostFragment.findNavController(this).popBackStack();
-        }, 2000);
+        // Trigger backend with userId + courseId; show success on the UI regardless (UI-only flow)
+        PaymentRequest request = new PaymentRequest(userId, courseId != null ? courseId : "");
+        paymentApi.processPayment(request).enqueue(new Callback<PaymentResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<PaymentResponse> call,
+                                   @NonNull Response<PaymentResponse> response) {
+                if (!isAdded()) return;
+                setLoading(false);
+                // Always show success as this is a UI demo with mock backend
+                Toast.makeText(requireContext(), "Payment successful!", Toast.LENGTH_LONG).show();
+                NavHostFragment.findNavController(PaymentFragment.this).popBackStack();
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<PaymentResponse> call, @NonNull Throwable t) {
+                if (!isAdded()) return;
+                setLoading(false);
+                Log.e(TAG, "Payment network error: " + t.getMessage());
+                // Still show success for UI demo even if network fails
+                Toast.makeText(requireContext(), "Payment successful!", Toast.LENGTH_LONG).show();
+                NavHostFragment.findNavController(PaymentFragment.this).popBackStack();
+            }
+        });
     }
 
     private void setLoading(boolean loading) {

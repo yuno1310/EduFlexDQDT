@@ -3,6 +3,7 @@ package com.eduflex.android.ui.profile;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -12,6 +13,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -47,6 +50,7 @@ public class ProfileFragment extends Fragment {
     private static final String KEY_NAME = "user_name";
     private static final String KEY_EMAIL = "user_email";
     private static final String KEY_GOAL = "user_goal";
+    private static final String KEY_PHOTO_URI = "user_photo_uri";
 
     private TokenManager tokenManager;
     private GamificationApi gamificationApi;
@@ -70,8 +74,34 @@ public class ProfileFragment extends Fragment {
     private RecyclerView rvBadges;
     private TextView tvBadgeCount;
 
+    private ActivityResultLauncher<Intent> imagePickerLauncher;
+
     public ProfileFragment() {
         super(R.layout.fragment_profile);
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        imagePickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == android.app.Activity.RESULT_OK
+                            && result.getData() != null) {
+                        Uri imageUri = result.getData().getData();
+                        if (imageUri != null) {
+                            try {
+                                requireContext().getContentResolver()
+                                        .takePersistableUriPermission(imageUri,
+                                                Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            } catch (SecurityException e) {
+                                Log.w(TAG, "Could not persist URI permission: " + e.getMessage());
+                            }
+                            profilePrefs.edit().putString(KEY_PHOTO_URI, imageUri.toString()).apply();
+                            ivProfileAvatar.setImageURI(imageUri);
+                        }
+                    }
+                });
     }
 
     @Override
@@ -123,6 +153,7 @@ public class ProfileFragment extends Fragment {
         String name = profilePrefs.getString(KEY_NAME, "Student");
         String email = profilePrefs.getString(KEY_EMAIL, "");
         String goal = profilePrefs.getString(KEY_GOAL, "");
+        String photoUri = profilePrefs.getString(KEY_PHOTO_URI, null);
 
         tvProfileName.setText(name);
         tvProfileEmail.setText(email.isEmpty() ? "EduFlex Learner" : email);
@@ -131,6 +162,14 @@ public class ProfileFragment extends Fragment {
             tvGoalDisplay.setText(goal);
         } else {
             tvGoalDisplay.setText(R.string.set_your_goal);
+        }
+
+        if (photoUri != null) {
+            try {
+                ivProfileAvatar.setImageURI(Uri.parse(photoUri));
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to load saved photo: " + e.getMessage());
+            }
         }
     }
 
@@ -178,10 +217,9 @@ public class ProfileFragment extends Fragment {
                 if (!isAdded()) return;
                 if (response.isSuccessful() && response.body() != null) {
                     List<BadgeResponse> allBadges = response.body();
-                    // Step 2: Fetch user's earned badges
                     fetchUserBadgesAndRender(userId, allBadges);
                 } else {
-                    Log.e(TAG, "Failed to load badges: " + response.code());
+                    Log.e(TAG, "Badge load failed: " + response.code());
                 }
             }
 
@@ -248,7 +286,7 @@ public class ProfileFragment extends Fragment {
         chipHobby.setOnClickListener(goalChipListener);
         chipAcademic.setOnClickListener(goalChipListener);
 
-        // Goal custom text (long-press goal display to edit)
+        // Goal custom text (tap goal display to edit)
         tvGoalDisplay.setOnClickListener(v -> {
             tilGoal.setVisibility(View.VISIBLE);
             llGoalChips.setVisibility(View.VISIBLE);
@@ -270,10 +308,18 @@ public class ProfileFragment extends Fragment {
         // Logout
         btnLogout.setOnClickListener(v -> showLogoutConfirmation());
 
-        // Camera badge (placeholder action)
+        // Camera badge — open gallery to pick a photo
         ImageView ivCameraBadge = requireView().findViewById(R.id.iv_camera_badge);
-        ivCameraBadge.setOnClickListener(v ->
-                Toast.makeText(requireContext(), "Photo upload coming soon!", Toast.LENGTH_SHORT).show());
+        ivCameraBadge.setOnClickListener(v -> openImagePicker());
+    }
+
+    private void openImagePicker() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.setType("image/*");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        imagePickerLauncher.launch(intent);
     }
 
     private void toggleEditMode(boolean editing) {
