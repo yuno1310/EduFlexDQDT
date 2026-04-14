@@ -1,6 +1,7 @@
 package com.eduflex.repository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -72,9 +73,6 @@ public class QuizRepository {
         .fetch();
   }
 
-  /**
-   * Check if user already passed this quiz (for duplicate XP prevention).
-   */
   public boolean hasPassedQuiz(UUID userId, UUID lessonId) {
     return dsl.fetchExists(
         dsl.selectFrom(QuizAttempts.QUIZ_ATTEMPTS)
@@ -83,13 +81,28 @@ public class QuizRepository {
             .and(QuizAttempts.QUIZ_ATTEMPTS.IS_PASSED.isTrue()));
   }
 
-  /**
-   * Count total questions for a lesson.
-   */
   public int countQuestionsByLessonId(UUID lessonId) {
     return dsl.selectCount()
         .from(Questions.QUESTIONS)
         .where(Questions.QUESTIONS.LESSON_ID.eq(lessonId))
         .fetchOne(0, int.class);
+  }
+
+  public List<String> getCorrectTextsForQuestion(Long questionId) {
+    var records = dsl.select(QuestionOptions.QUESTION_OPTIONS.OPTION_TEXT)
+        .from(QuestionOptions.QUESTION_OPTIONS)
+        .where(QuestionOptions.QUESTION_OPTIONS.QUESTION_ID.eq(questionId))
+        .and(QuestionOptions.QUESTION_OPTIONS.IS_CORRECT.eq(true))
+        .fetch();
+
+    if (records != null && records.isNotEmpty()) {
+      List<String> list = new ArrayList<String>();
+      for (var record : records) {
+        list.add(record.value1());
+      }
+      return list;
+    } else {
+      return null;
+    }
   }
 }
