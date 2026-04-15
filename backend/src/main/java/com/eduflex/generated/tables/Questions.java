@@ -79,6 +79,11 @@ public class Questions extends TableImpl<QuestionsRecord> {
      */
     public final TableField<QuestionsRecord, Integer> POINTS = createField(DSL.name("points"), SQLDataType.INTEGER.defaultValue(DSL.field(DSL.raw("10"), SQLDataType.INTEGER)), this, "");
 
+    /**
+     * The column <code>public.questions.question_type</code>.
+     */
+    public final TableField<QuestionsRecord, String> QUESTION_TYPE = createField(DSL.name("question_type"), SQLDataType.VARCHAR(50).defaultValue(DSL.field(DSL.raw("'MULTIPLE_CHOICE'::character varying"), SQLDataType.VARCHAR)), this, "");
+
     private Questions(Name alias, Table<QuestionsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

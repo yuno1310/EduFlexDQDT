@@ -7,6 +7,7 @@ package com.eduflex.generated.tables;
 import com.eduflex.generated.Keys;
 import com.eduflex.generated.Public;
 import com.eduflex.generated.tables.Badges.BadgesPath;
+import com.eduflex.generated.tables.CourseReviews.CourseReviewsPath;
 import com.eduflex.generated.tables.Courses.CoursesPath;
 import com.eduflex.generated.tables.Enrollments.EnrollmentsPath;
 import com.eduflex.generated.tables.GamificationStats.GamificationStatsPath;
@@ -94,6 +95,11 @@ public class Users extends TableImpl<UsersRecord> {
      */
     public final TableField<UsersRecord, Boolean> IS_ACTIVE = createField(DSL.name("is_active"), SQLDataType.BOOLEAN.defaultValue(DSL.field(DSL.raw("true"), SQLDataType.BOOLEAN)), this, "");
 
+    /**
+     * The column <code>public.users.role</code>.
+     */
+    public final TableField<UsersRecord, String> ROLE = createField(DSL.name("role"), SQLDataType.VARCHAR(20).defaultValue(DSL.field(DSL.raw("'USER'::character varying"), SQLDataType.VARCHAR)), this, "");
+
     private Users(Name alias, Table<UsersRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -164,6 +170,19 @@ public class Users extends TableImpl<UsersRecord> {
     @Override
     public UniqueKey<UsersRecord> getPrimaryKey() {
         return Keys.USERS_PKEY;
+    }
+
+    private transient CourseReviewsPath _courseReviews;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.course_reviews</code> table
+     */
+    public CourseReviewsPath courseReviews() {
+        if (_courseReviews == null)
+            _courseReviews = new CourseReviewsPath(this, null, Keys.COURSE_REVIEWS__COURSE_REVIEWS_USER_ID_FKEY.getInverseKey());
+
+        return _courseReviews;
     }
 
     private transient QuizAttemptsPath _quizAttempts;
@@ -246,9 +265,19 @@ public class Users extends TableImpl<UsersRecord> {
 
     /**
      * Get the implicit many-to-many join path to the
-     * <code>public.courses</code> table
+     * <code>public.courses</code> table, via the
+     * <code>course_reviews_course_id_fkey</code> key
      */
-    public CoursesPath courses() {
+    public CoursesPath courseReviewsCourseIdFkey() {
+        return courseReviews().courses();
+    }
+
+    /**
+     * Get the implicit many-to-many join path to the
+     * <code>public.courses</code> table, via the
+     * <code>fk_enrollment_course</code> key
+     */
+    public CoursesPath fkEnrollmentCourse() {
         return enrollments().courses();
     }
 

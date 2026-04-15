@@ -76,6 +76,20 @@ public class QuestionsRecord extends UpdatableRecordImpl<QuestionsRecord> {
         return (Integer) get(3);
     }
 
+    /**
+     * Setter for <code>public.questions.question_type</code>.
+     */
+    public void setQuestionType(String value) {
+        set(4, value);
+    }
+
+    /**
+     * Getter for <code>public.questions.question_type</code>.
+     */
+    public String getQuestionType() {
+        return (String) get(4);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -99,13 +113,14 @@ public class QuestionsRecord extends UpdatableRecordImpl<QuestionsRecord> {
     /**
      * Create a detached, initialised QuestionsRecord
      */
-    public QuestionsRecord(Long questionId, UUID lessonId, String questionText, Integer points) {
+    public QuestionsRecord(Long questionId, UUID lessonId, String questionText, Integer points, String questionType) {
         super(Questions.QUESTIONS);
 
         setQuestionId(questionId);
         setLessonId(lessonId);
         setQuestionText(questionText);
         setPoints(points);
+        setQuestionType(questionType);
         resetChangedOnNotNull();
     }
 
@@ -120,6 +135,7 @@ public class QuestionsRecord extends UpdatableRecordImpl<QuestionsRecord> {
             setLessonId(value.getLessonId());
             setQuestionText(value.getQuestionText());
             setPoints(value.getPoints());
+            setQuestionType(value.getQuestionType());
             resetChangedOnNotNull();
         }
     }

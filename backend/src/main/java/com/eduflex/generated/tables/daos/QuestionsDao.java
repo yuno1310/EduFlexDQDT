@@ -117,4 +117,19 @@ public class QuestionsDao extends DAOImpl<QuestionsRecord, com.eduflex.generated
     public List<com.eduflex.generated.tables.pojos.Questions> fetchByPoints(Integer... values) {
         return fetch(Questions.QUESTIONS.POINTS, values);
     }
+
+    /**
+     * Fetch records that have <code>question_type BETWEEN lowerInclusive AND
+     * upperInclusive</code>
+     */
+    public List<com.eduflex.generated.tables.pojos.Questions> fetchRangeOfQuestionType(String lowerInclusive, String upperInclusive) {
+        return fetchRange(Questions.QUESTIONS.QUESTION_TYPE, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * Fetch records that have <code>question_type IN (values)</code>
+     */
+    public List<com.eduflex.generated.tables.pojos.Questions> fetchByQuestionType(String... values) {
+        return fetch(Questions.QUESTIONS.QUESTION_TYPE, values);
+    }
 }
