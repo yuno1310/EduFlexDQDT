@@ -15,18 +15,6 @@ public class GetCourseBadgeUseCase {
   private BadgeRepository badgeRepository;
 
   public CourseBadgeResponse execute(UUID userId, UUID courseId) {
-    var record = badgeRepository.getEarnedCourseBadge(userId, courseId);
-
-    if (record == null) {
-      return new CourseBadgeResponse(false, "Failed to get badge", null, null, null, null);
-    }
-
-    return new CourseBadgeResponse(
-        true,
-        "Successful",
-        record.badgeName(),
-        record.description(),
-        record.iconUrl(),
-        record.earnedAt());
+    return badgeRepository.getEarnedCourseBadge(userId, courseId);
   }
 }
