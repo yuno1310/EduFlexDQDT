@@ -5,6 +5,7 @@ package com.eduflex.generated;
 
 
 import com.eduflex.generated.tables.Badges;
+import com.eduflex.generated.tables.CourseReviews;
 import com.eduflex.generated.tables.Courses;
 import com.eduflex.generated.tables.Enrollments;
 import com.eduflex.generated.tables.FlywaySchemaHistory;
@@ -29,6 +30,11 @@ public class Tables {
      * The table <code>public.badges</code>.
      */
     public static final Badges BADGES = Badges.BADGES;
+
+    /**
+     * The table <code>public.course_reviews</code>.
+     */
+    public static final CourseReviews COURSE_REVIEWS = CourseReviews.COURSE_REVIEWS;
 
     /**
      * The table <code>public.courses</code>.

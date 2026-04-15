@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/adminUsersFragment"
+        android:icon="@android:drawable/ic_menu_myplaces"
+        android:title="Users" />
+    <item
+        android:id="@+id/adminCoursesFragment"
+        android:icon="@android:drawable/ic_menu_agenda"
+        android:title="Courses" />
+    <item
+        android:id="@+id/adminProfileFragment"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:title="Profile" />
+</menu>

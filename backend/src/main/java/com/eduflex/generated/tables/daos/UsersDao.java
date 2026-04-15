@@ -148,4 +148,19 @@ public class UsersDao extends DAOImpl<UsersRecord, com.eduflex.generated.tables.
     public List<com.eduflex.generated.tables.pojos.Users> fetchByIsActive(Boolean... values) {
         return fetch(Users.USERS.IS_ACTIVE, values);
     }
+
+    /**
+     * Fetch records that have <code>role BETWEEN lowerInclusive AND
+     * upperInclusive</code>
+     */
+    public List<com.eduflex.generated.tables.pojos.Users> fetchRangeOfRole(String lowerInclusive, String upperInclusive) {
+        return fetchRange(Users.USERS.ROLE, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * Fetch records that have <code>role IN (values)</code>
+     */
+    public List<com.eduflex.generated.tables.pojos.Users> fetchByRole(String... values) {
+        return fetch(Users.USERS.ROLE, values);
+    }
 }

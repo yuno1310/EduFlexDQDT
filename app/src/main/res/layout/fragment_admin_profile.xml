@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/surface_bg">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/cyan_primary"
+        android:paddingTop="16dp"
+        android:paddingBottom="24dp"
+        android:paddingHorizontal="20dp"
+        android:gravity="center">
+
+        <!-- Admin avatar -->
+        <TextView
+            android:id="@+id/tv_admin_avatar"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:gravity="center"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_on_brand"
+            android:background="@drawable/bg_rank_circle" />
+
+        <TextView
+            android:id="@+id/tv_admin_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Admin"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_on_brand"
+            android:layout_marginTop="12dp" />
+
+        <TextView
+            android:id="@+id/tv_admin_email"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="admin@eduflex.com"
+            android:textSize="13sp"
+            android:textColor="@color/cyan_text_light"
+            android:layout_marginTop="4dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Administrator"
+            android:textSize="12sp"
+            android:textColor="@color/text_on_brand"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_search_input"
+            android:backgroundTint="#00838F"
+            android:paddingHorizontal="14dp"
+            android:paddingVertical="4dp" />
+    </LinearLayout>
+
+    <!-- Spacer -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- Logout button -->
+    <Button
+        android:id="@+id/btn_admin_logout"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginBottom="32dp"
+        android:background="@drawable/bg_button_danger_rounded"
+        android:text="@string/logout"
+        android:textAllCaps="false"
+        android:textColor="@color/danger"
+        android:textSize="16sp" />
+</LinearLayout>

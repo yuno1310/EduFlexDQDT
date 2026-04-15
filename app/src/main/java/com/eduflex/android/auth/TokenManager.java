@@ -12,6 +12,9 @@ public class TokenManager {
     private static final String TAG = "TokenManager";
     private static final String PREF_NAME = "eduflex_auth";
     private static final String KEY_TOKEN = "jwt_token";
+    private static final String KEY_ROLE = "user_role";
+    private static final String KEY_FULL_NAME = "user_full_name";
+    private static final String KEY_EMAIL = "user_email";
 
     private final SharedPreferences prefs;
 
@@ -27,12 +30,40 @@ public class TokenManager {
         return prefs.getString(KEY_TOKEN, null);
     }
 
+    public void saveRole(String role) {
+        prefs.edit().putString(KEY_ROLE, role != null ? role : "user").apply();
+    }
+
+    public String getRole() {
+        return prefs.getString(KEY_ROLE, "user");
+    }
+
+    public boolean isAdmin() {
+        return "admin".equals(getRole());
+    }
+
+    public void saveFullName(String fullName) {
+        prefs.edit().putString(KEY_FULL_NAME, fullName).apply();
+    }
+
+    public String getFullName() {
+        return prefs.getString(KEY_FULL_NAME, null);
+    }
+
+    public void saveEmail(String email) {
+        prefs.edit().putString(KEY_EMAIL, email).apply();
+    }
+
+    public String getEmail() {
+        return prefs.getString(KEY_EMAIL, null);
+    }
+
     public boolean isLoggedIn() {
         return getToken() != null;
     }
 
     public void clearToken() {
-        prefs.edit().remove(KEY_TOKEN).apply();
+        prefs.edit().remove(KEY_TOKEN).remove(KEY_ROLE).remove(KEY_FULL_NAME).remove(KEY_EMAIL).apply();
     }
 
     /**
