@@ -83,6 +83,10 @@ public class CourseDetailFragment extends Fragment {
 
         Button btnTestFillBlankQuiz = view.findViewById(R.id.btn_test_fill_blank_quiz);
         btnTestFillBlankQuiz.setOnClickListener(v -> openFillBlankQuizMock());
+        Button btnCourseReview = view.findViewById(R.id.btn_course_review);
+        btnCourseReview.setOnClickListener(v -> openCourseReview());
+        Button btnCourseCertificate = view.findViewById(R.id.btn_course_certificate);
+        btnCourseCertificate.setOnClickListener(v -> openCertificate());
 
         rvLessons = view.findViewById(R.id.rv_lessons);
         tvLessonsEmpty = view.findViewById(R.id.tv_lessons_empty);
@@ -182,19 +186,44 @@ public class CourseDetailFragment extends Fragment {
         navController.navigate(R.id.fillBlankQuizMockFragment, args);
     }
 
+    private void openCourseReview() {
+        Bundle args = new Bundle();
+        args.putString("courseId", courseId == null ? "" : courseId);
+        args.putString("courseTitle", courseTitle == null ? "Course" : courseTitle);
+        NavHostFragment.findNavController(this).navigate(R.id.courseReviewFragment, args);
+    }
+
+    private void openCertificate() {
+        int progress = getCurrentCourseProgress();
+        if (progress < 100) {
+            Toast.makeText(requireContext(), "Complete 100% progress to unlock certificate.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Bundle args = new Bundle();
+        args.putString("courseId", courseId == null ? "" : courseId);
+        args.putString("courseTitle", courseTitle == null ? "Course" : courseTitle);
+        NavHostFragment.findNavController(this).navigate(R.id.certificateFragment, args);
+    }
+
     private void updateCourseProgressUi() {
         if (progressCourse == null || tvCourseProgressValue == null) {
             return;
         }
 
+        int progress = getCurrentCourseProgress();
+
+        progressCourse.setProgress(progress);
+        tvCourseProgressValue.setText(progress + "%");
+    }
+
+    private int getCurrentCourseProgress() {
         int progress = 0;
         if (courseId != null && !courseId.isEmpty()) {
             SharedPreferences prefs = requireContext().getSharedPreferences(PREF_COURSE_PROGRESS, Context.MODE_PRIVATE);
             progress = Math.max(0, Math.min(100, prefs.getInt(courseId, 0)));
         }
-
-        progressCourse.setProgress(progress);
-        tvCourseProgressValue.setText(progress + "%");
+        return progress;
     }
 
     private String getMockContent(String lessonTitle, String contentType) {
