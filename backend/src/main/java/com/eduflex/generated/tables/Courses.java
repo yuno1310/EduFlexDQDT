@@ -6,6 +6,7 @@ package com.eduflex.generated.tables;
 
 import com.eduflex.generated.Keys;
 import com.eduflex.generated.Public;
+import com.eduflex.generated.tables.CourseReviews.CourseReviewsPath;
 import com.eduflex.generated.tables.Enrollments.EnrollmentsPath;
 import com.eduflex.generated.tables.Lesson.LessonPath;
 import com.eduflex.generated.tables.Transactions.TransactionsPath;
@@ -161,6 +162,19 @@ public class Courses extends TableImpl<CoursesRecord> {
         return Keys.COURSES_PKEY;
     }
 
+    private transient CourseReviewsPath _courseReviews;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.course_reviews</code> table
+     */
+    public CourseReviewsPath courseReviews() {
+        if (_courseReviews == null)
+            _courseReviews = new CourseReviewsPath(this, null, Keys.COURSE_REVIEWS__COURSE_REVIEWS_COURSE_ID_FKEY.getInverseKey());
+
+        return _courseReviews;
+    }
+
     private transient EnrollmentsPath _enrollments;
 
     /**
@@ -202,9 +216,17 @@ public class Courses extends TableImpl<CoursesRecord> {
 
     /**
      * Get the implicit many-to-many join path to the <code>public.users</code>
-     * table
+     * table, via the <code>course_reviews_user_id_fkey</code> key
      */
-    public UsersPath users() {
+    public UsersPath courseReviewsUserIdFkey() {
+        return courseReviews().users();
+    }
+
+    /**
+     * Get the implicit many-to-many join path to the <code>public.users</code>
+     * table, via the <code>fk_enrollment_user</code> key
+     */
+    public UsersPath fkEnrollmentUser() {
         return enrollments().users();
     }
 

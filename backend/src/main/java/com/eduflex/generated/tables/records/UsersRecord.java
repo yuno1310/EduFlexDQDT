@@ -105,6 +105,20 @@ public class UsersRecord extends UpdatableRecordImpl<UsersRecord> {
         return (Boolean) get(5);
     }
 
+    /**
+     * Setter for <code>public.users.role</code>.
+     */
+    public void setRole(String value) {
+        set(6, value);
+    }
+
+    /**
+     * Getter for <code>public.users.role</code>.
+     */
+    public String getRole() {
+        return (String) get(6);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -128,7 +142,7 @@ public class UsersRecord extends UpdatableRecordImpl<UsersRecord> {
     /**
      * Create a detached, initialised UsersRecord
      */
-    public UsersRecord(UUID userId, String email, String passwordHash, String fullName, LocalDateTime createdAt, Boolean isActive) {
+    public UsersRecord(UUID userId, String email, String passwordHash, String fullName, LocalDateTime createdAt, Boolean isActive, String role) {
         super(Users.USERS);
 
         setUserId(userId);
@@ -137,6 +151,7 @@ public class UsersRecord extends UpdatableRecordImpl<UsersRecord> {
         setFullName(fullName);
         setCreatedAt(createdAt);
         setIsActive(isActive);
+        setRole(role);
         resetChangedOnNotNull();
     }
 
@@ -153,6 +168,7 @@ public class UsersRecord extends UpdatableRecordImpl<UsersRecord> {
             setFullName(value.getFullName());
             setCreatedAt(value.getCreatedAt());
             setIsActive(value.getIsActive());
+            setRole(value.getRole());
             resetChangedOnNotNull();
         }
     }

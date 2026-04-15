@@ -5,6 +5,7 @@ package com.eduflex.generated;
 
 
 import com.eduflex.generated.tables.Badges;
+import com.eduflex.generated.tables.CourseReviews;
 import com.eduflex.generated.tables.Courses;
 import com.eduflex.generated.tables.Enrollments;
 import com.eduflex.generated.tables.FlywaySchemaHistory;
@@ -43,6 +44,11 @@ public class Public extends SchemaImpl {
      * The table <code>public.badges</code>.
      */
     public final Badges BADGES = Badges.BADGES;
+
+    /**
+     * The table <code>public.course_reviews</code>.
+     */
+    public final CourseReviews COURSE_REVIEWS = CourseReviews.COURSE_REVIEWS;
 
     /**
      * The table <code>public.courses</code>.
@@ -121,6 +127,7 @@ public class Public extends SchemaImpl {
     public final List<Table<?>> getTables() {
         return Arrays.asList(
             Badges.BADGES,
+            CourseReviews.COURSE_REVIEWS,
             Courses.COURSES,
             Enrollments.ENROLLMENTS,
             FlywaySchemaHistory.FLYWAY_SCHEMA_HISTORY,

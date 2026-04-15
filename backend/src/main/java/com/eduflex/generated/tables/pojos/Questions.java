@@ -20,6 +20,7 @@ public class Questions implements Serializable {
     private UUID lessonId;
     private String questionText;
     private Integer points;
+    private String questionType;
 
     public Questions() {}
 
@@ -28,18 +29,21 @@ public class Questions implements Serializable {
         this.lessonId = value.lessonId;
         this.questionText = value.questionText;
         this.points = value.points;
+        this.questionType = value.questionType;
     }
 
     public Questions(
         Long questionId,
         UUID lessonId,
         String questionText,
-        Integer points
+        Integer points,
+        String questionType
     ) {
         this.questionId = questionId;
         this.lessonId = lessonId;
         this.questionText = questionText;
         this.points = points;
+        this.questionType = questionType;
     }
 
     /**
@@ -98,6 +102,20 @@ public class Questions implements Serializable {
         this.points = points;
     }
 
+    /**
+     * Getter for <code>public.questions.question_type</code>.
+     */
+    public String getQuestionType() {
+        return this.questionType;
+    }
+
+    /**
+     * Setter for <code>public.questions.question_type</code>.
+     */
+    public void setQuestionType(String questionType) {
+        this.questionType = questionType;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -131,6 +149,12 @@ public class Questions implements Serializable {
         }
         else if (!this.points.equals(other.points))
             return false;
+        if (this.questionType == null) {
+            if (other.questionType != null)
+                return false;
+        }
+        else if (!this.questionType.equals(other.questionType))
+            return false;
         return true;
     }
 
@@ -142,6 +166,7 @@ public class Questions implements Serializable {
         result = prime * result + ((this.lessonId == null) ? 0 : this.lessonId.hashCode());
         result = prime * result + ((this.questionText == null) ? 0 : this.questionText.hashCode());
         result = prime * result + ((this.points == null) ? 0 : this.points.hashCode());
+        result = prime * result + ((this.questionType == null) ? 0 : this.questionType.hashCode());
         return result;
     }
 
@@ -153,6 +178,7 @@ public class Questions implements Serializable {
         sb.append(", ").append(lessonId);
         sb.append(", ").append(questionText);
         sb.append(", ").append(points);
+        sb.append(", ").append(questionType);
 
         sb.append(")");
         return sb.toString();

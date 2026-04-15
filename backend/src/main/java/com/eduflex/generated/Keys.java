@@ -5,6 +5,7 @@ package com.eduflex.generated;
 
 
 import com.eduflex.generated.tables.Badges;
+import com.eduflex.generated.tables.CourseReviews;
 import com.eduflex.generated.tables.Courses;
 import com.eduflex.generated.tables.Enrollments;
 import com.eduflex.generated.tables.FlywaySchemaHistory;
@@ -18,6 +19,7 @@ import com.eduflex.generated.tables.Transactions;
 import com.eduflex.generated.tables.UserBadges;
 import com.eduflex.generated.tables.Users;
 import com.eduflex.generated.tables.records.BadgesRecord;
+import com.eduflex.generated.tables.records.CourseReviewsRecord;
 import com.eduflex.generated.tables.records.CoursesRecord;
 import com.eduflex.generated.tables.records.EnrollmentsRecord;
 import com.eduflex.generated.tables.records.FlywaySchemaHistoryRecord;
@@ -51,6 +53,8 @@ public class Keys {
 
     public static final UniqueKey<BadgesRecord> BADGES_NAME_KEY = Internal.createUniqueKey(Badges.BADGES, DSL.name("badges_name_key"), new TableField[] { Badges.BADGES.NAME }, true);
     public static final UniqueKey<BadgesRecord> BADGES_PKEY = Internal.createUniqueKey(Badges.BADGES, DSL.name("badges_pkey"), new TableField[] { Badges.BADGES.ID }, true);
+    public static final UniqueKey<CourseReviewsRecord> COURSE_REVIEWS_PKEY = Internal.createUniqueKey(CourseReviews.COURSE_REVIEWS, DSL.name("course_reviews_pkey"), new TableField[] { CourseReviews.COURSE_REVIEWS.REVIEW_ID }, true);
+    public static final UniqueKey<CourseReviewsRecord> COURSE_REVIEWS_USER_ID_COURSE_ID_KEY = Internal.createUniqueKey(CourseReviews.COURSE_REVIEWS, DSL.name("course_reviews_user_id_course_id_key"), new TableField[] { CourseReviews.COURSE_REVIEWS.USER_ID, CourseReviews.COURSE_REVIEWS.COURSE_ID }, true);
     public static final UniqueKey<CoursesRecord> COURSES_PKEY = Internal.createUniqueKey(Courses.COURSES, DSL.name("courses_pkey"), new TableField[] { Courses.COURSES.COURSE_ID }, true);
     public static final UniqueKey<EnrollmentsRecord> ENROLLMENTS_PKEY = Internal.createUniqueKey(Enrollments.ENROLLMENTS, DSL.name("enrollments_pkey"), new TableField[] { Enrollments.ENROLLMENTS.ENROLLMENT_ID }, true);
     public static final UniqueKey<EnrollmentsRecord> UQ_USER_COURSE = Internal.createUniqueKey(Enrollments.ENROLLMENTS, DSL.name("uq_user_course"), new TableField[] { Enrollments.ENROLLMENTS.USER_ID, Enrollments.ENROLLMENTS.COURSE_ID }, true);
@@ -72,6 +76,8 @@ public class Keys {
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
+    public static final ForeignKey<CourseReviewsRecord, CoursesRecord> COURSE_REVIEWS__COURSE_REVIEWS_COURSE_ID_FKEY = Internal.createForeignKey(CourseReviews.COURSE_REVIEWS, DSL.name("course_reviews_course_id_fkey"), new TableField[] { CourseReviews.COURSE_REVIEWS.COURSE_ID }, Keys.COURSES_PKEY, new TableField[] { Courses.COURSES.COURSE_ID }, true);
+    public static final ForeignKey<CourseReviewsRecord, UsersRecord> COURSE_REVIEWS__COURSE_REVIEWS_USER_ID_FKEY = Internal.createForeignKey(CourseReviews.COURSE_REVIEWS, DSL.name("course_reviews_user_id_fkey"), new TableField[] { CourseReviews.COURSE_REVIEWS.USER_ID }, Keys.USERS_PKEY, new TableField[] { Users.USERS.USER_ID }, true);
     public static final ForeignKey<EnrollmentsRecord, CoursesRecord> ENROLLMENTS__FK_ENROLLMENT_COURSE = Internal.createForeignKey(Enrollments.ENROLLMENTS, DSL.name("fk_enrollment_course"), new TableField[] { Enrollments.ENROLLMENTS.COURSE_ID }, Keys.COURSES_PKEY, new TableField[] { Courses.COURSES.COURSE_ID }, true);
     public static final ForeignKey<EnrollmentsRecord, UsersRecord> ENROLLMENTS__FK_ENROLLMENT_USER = Internal.createForeignKey(Enrollments.ENROLLMENTS, DSL.name("fk_enrollment_user"), new TableField[] { Enrollments.ENROLLMENTS.USER_ID }, Keys.USERS_PKEY, new TableField[] { Users.USERS.USER_ID }, true);
     public static final ForeignKey<GamificationStatsRecord, UsersRecord> GAMIFICATION_STATS__FK_GAMIFICATION_USER = Internal.createForeignKey(GamificationStats.GAMIFICATION_STATS, DSL.name("fk_gamification_user"), new TableField[] { GamificationStats.GAMIFICATION_STATS.USER_ID }, Keys.USERS_PKEY, new TableField[] { Users.USERS.USER_ID }, true);
