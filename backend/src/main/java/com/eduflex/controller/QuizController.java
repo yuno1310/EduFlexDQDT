@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.eduflex.dto.FillBlankDTO.SubmitFillBlankRequest;
+import com.eduflex.dto.FillBlankDTO.SubmitFillBlankResponse;
 import com.eduflex.dto.QuizDTO.CreateQuizRequest;
 import com.eduflex.dto.QuizDTO.CreateQuizResponse;
 import com.eduflex.dto.QuizDTO.GetQuizResponse;
@@ -11,6 +13,7 @@ import com.eduflex.dto.QuizDTO.SubmitQuizRequest;
 import com.eduflex.dto.QuizDTO.SubmitQuizResponse;
 import com.eduflex.service.CreateQuizUseCase;
 import com.eduflex.service.GetQuizUseCase;
+import com.eduflex.service.SubmitFillBlankUseCase;
 import com.eduflex.service.SubmitQuizUseCase;
 
 import java.util.UUID;
@@ -25,6 +28,8 @@ public class QuizController {
   private GetQuizUseCase getQuizUseCase;
   @Autowired
   private SubmitQuizUseCase submitQuizUseCase;
+  @Autowired
+  private SubmitFillBlankUseCase submitFillBlankUseCase;
 
   @PostMapping("/create")
   public ResponseEntity<CreateQuizResponse> createQuiz(@RequestBody CreateQuizRequest request) {
@@ -38,9 +43,20 @@ public class QuizController {
     return response.success() ? ResponseEntity.ok(response) : ResponseEntity.badRequest().body(response);
   }
 
-  @PostMapping("/submit")
+  @PostMapping("/submit-multiple-choice")
   public ResponseEntity<SubmitQuizResponse> submitQuiz(@RequestBody SubmitQuizRequest request) {
     var response = submitQuizUseCase.execute(request);
     return ResponseEntity.ok(response);
+  }
+
+  @PostMapping("/submit-fill-blank")
+  public ResponseEntity<SubmitFillBlankResponse> submitFillBlank(
+      @RequestBody SubmitFillBlankRequest request) {
+    var response = submitFillBlankUseCase.execute(request);
+    if (response.success() == true) {
+      return ResponseEntity.ok(response);
+    } else {
+      return ResponseEntity.badRequest().body(response);
+    }
   }
 }
