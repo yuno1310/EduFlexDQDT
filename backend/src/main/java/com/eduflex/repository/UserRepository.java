@@ -8,6 +8,7 @@ import com.eduflex.entity.UsersDbO;
 import com.eduflex.generated.tables.Users;
 import com.eduflex.generated.tables.records.UsersRecord;
 
+import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -51,4 +52,25 @@ public class UserRepository {
         .execute();
     return updateRow > 0;
   }
+
+  /**
+   * Get all users ordered by creation date (newest first).
+   */
+  public List<UsersDbO> findAll() {
+    return dsl.selectFrom(Users.USERS)
+        .orderBy(Users.USERS.CREATED_AT.desc())
+        .fetch()
+        .map(UsersDbO::new);
+  }
+
+  /**
+   * Delete a user by ID. Returns true if deleted.
+   */
+  public boolean deleteById(UUID userId) {
+    int rows = dsl.deleteFrom(Users.USERS)
+        .where(Users.USERS.USER_ID.eq(userId))
+        .execute();
+    return rows > 0;
+  }
 }
+

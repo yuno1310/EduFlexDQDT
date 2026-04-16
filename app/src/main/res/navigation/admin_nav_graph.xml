@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/admin_nav_graph"
+    app:startDestination="@id/adminUsersFragment">
+
+    <fragment
+        android:id="@+id/adminUsersFragment"
+        android:name="com.eduflex.android.ui.admin.AdminFragment"
+        android:label="User Management" />
+
+    <fragment
+        android:id="@+id/adminCoursesFragment"
+        android:name="com.eduflex.android.ui.admin.AdminCoursesFragment"
+        android:label="Course Management" />
+
+    <fragment
+        android:id="@+id/adminProfileFragment"
+        android:name="com.eduflex.android.ui.admin.AdminProfileFragment"
+        android:label="Profile" />
+</navigation>

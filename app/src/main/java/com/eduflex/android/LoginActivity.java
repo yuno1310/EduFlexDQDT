@@ -40,9 +40,13 @@ public class LoginActivity extends AppCompatActivity {
 
         tokenManager = new TokenManager(this);
 
-        // If already logged in, go straight to main
+        // If already logged in, go straight to correct screen
         if (tokenManager.isLoggedIn()) {
-            navigateToMain();
+            if (tokenManager.isAdmin()) {
+                navigateToAdmin();
+            } else {
+                navigateToMain();
+            }
             return;
         }
 
@@ -81,9 +85,17 @@ public class LoginActivity extends AppCompatActivity {
                 setLoading(false);
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                     tokenManager.saveToken(response.body().getToken());
+                    tokenManager.saveRole(response.body().getRole());
+                    tokenManager.saveFullName(response.body().getFullName());
+                    tokenManager.saveEmail(response.body().getEmail());
                     SessionManager.resetLogoutState();
                     Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
-                    navigateToMain();
+
+                    if ("admin".equals(response.body().getRole())) {
+                        navigateToAdmin();
+                    } else {
+                        navigateToMain();
+                    }
                 } else {
                     String msg = response.body() != null ? response.body().getMessage() : "Login failed";
                     Toast.makeText(LoginActivity.this, msg, Toast.LENGTH_SHORT).show();
@@ -105,6 +117,13 @@ public class LoginActivity extends AppCompatActivity {
 
     private void navigateToMain() {
         Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
+
+    private void navigateToAdmin() {
+        Intent intent = new Intent(this, AdminActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
