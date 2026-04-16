@@ -50,19 +50,33 @@ public class AdminActivity extends AppCompatActivity {
         finish();
     }
 
+    /**
+     * Apply edge-to-edge insets — identical to MainActivity.
+     * Top inset goes to navHost, bottom inset goes to bottomNav.
+     */
     private void applyEdgeToEdgeInsets() {
         View root = findViewById(R.id.root_admin);
-        final int originalTop = root.getPaddingTop();
-        final int originalBottom = root.getPaddingBottom();
+        View navHost = findViewById(R.id.admin_nav_host);
+        View bottomNav = findViewById(R.id.admin_bottom_nav);
+
+        final int navHostTopPadding = navHost.getPaddingTop();
+        final int bottomNavBottomPadding = bottomNav.getPaddingBottom();
 
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            root.setPadding(
-                root.getPaddingLeft(),
-                originalTop + systemBars.top,
-                root.getPaddingRight(),
-                originalBottom + systemBars.bottom
-            );
+
+            navHost.setPadding(
+                    navHost.getPaddingLeft(),
+                    navHostTopPadding + systemBars.top,
+                    navHost.getPaddingRight(),
+                    navHost.getPaddingBottom());
+
+            bottomNav.setPadding(
+                    bottomNav.getPaddingLeft(),
+                    bottomNav.getPaddingTop(),
+                    bottomNav.getPaddingRight(),
+                    bottomNavBottomPadding + systemBars.bottom);
+
             return insets;
         });
 

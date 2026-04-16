@@ -49,11 +49,12 @@
                     android:gravity="center"
                     android:padding="14dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="👥"
-                        android:textSize="24sp" />
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:src="@drawable/ic_people"
+                        app:tint="@color/text_title"
+                        android:contentDescription="Total users" />
 
                     <TextView
                         android:id="@+id/tv_total_users"
@@ -135,11 +136,12 @@
                     android:gravity="center"
                     android:padding="14dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="⚡"
-                        android:textSize="24sp" />
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:src="@drawable/ic_bolt"
+                        app:tint="#FFD700"
+                        android:contentDescription="Total XP" />
 
                     <TextView
                         android:id="@+id/tv_total_xp"
@@ -148,7 +150,7 @@
                         android:text="0"
                         android:textSize="22sp"
                         android:textStyle="bold"
-                        android:textColor="@color/cyan_primary"
+                        android:textColor="#FFD700"
                         android:layout_marginTop="4dp" />
 
                     <TextView
