@@ -1,7 +1,10 @@
 package com.eduflex.service;
 
 import com.eduflex.entity.UserBadgesDbO;
+import com.eduflex.entity.BadgesDbO;
+import com.eduflex.generated.tables.records.BadgesRecord;
 import com.eduflex.repository.BadgeRepository;
+import com.eduflex.repository.CourseRepository;
 import com.eduflex.repository.GamificationStatsRepository;
 import com.eduflex.repository.UserBadgeRepository;
 import org.slf4j.Logger;
@@ -29,6 +32,9 @@ public class CheckAndAwardBadgesUseCase {
 
     @Autowired
     private GamificationStatsRepository gamificationStatsRepository;
+
+    @Autowired
+    private CourseRepository courseRepository;
 
     /**
      * Award a badge if user doesn't already have it.
@@ -82,5 +88,33 @@ public class CheckAndAwardBadgesUseCase {
         if (xp >= 1000) {
             tryAward(userId, "XP_1000");
         }
+    }
+
+    /**
+     * Called when a course is completed.
+     * Generates a badge dynamically if it does not exist for this course yet, and awards it.
+     */
+    @Transactional
+    public void checkCourseCompletionBadge(UUID userId, UUID courseId) {
+        String conditionType = "COURSE_" + courseId.toString();
+        var badge = badgeRepository.findByConditionType(conditionType);
+
+        if (badge == null) {
+            var course = courseRepository.find_by_id_course(courseId);
+            if (course == null) {
+                log.warn("Cannot create completion badge, course not found: {}", courseId);
+                return;
+            }
+
+            BadgesRecord record = new BadgesRecord();
+            record.setName("Certified: " + course.getTitle());
+            record.setDescription("Successfully completed the course: " + course.getTitle());
+            record.setConditionType(conditionType);
+
+            badgeRepository.save(new BadgesDbO(record));
+            log.info("Dynamically created new badge for course: {}", course.getTitle());
+        }
+
+        tryAward(userId, conditionType);
     }
 }

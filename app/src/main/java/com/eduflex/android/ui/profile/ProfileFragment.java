@@ -247,7 +247,7 @@ public class ProfileFragment extends Fragment {
                 }
 
                 // Update UI
-                tvBadgeCount.setText(earnedIds.size() + "/" + allBadges.size());
+                tvBadgeCount.setText(String.valueOf(earnedIds.size()));
                 rvBadges.setAdapter(new BadgeAdapter(allBadges, earnedIds));
             }
 
@@ -256,7 +256,7 @@ public class ProfileFragment extends Fragment {
                 if (!isAdded()) return;
                 Log.e(TAG, "User badges network error: " + t.getMessage());
                 // Still show all badges as locked
-                tvBadgeCount.setText("0/" + allBadges.size());
+                tvBadgeCount.setText("0");
                 rvBadges.setAdapter(new BadgeAdapter(allBadges, new HashSet<>()));
             }
         });

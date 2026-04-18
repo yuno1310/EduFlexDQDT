@@ -79,6 +79,10 @@ public class BadgeAdapter extends RecyclerView.Adapter<BadgeAdapter.BadgeViewHol
      */
     private int getIconForCondition(String conditionType) {
         if (conditionType == null) return android.R.drawable.btn_star_big_on;
+        if (conditionType.startsWith("COURSE_")) {
+            return android.R.drawable.ic_menu_agenda; // Document/Certificate like icon
+        }
+        
         switch (conditionType) {
             case "FIRST_LOGIN":
                 return android.R.drawable.ic_menu_myplaces;
