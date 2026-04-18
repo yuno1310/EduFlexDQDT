@@ -4,6 +4,7 @@ import com.eduflex.dto.AddXpDTO;
 import com.eduflex.dto.ProgressDTO.SaveLessonRequest;
 import com.eduflex.dto.ProgressDTO.SaveLessonResponse;
 import com.eduflex.repository.LessonProgressRepository;
+import com.eduflex.repository.EnrollmentRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,12 @@ public class SaveLessonProgressUseCase {
 
   @Autowired
   private UpdateStreakUseCase updateStreakUseCase;
+
+  @Autowired
+  private EnrollmentRepository enrollmentRepository;
+
+  @Autowired
+  private CheckAndAwardBadgesUseCase checkAndAwardBadgesUseCase;
 
   @Transactional
   public SaveLessonResponse execute(SaveLessonRequest request) {
@@ -54,7 +61,18 @@ public class SaveLessonProgressUseCase {
       percent = Math.round(percent * 10.0) / 10.0;
       progressRepository.updateCourseProgress(userId, courseId, percent);
 
+      // Check course completion
+      boolean isCourseCompleted = (completedLessons == totalLessons && totalLessons > 0);
+      if (isCourseCompleted) {
+        enrollmentRepository.markCourseAsCompleted(userId, courseId);
+        checkAndAwardBadgesUseCase.checkCourseCompletionBadge(userId, courseId);
+      }
+
       String xpMsg = alreadyCompleted ? "" : " (+" + LESSON_COMPLETE_XP + " XP)";
+      if (isCourseCompleted) {
+        xpMsg += " - Course Completed!";
+      }
+
       return new SaveLessonResponse(true, "Lưu tiến độ thành công!" + xpMsg, percent);
 
     } catch (Exception e) {

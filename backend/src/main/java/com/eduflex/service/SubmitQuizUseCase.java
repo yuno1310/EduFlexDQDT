@@ -30,6 +30,8 @@ public class SubmitQuizUseCase {
   private UpdateStreakUseCase updateStreakUseCase;
   @Autowired
   private EnrollmentRepository enrollmentRepository;
+  @Autowired
+  private CheckAndAwardBadgesUseCase checkAndAwardBadgesUseCase;
 
   @Transactional
   public SubmitQuizResponse execute(SubmitQuizRequest request) {
@@ -108,6 +110,7 @@ public class SubmitQuizUseCase {
       totalXpRewarded += COURSE_COMPLETE_XP;
       addXpUseCase.execute(userId, new AddXpDTO.AddXpRequest(COURSE_COMPLETE_XP));
       enrollmentRepository.markCourseAsCompleted(userId, courseId);
+      checkAndAwardBadgesUseCase.checkCourseCompletionBadge(userId, courseId);
       msg = "Awesome! You have completed 100% of the course! (+" + totalXpRewarded + " XP)";
     }
 

@@ -24,6 +24,12 @@ public class BadgeRepository {
         .map(BadgesDbO::new);
   }
 
+  public BadgesDbO save(BadgesDbO badge) {
+    badge.record.attach(dsl.configuration());
+    badge.record.store();
+    return new BadgesDbO(badge.record);
+  }
+
   public BadgesDbO findById(Long id) {
     var record = dsl.selectFrom(Badges.BADGES)
         .where(Badges.BADGES.ID.eq(id))
