@@ -154,7 +154,9 @@ public class MainActivity extends AppCompatActivity {
 
         if (id == R.id.homeFragment || id == R.id.courseDetailFragment
                 || id == R.id.lessonStudyFragment || id == R.id.quizFragment
-                || id == R.id.leaderboardFragment) {
+                || id == R.id.leaderboardFragment || id == R.id.courseReviewFragment
+                || id == R.id.certificateFragment || id == R.id.quizResultFragment
+                || id == R.id.fillBlankQuizMockFragment) {
             return R.id.homeFragment;
         }
 

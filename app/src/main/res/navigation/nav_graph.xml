@@ -148,4 +148,32 @@
             android:defaultValue="false" />
     </fragment>
 
+    <fragment
+        android:id="@+id/courseReviewFragment"
+        android:name="com.eduflex.android.ui.review.CourseReviewFragment"
+        android:label="Course Review">
+        <argument
+            android:name="courseId"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
+            android:name="courseTitle"
+            app:argType="string"
+            android:defaultValue="Course" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/certificateFragment"
+        android:name="com.eduflex.android.ui.certificate.CertificateFragment"
+        android:label="Certificate">
+        <argument
+            android:name="courseId"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
+            android:name="courseTitle"
+            app:argType="string"
+            android:defaultValue="Course" />
+    </fragment>
+
 </navigation>
