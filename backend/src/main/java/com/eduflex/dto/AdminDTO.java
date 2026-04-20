@@ -28,4 +28,9 @@ public class AdminDTO {
             boolean success,
             String message
     ) {}
+
+    public record DeleteCourseResponse(
+            boolean success,
+            String message
+    ) {}
 }

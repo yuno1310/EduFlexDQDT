@@ -60,4 +60,10 @@ public class CourseRepository {
         .fetchOne();
     return result;
   }
+
+  public boolean deleteCourse(UUID courseId) {
+    return dsl.deleteFrom(Courses.COURSES)
+        .where(Courses.COURSES.COURSE_ID.eq(courseId))
+        .execute() > 0;
+  }
 }
