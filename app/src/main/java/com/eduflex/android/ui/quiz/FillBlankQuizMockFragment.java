@@ -1,7 +1,5 @@
 package com.eduflex.android.ui.quiz;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -16,17 +14,33 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.eduflex.android.R;
+import com.eduflex.android.api.ApiClient;
+import com.eduflex.android.api.QuizApi;
+import com.eduflex.android.auth.TokenManager;
+import com.eduflex.android.model.QuizGetResponse;
+import com.eduflex.android.model.SubmitFillBlankRequest;
+import com.eduflex.android.model.SubmitFillBlankResponse;
 
-import java.util.Locale;
+import java.util.Collections;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class FillBlankQuizMockFragment extends Fragment {
 
-    private static final String PREF_COURSE_PROGRESS = "course_progress";
+    private QuizApi quizApi;
+    private TokenManager tokenManager;
 
+    private String lessonId;
     private String courseId;
     private String lessonTitle;
+    private long questionId;
 
+    private TextView tvTitle;
+    private TextView tvQuestion;
     private EditText etAnswer;
+    private Button btnSubmit;
 
     public FillBlankQuizMockFragment() {
         super(R.layout.fragment_fill_blank_quiz_mock);
@@ -36,66 +50,135 @@ public class FillBlankQuizMockFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        quizApi = ApiClient.createAuthenticatedService(QuizApi.class);
+        tokenManager = new TokenManager(requireContext());
+
         Bundle args = getArguments();
+        lessonId = args != null ? args.getString("lessonId", "") : "";
         courseId = args != null ? args.getString("courseId", "") : "";
         lessonTitle = args != null ? args.getString("lessonTitle", "Quiz điền từ") : "Quiz điền từ";
 
-        TextView tvTitle = view.findViewById(R.id.tv_fill_blank_quiz_title);
-        tvTitle.setText(lessonTitle + " - Điền từ (Mock)");
-
+        tvTitle = view.findViewById(R.id.tv_fill_blank_quiz_title);
+        tvQuestion = view.findViewById(R.id.tv_fill_blank_quiz_question);
         etAnswer = view.findViewById(R.id.et_fill_blank_answer);
+        btnSubmit = view.findViewById(R.id.btn_submit_fill_blank_quiz);
 
-        Button btnBack = view.findViewById(R.id.btn_back_fill_blank_quiz);
-        Button btnSubmit = view.findViewById(R.id.btn_submit_fill_blank_quiz);
+        tvTitle.setText(lessonTitle + " - Điền từ");
 
-        btnBack.setOnClickListener(v -> NavHostFragment.findNavController(this).popBackStack());
-        btnSubmit.setOnClickListener(v -> submitMockQuiz());
+        view.findViewById(R.id.btn_back_fill_blank_quiz)
+                .setOnClickListener(v -> NavHostFragment.findNavController(this).popBackStack());
+
+        btnSubmit.setOnClickListener(v -> submitQuiz());
+
+        if (lessonId == null || lessonId.isEmpty()) {
+            tvQuestion.setText("Quiz không khả dụng cho bài học này.");
+            btnSubmit.setEnabled(false);
+            return;
+        }
+
+        loadQuiz();
     }
 
-    private void submitMockQuiz() {
+    private void loadQuiz() {
+        tvQuestion.setText("Đang tải câu hỏi...");
+        btnSubmit.setEnabled(false);
+
+        quizApi.getQuiz(lessonId).enqueue(new Callback<QuizGetResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<QuizGetResponse> call,
+                                   @NonNull Response<QuizGetResponse> response) {
+                if (!isAdded()) return;
+
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    QuizGetResponse quiz = response.body();
+                    questionId = quiz.getQuestionId();
+                    String text = quiz.getQuestionText();
+                    if (text == null || text.trim().isEmpty()) {
+                        tvQuestion.setText("Không tìm thấy câu hỏi cho bài học này.");
+                    } else {
+                        tvQuestion.setText(text);
+                        btnSubmit.setEnabled(true);
+                    }
+                } else {
+                    String msg = "Không thể tải câu hỏi.";
+                    if (response.body() != null && response.body().getMessage() != null
+                            && !response.body().getMessage().trim().isEmpty()) {
+                        msg = response.body().getMessage();
+                    }
+                    tvQuestion.setText(msg);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<QuizGetResponse> call, @NonNull Throwable t) {
+                if (!isAdded()) return;
+                tvQuestion.setText("Lỗi mạng khi tải câu hỏi.");
+            }
+        });
+    }
+
+    private void submitQuiz() {
         String input = etAnswer.getText() == null ? "" : etAnswer.getText().toString().trim();
         if (input.isEmpty()) {
             Toast.makeText(requireContext(), "Nhập câu trả lời trước khi nộp.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Mock rule: expected answer is "kotlin".
-        String normalized = input.toLowerCase(Locale.US);
-        boolean passed = "kotlin".equals(normalized);
-
-        int correctCount = passed ? 1 : 0;
-        float scorePercent = passed ? 100f : 0f;
-        int xpRewarded = passed ? 30 : 0;
-
-        if (passed) {
-            saveMockCourseProgress(20);
-        }
-
-        String message = passed
-                ? "Mock submit thành công. Bạn đã trả lời đúng câu điền từ."
-                : "Mock submit thành công, nhưng câu trả lời chưa đúng.";
-
-        Bundle resultArgs = new Bundle();
-        resultArgs.putString("lessonTitle", lessonTitle);
-        resultArgs.putString("message", message);
-        resultArgs.putInt("correctCount", correctCount);
-        resultArgs.putInt("totalQuestions", 1);
-        resultArgs.putFloat("scorePercent", scorePercent);
-        resultArgs.putInt("xpRewarded", xpRewarded);
-        resultArgs.putBoolean("passed", passed);
-
-        NavController navController = NavHostFragment.findNavController(this);
-        navController.navigate(R.id.quizResultFragment, resultArgs);
-    }
-
-    private void saveMockCourseProgress(int progressDelta) {
-        if (courseId == null || courseId.isEmpty() || !isAdded()) {
+        String userId = tokenManager.getUserId();
+        if (userId == null || userId.isEmpty()) {
+            Toast.makeText(requireContext(), "Vui lòng đăng nhập lại để nộp bài.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        SharedPreferences prefs = requireContext().getSharedPreferences(PREF_COURSE_PROGRESS, Context.MODE_PRIVATE);
-        int current = prefs.getInt(courseId, 0);
-        int next = Math.max(0, Math.min(100, current + progressDelta));
-        prefs.edit().putInt(courseId, next).apply();
+        btnSubmit.setEnabled(false);
+
+        SubmitFillBlankRequest.BlankAnswer answer = new SubmitFillBlankRequest.BlankAnswer(questionId, input);
+        SubmitFillBlankRequest request = new SubmitFillBlankRequest(
+                userId, lessonId, Collections.singletonList(answer));
+
+        quizApi.submitFillBlank(request).enqueue(new Callback<SubmitFillBlankResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<SubmitFillBlankResponse> call,
+                                   @NonNull Response<SubmitFillBlankResponse> response) {
+                if (!isAdded()) return;
+                btnSubmit.setEnabled(true);
+
+                if (response.isSuccessful() && response.body() != null) {
+                    navigateToResult(response.body());
+                } else {
+                    Toast.makeText(requireContext(), "Nộp bài thất bại.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<SubmitFillBlankResponse> call, @NonNull Throwable t) {
+                if (!isAdded()) return;
+                btnSubmit.setEnabled(true);
+                Toast.makeText(requireContext(), "Lỗi mạng khi nộp bài.", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void navigateToResult(SubmitFillBlankResponse result) {
+        boolean passed = result.getCorrectCount() > 0;
+        float scorePercent = result.getTotalQuestions() > 0
+                ? (result.getCorrectCount() * 100f) / result.getTotalQuestions()
+                : 0f;
+        int xpRewarded = passed ? 30 : 0;
+
+        String message = result.getMessage() != null ? result.getMessage()
+                : (passed ? "Bạn đã trả lời đúng!" : "Câu trả lời chưa đúng.");
+
+        Bundle args = new Bundle();
+        args.putString("lessonTitle", lessonTitle);
+        args.putString("message", message);
+        args.putInt("correctCount", result.getCorrectCount());
+        args.putInt("totalQuestions", result.getTotalQuestions());
+        args.putFloat("scorePercent", scorePercent);
+        args.putInt("xpRewarded", xpRewarded);
+        args.putBoolean("passed", passed);
+
+        NavController navController = NavHostFragment.findNavController(this);
+        navController.navigate(R.id.quizResultFragment, args);
     }
 }

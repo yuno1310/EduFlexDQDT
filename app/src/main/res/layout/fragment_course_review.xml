@@ -63,7 +63,7 @@
 
                 <androidx.appcompat.widget.AppCompatRatingBar
                     android:id="@+id/rating_course"
-                    style="@style/Widget.AppCompat.RatingBar.Indicator"
+                    style="?attr/ratingBarStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"

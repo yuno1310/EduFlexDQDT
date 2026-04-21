@@ -51,7 +51,7 @@
                     android:id="@+id/tv_fill_blank_quiz_question"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="[Mock] Android native ngôn ngữ hiện đại nhất mà team đang dùng là ____"
+                    android:text="Đang tải câu hỏi..."
                     android:textColor="@color/text_primary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
@@ -60,7 +60,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="Loại câu hỏi mới: điền từ (không phân biệt hoa thường)"
+                    android:text="Điền từ vào chỗ trống (không phân biệt hoa thường)"
                     android:textColor="@color/text_secondary"
                     android:textSize="13sp" />
 
@@ -82,7 +82,7 @@
                     android:layout_height="48dp"
                     android:layout_marginTop="18dp"
                     android:background="@drawable/bg_button_primary_rounded"
-                    android:text="Submit Mock"
+                    android:text="Nộp bài"
                     android:textColor="@color/text_on_brand"
                     android:textStyle="bold" />
             </LinearLayout>
