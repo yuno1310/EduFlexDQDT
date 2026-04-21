@@ -8,19 +8,19 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.eduflex.android.R;
-import com.eduflex.android.model.Course;
+import com.eduflex.android.model.EnrolledCourse;
 import java.util.List;
 
 public class ContinueLearningAdapter extends RecyclerView.Adapter<ContinueLearningAdapter.ViewHolder> {
 
     public interface OnCourseClickListener {
-        void onCourseClick(Course course);
+        void onCourseClick(EnrolledCourse course);
     }
 
-    private final List<Course> items;
+    private final List<EnrolledCourse> items;
     private final OnCourseClickListener listener;
 
-    public ContinueLearningAdapter(List<Course> items, OnCourseClickListener listener) {
+    public ContinueLearningAdapter(List<EnrolledCourse> items, OnCourseClickListener listener) {
         this.items = items;
         this.listener = listener;
     }
@@ -35,25 +35,16 @@ public class ContinueLearningAdapter extends RecyclerView.Adapter<ContinueLearni
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Course course = items.get(position);
+        EnrolledCourse course = items.get(position);
         holder.tvTitle.setText(course.getTitle());
 
-        int completedLessons = (position % 10) + 1;
-        int progressPercent = completedLessons * 10;
-        String status = course.getStatus();
-        if (status != null && "completed".equalsIgnoreCase(status)) {
-            completedLessons = 10;
-            progressPercent = 100;
-        }
-
-        holder.tvLessonCount.setText("Lesson " + completedLessons + " / 10");
+        int progressPercent = (int) Math.round(course.getProgressPercent());
         holder.progressBar.setProgress(progressPercent);
         holder.tvPercent.setText(progressPercent + "% complete");
+        holder.tvLessonCount.setText(course.getLearningMode() != null ? course.getLearningMode() : "");
 
         holder.itemView.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onCourseClick(course);
-            }
+            if (listener != null) listener.onCourseClick(course);
         });
     }
 

@@ -81,6 +81,13 @@ public class CourseDetailFragment extends Fragment {
         tvTitle.setText(courseTitle);
         tvDescription.setText(courseDescription);
 
+        Button btnEnroll = view.findViewById(R.id.btn_enroll);
+        btnEnroll.setOnClickListener(v -> {
+            btnEnroll.setEnabled(false);
+            btnEnroll.setText("Enrolled ✓");
+            Toast.makeText(requireContext(), "Enrolled in " + courseTitle + "!", Toast.LENGTH_SHORT).show();
+        });
+
         Button btnAiSummary = view.findViewById(R.id.btn_ai_summary);
         btnAiSummary.setOnClickListener(v -> openAiSummary());
 

@@ -34,9 +34,13 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import com.eduflex.android.api.CourseApi;
-import com.eduflex.android.model.CategoryListResponse;
+import com.eduflex.android.model.Category;
 import com.eduflex.android.model.Course;
 import com.eduflex.android.model.CourseListResponse;
+import com.eduflex.android.model.EnrolledCourse;
+import com.eduflex.android.model.EnrolledCoursesResponse;
+import java.util.Arrays;
+import java.util.List;
 
 public class HomeFragment extends Fragment {
 
@@ -198,22 +202,26 @@ public class HomeFragment extends Fragment {
         rv.setLayoutManager(new LinearLayoutManager(
                 getContext(), LinearLayoutManager.HORIZONTAL, false));
 
-        courseApi.getCourses().enqueue(new Callback<CourseListResponse>() {
+        String userId = tokenManager.getUserId();
+        if (userId == null) return;
+
+        courseApi.getEnrolledCourses(userId).enqueue(new Callback<EnrolledCoursesResponse>() {
             @Override
-            public void onResponse(Call<CourseListResponse> call, retrofit2.Response<CourseListResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    CourseListResponse body = response.body();
-                    if (body.getListCourse() != null) {
-                        rv.setAdapter(new ContinueLearningAdapter(body.getListCourse(), HomeFragment.this::onCourseClick));
+            public void onResponse(Call<EnrolledCoursesResponse> call, Response<EnrolledCoursesResponse> response) {
+                if (!isAdded()) return;
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    List<EnrolledCourse> courses = response.body().getEnrolledCourses();
+                    if (courses != null && !courses.isEmpty()) {
+                        rv.setAdapter(new ContinueLearningAdapter(courses, HomeFragment.this::onEnrolledCourseClick));
                     }
                 } else {
-                    Log.e(TAG, "Failed to load continue learning courses: " + response.code());
+                    Log.e(TAG, "Failed to load enrolled courses: " + response.code());
                 }
             }
 
             @Override
-            public void onFailure(Call<CourseListResponse> call, Throwable t) {
-                Log.e(TAG, "Network error loading continue learning courses: " + t.getMessage());
+            public void onFailure(Call<EnrolledCoursesResponse> call, Throwable t) {
+                Log.e(TAG, "Network error loading enrolled courses: " + t.getMessage());
             }
         });
     }
@@ -247,38 +255,37 @@ public class HomeFragment extends Fragment {
         rv.setLayoutManager(new LinearLayoutManager(
                 getContext(), LinearLayoutManager.HORIZONTAL, false));
 
-        courseApi.getCategories().enqueue(new Callback<CategoryListResponse>() {
-            @Override
-            public void onResponse(Call<CategoryListResponse> call, Response<CategoryListResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    CategoryListResponse body = response.body();
-                    if (body.getListCategory() != null) {
-                        rv.setAdapter(new CategoryAdapter(body.getListCategory()));
-                    }
-                } else {
-                    Log.e(TAG, "Failed to load categories: " + response.code());
-                    // Optionally show fallback UI or error message
-                }
-            }
-
-            @Override
-            public void onFailure(Call<CategoryListResponse> call, Throwable t) {
-                Log.e(TAG, "Network error loading categories: " + t.getMessage());
-                // Optionally show fallback UI or error message
-            }
-        });
+        List<Category> mockCategories = Arrays.asList(
+                new Category("1", "Programming"),
+                new Category("2", "Design"),
+                new Category("3", "Data Science"),
+                new Category("4", "Mobile Dev"),
+                new Category("5", "DevOps"),
+                new Category("6", "AI & ML")
+        );
+        rv.setAdapter(new CategoryAdapter(mockCategories));
     }
 
     private void onCourseClick(Course course) {
         String courseTitle = course.getTitle() != null ? course.getTitle() : "Untitled Course";
         String description = "Learn about " + courseTitle + " with hands-on projects and interactive lessons.";
-        
+
         Bundle args = new Bundle();
         args.putString("courseId", course.getCourseID());
         args.putString("courseTitle", courseTitle);
         args.putString("courseDescription", description);
-        
-        NavController navController = NavHostFragment.findNavController(this);
-        navController.navigate(R.id.courseDetailFragment, args);
+
+        NavHostFragment.findNavController(this).navigate(R.id.courseDetailFragment, args);
+    }
+
+    private void onEnrolledCourseClick(EnrolledCourse course) {
+        String courseTitle = course.getTitle() != null ? course.getTitle() : "Untitled Course";
+
+        Bundle args = new Bundle();
+        args.putString("courseId", course.getCourseId());
+        args.putString("courseTitle", courseTitle);
+        args.putString("courseDescription", course.getLearningMode() != null ? course.getLearningMode() : "");
+
+        NavHostFragment.findNavController(this).navigate(R.id.courseDetailFragment, args);
     }
 }

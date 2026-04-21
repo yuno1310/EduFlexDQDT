@@ -60,9 +60,17 @@
         android:name="com.eduflex.android.ui.lesson.LessonStudyFragment"
         android:label="Lesson Study">
         <argument
+            android:name="lessonId"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
             android:name="lessonTitle"
             app:argType="string"
             android:defaultValue="Untitled Lesson" />
+        <argument
+            android:name="courseId"
+            app:argType="string"
+            android:defaultValue="" />
         <argument
             android:name="contentType"
             app:argType="string"
