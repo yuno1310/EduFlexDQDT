@@ -60,9 +60,17 @@
         android:name="com.eduflex.android.ui.lesson.LessonStudyFragment"
         android:label="Lesson Study">
         <argument
+            android:name="lessonId"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
             android:name="lessonTitle"
             app:argType="string"
             android:defaultValue="Untitled Lesson" />
+        <argument
+            android:name="courseId"
+            app:argType="string"
+            android:defaultValue="" />
         <argument
             android:name="contentType"
             app:argType="string"
@@ -94,7 +102,7 @@
     <fragment
         android:id="@+id/fillBlankQuizMockFragment"
         android:name="com.eduflex.android.ui.quiz.FillBlankQuizMockFragment"
-        android:label="Fill Blank Quiz Mock">
+        android:label="Fill Blank Quiz">
         <argument
             android:name="courseId"
             app:argType="string"
@@ -174,6 +182,25 @@
             android:name="courseTitle"
             app:argType="string"
             android:defaultValue="Course" />
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/aiCourseSummaryFragment"
+        android:name="com.eduflex.android.ui.ai.AiCourseSummaryFragment"
+        android:label="AI Course Summary">
+        <argument
+            android:name="courseId"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
+            android:name="courseTitle"
+            app:argType="string"
+            android:defaultValue="Course" />
+        <argument
+            android:name="courseDescription"
+            app:argType="string"
+            android:defaultValue="" />
     </fragment>
 
 </navigation>

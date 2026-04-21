@@ -4,29 +4,44 @@ plugins {
 }
 
 val dotenvFile = rootProject.file(".env")
-val dotenvApiBaseUrl: String? = if (dotenvFile.exists()) {
+fun dotenvValue(key: String): String? = if (dotenvFile.exists()) {
     dotenvFile.readLines()
         .asSequence()
         .map { it.trim() }
         .filter { it.isNotEmpty() && !it.startsWith("#") && it.contains("=") }
         .map { line ->
-            val key = line.substringBefore("=").trim()
-            val value = line.substringAfter("=")
-                .trim()
-                .removeSurrounding("\"")
-                .removeSurrounding("'")
-            key to value
+            val k = line.substringBefore("=").trim()
+            val v = line.substringAfter("=").trim().removeSurrounding("\"").removeSurrounding("'")
+            k to v
         }
-        .firstOrNull { (key, _) -> key == "API_BASE_URL" }
+        .firstOrNull { (k, _) -> k == key }
         ?.second
-} else {
-    null
-}
+} else null
 
-val apiBaseUrl = dotenvApiBaseUrl
+val apiBaseUrl = dotenvValue("API_BASE_URL")
     ?: providers.gradleProperty("API_BASE_URL").orNull
     ?: providers.environmentVariable("API_BASE_URL").orNull
     ?: "http://10.0.2.2:8080/"
+
+val geminiApiKey = dotenvValue("GEMINI_API_KEY")
+    ?: providers.gradleProperty("GEMINI_API_KEY").orNull
+    ?: providers.environmentVariable("GEMINI_API_KEY").orNull
+    ?: ""
+
+val openRouterApiKey = dotenvValue("OPENROUTER_API_KEY")
+    ?: providers.gradleProperty("OPENROUTER_API_KEY").orNull
+    ?: providers.environmentVariable("OPENROUTER_API_KEY").orNull
+    ?: ""
+
+val anthropicApiKey = dotenvValue("ANTHROPIC_API_KEY")
+    ?: providers.gradleProperty("ANTHROPIC_API_KEY").orNull
+    ?: providers.environmentVariable("ANTHROPIC_API_KEY").orNull
+    ?: ""
+
+val groqApiKey = dotenvValue("GROQ_API_KEY")
+    ?: providers.gradleProperty("GROQ_API_KEY").orNull
+    ?: providers.environmentVariable("GROQ_API_KEY").orNull
+    ?: ""
 
 android {
     namespace = "com.eduflex.android"
@@ -40,6 +55,10 @@ android {
         versionName = "1.0"
 
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
+        buildConfigField("String", "OPENROUTER_API_KEY", "\"$openRouterApiKey\"")
+        buildConfigField("String", "ANTHROPIC_API_KEY", "\"$anthropicApiKey\"")
+        buildConfigField("String", "GROQ_API_KEY", "\"$groqApiKey\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -81,6 +81,16 @@ public class CourseDetailFragment extends Fragment {
         tvTitle.setText(courseTitle);
         tvDescription.setText(courseDescription);
 
+        Button btnEnroll = view.findViewById(R.id.btn_enroll);
+        btnEnroll.setOnClickListener(v -> {
+            btnEnroll.setEnabled(false);
+            btnEnroll.setText("Enrolled ✓");
+            Toast.makeText(requireContext(), "Enrolled in " + courseTitle + "!", Toast.LENGTH_SHORT).show();
+        });
+
+        Button btnAiSummary = view.findViewById(R.id.btn_ai_summary);
+        btnAiSummary.setOnClickListener(v -> openAiSummary());
+
         Button btnTestFillBlankQuiz = view.findViewById(R.id.btn_test_fill_blank_quiz);
         btnTestFillBlankQuiz.setOnClickListener(v -> openFillBlankQuizMock());
         Button btnCourseReview = view.findViewById(R.id.btn_course_review);
@@ -174,6 +184,14 @@ public class CourseDetailFragment extends Fragment {
 
         args.putString("lessonContent", getMockContent(lesson.getTitle(), type));
         navController.navigate(R.id.lessonStudyFragment, args);
+    }
+
+    private void openAiSummary() {
+        Bundle args = new Bundle();
+        args.putString("courseId", courseId == null ? "" : courseId);
+        args.putString("courseTitle", courseTitle == null ? "" : courseTitle);
+        args.putString("courseDescription", courseDescription == null ? "" : courseDescription);
+        NavHostFragment.findNavController(this).navigate(R.id.aiCourseSummaryFragment, args);
     }
 
     private void openFillBlankQuizMock() {
