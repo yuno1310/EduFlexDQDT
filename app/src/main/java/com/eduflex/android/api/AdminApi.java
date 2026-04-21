@@ -1,6 +1,7 @@
 package com.eduflex.android.api;
 
 import com.eduflex.android.model.AdminUserResponse;
+import com.eduflex.android.model.DeleteCourseResponse;
 import com.eduflex.android.model.DeleteUserResponse;
 
 import retrofit2.Call;
@@ -15,4 +16,7 @@ public interface AdminApi {
 
     @DELETE("/api/admin/users/{userId}")
     Call<DeleteUserResponse> deleteUser(@Path("userId") String userId);
+
+    @DELETE("/api/admin/courses/{courseId}")
+    Call<DeleteCourseResponse> deleteCourse(@Path("courseId") String courseId);
 }
