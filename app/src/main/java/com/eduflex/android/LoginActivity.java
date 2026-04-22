@@ -92,6 +92,7 @@ public class LoginActivity extends AppCompatActivity {
                     tokenManager.saveRole(response.body().getRole());
                     tokenManager.saveFullName(response.body().getFullName());
                     tokenManager.saveEmail(response.body().getEmail());
+                    tokenManager.saveAvatarUrl(response.body().getAvatarUrl());
                     SessionManager.resetLogoutState();
                     Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
 

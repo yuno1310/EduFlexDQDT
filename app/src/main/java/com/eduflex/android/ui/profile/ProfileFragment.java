@@ -163,6 +163,17 @@ public class ProfileFragment extends Fragment {
     }
 
     private void loadProfile() {
+        // Seed from TokenManager on first load so login data is reflected
+        if (profilePrefs.getString(KEY_NAME, null) == null && tokenManager.getFullName() != null) {
+            profilePrefs.edit().putString(KEY_NAME, tokenManager.getFullName()).apply();
+        }
+        if (profilePrefs.getString(KEY_EMAIL, null) == null && tokenManager.getEmail() != null) {
+            profilePrefs.edit().putString(KEY_EMAIL, tokenManager.getEmail()).apply();
+        }
+        if (profilePrefs.getString(KEY_PHOTO_URI, null) == null && tokenManager.getAvatarUrl() != null) {
+            profilePrefs.edit().putString(KEY_PHOTO_URI, tokenManager.getAvatarUrl()).apply();
+        }
+
         String name = profilePrefs.getString(KEY_NAME, "Student");
         String email = profilePrefs.getString(KEY_EMAIL, "");
         String goal = profilePrefs.getString(KEY_GOAL, "");
@@ -178,10 +189,14 @@ public class ProfileFragment extends Fragment {
         }
 
         if (photoUri != null) {
-            try {
-                ivProfileAvatar.setImageURI(Uri.parse(photoUri));
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to load saved photo: " + e.getMessage());
+            if (photoUri.startsWith("http")) {
+                com.bumptech.glide.Glide.with(this).load(photoUri).circleCrop().into(ivProfileAvatar);
+            } else {
+                try {
+                    ivProfileAvatar.setImageURI(Uri.parse(photoUri));
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to load saved photo: " + e.getMessage());
+                }
             }
         }
     }
@@ -385,7 +400,9 @@ public class ProfileFragment extends Fragment {
                     if (response.isSuccessful() && response.body() != null) {
                         Object urlObj = response.body().get("url");
                         if (urlObj instanceof String) {
-                            profilePrefs.edit().putString(KEY_PHOTO_URI, (String) urlObj).apply();
+                            String url = (String) urlObj;
+                            profilePrefs.edit().putString(KEY_PHOTO_URI, url).apply();
+                            com.bumptech.glide.Glide.with(ProfileFragment.this).load(url).circleCrop().into(ivProfileAvatar);
                         }
                         Toast.makeText(requireContext(), "Avatar updated", Toast.LENGTH_SHORT).show();
                     } else {
