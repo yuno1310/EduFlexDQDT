@@ -141,27 +141,31 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void syncBottomNavSelection(BottomNavigationView bottomNav, NavController navController) {
+        NavigationUI.setupWithNavController(bottomNav, navController);
+
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
-            int selectedItemId = resolveBottomNavItem(destination);
+            int selectedItemId = resolveBottomNavItem(destination, arguments);
             if (selectedItemId != 0) {
                 bottomNav.getMenu().findItem(selectedItemId).setChecked(true);
             }
         });
     }
 
-    private int resolveBottomNavItem(NavDestination destination) {
+    private int resolveBottomNavItem(NavDestination destination, android.os.Bundle arguments) {
         int id = destination.getId();
 
-        if (id == R.id.homeFragment || id == R.id.courseDetailFragment
+        if (id == R.id.courseDetailFragment
                 || id == R.id.lessonStudyFragment || id == R.id.quizFragment
                 || id == R.id.leaderboardFragment || id == R.id.courseReviewFragment
                 || id == R.id.certificateFragment || id == R.id.quizResultFragment
-                || id == R.id.fillBlankQuizMockFragment) {
-            return R.id.homeFragment;
+                || id == R.id.fillBlankQuizMockFragment || id == R.id.aiCourseSummaryFragment) {
+            int sourceTab = arguments != null ? arguments.getInt("sourceTab", 0) : 0;
+            return sourceTab != 0 ? sourceTab : R.id.homeFragment;
         }
 
-        if (id == R.id.coursesFragment || id == R.id.searchFragment
-                || id == R.id.cartFragment || id == R.id.profileFragment) {
+        if (id == R.id.homeFragment || id == R.id.coursesFragment
+                || id == R.id.searchFragment || id == R.id.cartFragment
+                || id == R.id.profileFragment) {
             return id;
         }
 

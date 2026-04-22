@@ -1,6 +1,8 @@
 package com.eduflex.android.ui.search;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
@@ -15,28 +17,26 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.eduflex.android.R;
 import com.eduflex.android.adapter.CourseCardAdapter;
+import com.eduflex.android.api.ApiClient;
+import com.eduflex.android.api.CourseApi;
 import com.eduflex.android.model.Course;
+import com.eduflex.android.model.CourseSearchResult;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class SearchFragment extends Fragment {
 
-    private static final List<Course> MOCK_COURSES = Arrays.asList(
-            new Course("1", "Introduction to Java Programming", "Online", "Available"),
-            new Course("2", "Android Development with Kotlin", "Online", "Available"),
-            new Course("3", "Data Structures & Algorithms", "Offline", "Available"),
-            new Course("4", "Web Development with React", "Online", "Available"),
-            new Course("5", "Machine Learning Fundamentals", "Online", "Available"),
-            new Course("6", "Database Design with PostgreSQL", "Offline", "Available"),
-            new Course("7", "UI/UX Design Principles", "Online", "Available"),
-            new Course("8", "Python for Beginners", "Online", "Available"),
-            new Course("9", "Spring Boot REST APIs", "Online", "Available"),
-            new Course("10", "DevOps and CI/CD Pipelines", "Offline", "Available")
-    );
+    private static final long DEBOUNCE_MS = 300;
 
-    private List<Course> filteredCourses = new ArrayList<>();
+    private List<Course> displayedCourses = new ArrayList<>();
     private CourseCardAdapter adapter;
+    private CourseApi courseApi;
+    private Call<List<CourseSearchResult>> pendingCall;
+    private final Handler debounceHandler = new Handler(Looper.getMainLooper());
+    private Runnable pendingSearch;
 
     public SearchFragment() {
         super(R.layout.fragment_search);
@@ -46,12 +46,14 @@ public class SearchFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        courseApi = ApiClient.createAuthenticatedService(CourseApi.class);
+
         EditText etSearch = view.findViewById(R.id.et_search);
         TextView tvEmpty = view.findViewById(R.id.tv_search_empty);
         RecyclerView rvResults = view.findViewById(R.id.rv_search_results);
 
         rvResults.setLayoutManager(new LinearLayoutManager(requireContext()));
-        adapter = new CourseCardAdapter(filteredCourses, course -> openCourseDetail(course));
+        adapter = new CourseCardAdapter(displayedCourses, course -> openCourseDetail(course));
         rvResults.setAdapter(adapter);
 
         etSearch.addTextChangedListener(new TextWatcher() {
@@ -60,29 +62,73 @@ public class SearchFragment extends Fragment {
 
             @Override
             public void afterTextChanged(Editable s) {
-                String query = s.toString().trim().toLowerCase();
-                filteredCourses.clear();
+                String query = s.toString().trim();
 
                 if (query.isEmpty()) {
+                    debounceHandler.removeCallbacks(pendingSearch);
+                    cancelPending();
+                    displayedCourses.clear();
+                    adapter.notifyDataSetChanged();
                     rvResults.setVisibility(View.GONE);
                     tvEmpty.setVisibility(View.GONE);
-                } else {
-                    for (Course c : MOCK_COURSES) {
-                        if (c.getTitle().toLowerCase().contains(query)) {
-                            filteredCourses.add(c);
-                        }
-                    }
-                    if (filteredCourses.isEmpty()) {
-                        rvResults.setVisibility(View.GONE);
-                        tvEmpty.setVisibility(View.VISIBLE);
-                    } else {
-                        tvEmpty.setVisibility(View.GONE);
-                        rvResults.setVisibility(View.VISIBLE);
+                    return;
+                }
+
+                debounceHandler.removeCallbacks(pendingSearch);
+                pendingSearch = () -> searchCourses(query, rvResults, tvEmpty);
+                debounceHandler.postDelayed(pendingSearch, DEBOUNCE_MS);
+            }
+        });
+    }
+
+    private void searchCourses(String keyword, RecyclerView rvResults, TextView tvEmpty) {
+        cancelPending();
+
+        pendingCall = courseApi.searchCourses(keyword);
+        pendingCall.enqueue(new Callback<List<CourseSearchResult>>() {
+            @Override
+            public void onResponse(Call<List<CourseSearchResult>> call, Response<List<CourseSearchResult>> response) {
+                if (!isAdded()) return;
+                displayedCourses.clear();
+                if (response.isSuccessful() && response.body() != null) {
+                    for (CourseSearchResult result : response.body()) {
+                        displayedCourses.add(new Course(result.getCourseId(), result.getTitle(), "", "Available"));
                     }
                 }
                 adapter.notifyDataSetChanged();
+                if (displayedCourses.isEmpty()) {
+                    rvResults.setVisibility(View.GONE);
+                    tvEmpty.setVisibility(View.VISIBLE);
+                } else {
+                    tvEmpty.setVisibility(View.GONE);
+                    rvResults.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<CourseSearchResult>> call, Throwable t) {
+                if (!isAdded() || call.isCanceled()) return;
+                displayedCourses.clear();
+                adapter.notifyDataSetChanged();
+                rvResults.setVisibility(View.GONE);
+                tvEmpty.setVisibility(View.VISIBLE);
+                tvEmpty.setText("Search failed. Check your connection.");
             }
         });
+    }
+
+    private void cancelPending() {
+        if (pendingCall != null) {
+            pendingCall.cancel();
+            pendingCall = null;
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        debounceHandler.removeCallbacks(pendingSearch);
+        cancelPending();
     }
 
     private void openCourseDetail(Course course) {

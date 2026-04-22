@@ -53,6 +53,10 @@
             android:name="courseDescription"
             app:argType="string"
             android:defaultValue="No description" />
+        <argument
+            android:name="sourceTab"
+            app:argType="integer"
+            android:defaultValue="0" />
     </fragment>
 
     <fragment

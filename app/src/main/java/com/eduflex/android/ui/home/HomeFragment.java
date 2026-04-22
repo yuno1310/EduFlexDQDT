@@ -285,6 +285,7 @@ public class HomeFragment extends Fragment {
         args.putString("courseId", course.getCourseId());
         args.putString("courseTitle", courseTitle);
         args.putString("courseDescription", course.getLearningMode() != null ? course.getLearningMode() : "");
+        args.putInt("progressPercent", (int) Math.round(course.getProgressPercent()));
 
         NavHostFragment.findNavController(this).navigate(R.id.courseDetailFragment, args);
     }
