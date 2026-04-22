@@ -60,4 +60,20 @@ public class EnrollmentRepository {
         .and(Enrollments.ENROLLMENTS.COURSE_ID.eq(courseId))
         .execute();
   }
+
+  public boolean isUserEnrolled(UUID userId, UUID courseId) {
+    return dsl.fetchExists(
+        dsl.selectOne()
+            .from(com.eduflex.generated.tables.Enrollments.ENROLLMENTS)
+            .where(com.eduflex.generated.tables.Enrollments.ENROLLMENTS.USER_ID.eq(userId))
+            .and(com.eduflex.generated.tables.Enrollments.ENROLLMENTS.COURSE_ID.eq(courseId)));
+  }
+
+  public void enrollUser(UUID userId, UUID courseId) {
+    var e = com.eduflex.generated.tables.Enrollments.ENROLLMENTS;
+    dsl.insertInto(e)
+        .set(e.USER_ID, userId)
+        .set(e.COURSE_ID, courseId)
+        .execute();
+  }
 }

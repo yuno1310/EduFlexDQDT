@@ -1,46 +1,50 @@
 package com.eduflex.service;
 
-import org.jooq.DSLContext;
+import com.eduflex.dto.ReviewDTO.SubmitReviewRequest;
+import com.eduflex.dto.ReviewDTO.SubmitReviewResponse;
+import com.eduflex.repository.CourseReviewRepository;
+import com.eduflex.repository.EnrollmentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.eduflex.dto.ReviewDTO.*;
-import com.eduflex.generated.tables.CourseReviews;
-
-import java.util.UUID;
 
 @Service
 public class SubmitReviewUseCase {
 
   @Autowired
-  private DSLContext dsl;
+  private CourseReviewRepository courseReviewRepository;
 
-  public SubmitReviewResponse execute(UUID courseId, SubmitReviewRequest request) {
+  @Autowired
+  private EnrollmentRepository enrollmentRepository;
+
+  public SubmitReviewResponse execute(SubmitReviewRequest request) {
+
+    if (request.courseId() == null) {
+      return new SubmitReviewResponse(false, "Course ID is missing!");
+    }
     if (request.userId() == null) {
-      return new SubmitReviewResponse(false, "Không tìm thấy thông tin User!");
+      return new SubmitReviewResponse(false, "User ID is missing!");
     }
-    if (request.rating() == null) {
-      return new SubmitReviewResponse(false, "Vui lòng chọn số sao đánh giá!");
-    }
-    if (request.comment() == null || request.comment().trim().isEmpty()) {
-      return new SubmitReviewResponse(false, "Vui lòng nhập nội dung đánh giá!");
-    }
-    if (request.rating() < 1 || request.rating() > 5) {
+    if (request.rating() == null || request.rating() < 1 || request.rating() > 5) {
       return new SubmitReviewResponse(false, "Rating must be between 1 and 5 stars!");
     }
+    if (request.comment() == null || request.comment().trim().isEmpty()) {
+      return new SubmitReviewResponse(false, "Please enter your review comment!");
+    }
 
-    var r = CourseReviews.COURSE_REVIEWS;
+    boolean isEnrolled = enrollmentRepository.isUserEnrolled(request.userId(), request.courseId());
+    if (!isEnrolled) {
+      return new SubmitReviewResponse(false, "You must enroll in this course before leaving a review!");
+    }
 
-    dsl.insertInto(r)
-        .set(r.USER_ID, request.userId())
-        .set(r.COURSE_ID, courseId)
-        .set(r.RATING, request.rating())
-        .set(r.COMMENT, request.comment())
-        .onConflict(r.USER_ID, r.COURSE_ID)
-        .doUpdate()
-        .set(r.RATING, request.rating())
-        .set(r.COMMENT, request.comment())
-        .execute();
-
-    return new SubmitReviewResponse(true, "Review saved successfully!");
+    try {
+      courseReviewRepository.upsertReview(
+          request.userId(),
+          request.courseId(),
+          request.rating(),
+          request.comment());
+      return new SubmitReviewResponse(true, "Review saved successfully!");
+    } catch (Exception e) {
+      return new SubmitReviewResponse(false, "System error: Unable to save review.");
+    }
   }
 }
