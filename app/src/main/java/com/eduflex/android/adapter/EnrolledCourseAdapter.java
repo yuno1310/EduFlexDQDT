@@ -16,10 +16,16 @@ import java.util.List;
 
 public class EnrolledCourseAdapter extends RecyclerView.Adapter<EnrolledCourseAdapter.ViewHolder> {
 
-    private final List<EnrolledCourse> items;
+    public interface OnCourseClickListener {
+        void onCourseClick(EnrolledCourse course);
+    }
 
-    public EnrolledCourseAdapter(List<EnrolledCourse> items) {
+    private final List<EnrolledCourse> items;
+    private final OnCourseClickListener listener;
+
+    public EnrolledCourseAdapter(List<EnrolledCourse> items, OnCourseClickListener listener) {
         this.items = items;
+        this.listener = listener;
     }
 
     @NonNull
@@ -39,6 +45,9 @@ public class EnrolledCourseAdapter extends RecyclerView.Adapter<EnrolledCourseAd
         int progress = (int) course.getProgressPercent();
         holder.progressBar.setProgress(progress);
         holder.tvProgressLabel.setText(progress + "% complete");
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) listener.onCourseClick(course);
+        });
     }
 
     @Override

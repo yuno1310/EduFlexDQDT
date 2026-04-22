@@ -9,6 +9,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -76,7 +77,7 @@ public class CoursesFragment extends Fragment {
                     if (courses == null || courses.isEmpty()) {
                         showEmpty("You haven't enrolled in any courses yet.");
                     } else {
-                        rvEnrolledCourses.setAdapter(new EnrolledCourseAdapter(courses));
+                        rvEnrolledCourses.setAdapter(new EnrolledCourseAdapter(courses, CoursesFragment.this::openCourseDetail));
                         rvEnrolledCourses.setVisibility(View.VISIBLE);
                         tvCoursesEmpty.setVisibility(View.GONE);
                     }
@@ -94,6 +95,16 @@ public class CoursesFragment extends Fragment {
                 showEmpty("Network error. Please check your connection.");
             }
         });
+    }
+
+    private void openCourseDetail(EnrolledCourse course) {
+        Bundle args = new Bundle();
+        args.putString("courseId", course.getCourseId());
+        args.putString("courseTitle", course.getTitle() != null ? course.getTitle() : "");
+        args.putString("courseDescription", course.getLearningMode() != null ? course.getLearningMode() : "");
+        args.putInt("progressPercent", (int) Math.round(course.getProgressPercent()));
+        args.putInt("sourceTab", R.id.coursesFragment);
+        NavHostFragment.findNavController(this).navigate(R.id.courseDetailFragment, args);
     }
 
     private void setLoading(boolean loading) {
