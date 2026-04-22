@@ -254,7 +254,9 @@
                         android:hint="@string/set_your_goal"
                         android:inputType="textMultiLine"
                         android:minLines="2"
-                        android:maxLines="4" />
+                        android:maxLines="4"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_secondary" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Goal chips (quick select) -->
@@ -356,7 +358,9 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/full_name_hint"
-                        android:inputType="textPersonName" />
+                        android:inputType="textPersonName"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_secondary" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <LinearLayout

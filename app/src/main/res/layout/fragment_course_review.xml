@@ -89,7 +89,9 @@
                     android:gravity="top|start"
                     android:hint="Viết nhận xét của bạn..."
                     android:inputType="textMultiLine|textCapSentences"
-                    android:padding="10dp" />
+                    android:padding="10dp"
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/text_secondary" />
 
                 <Button
                     android:id="@+id/btn_submit_review"

@@ -1,7 +1,5 @@
 package com.eduflex.android.ui.review;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -17,13 +15,13 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.eduflex.android.R;
 import com.eduflex.android.api.ApiClient;
-import com.eduflex.android.api.CourseApi;
-import com.eduflex.android.auth.TokenManager;
-import com.eduflex.android.model.ReviewRequest;
-import com.eduflex.android.model.ReviewResponse;
+import com.eduflex.android.api.CourseReviewApi;
+import com.eduflex.android.model.CourseReviewItem;
+import com.eduflex.android.model.CourseReviewListResponse;
+import com.eduflex.android.model.CourseReviewRequest;
+import com.eduflex.android.model.CourseReviewSubmitResponse;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import retrofit2.Call;
@@ -32,11 +30,9 @@ import retrofit2.Response;
 
 public class CourseReviewFragment extends Fragment {
 
-    private static final String PREF_COURSE_REVIEW = "course_reviews";
-
     private String courseId;
     private String courseTitle;
-    private CourseApi courseApi;
+    private CourseReviewApi courseReviewApi;
 
     public CourseReviewFragment() {
         super(R.layout.fragment_course_review);
@@ -49,6 +45,7 @@ public class CourseReviewFragment extends Fragment {
         Bundle args = getArguments();
         courseId = args != null ? args.getString("courseId", "") : "";
         courseTitle = args != null ? args.getString("courseTitle", "Course") : "Course";
+        courseReviewApi = ApiClient.createAuthenticatedService(CourseReviewApi.class);
 
         TextView tvTitle = view.findViewById(R.id.tv_review_course_title);
         RatingBar ratingBar = view.findViewById(R.id.rating_course);
@@ -57,13 +54,16 @@ public class CourseReviewFragment extends Fragment {
         Button btnSubmit = view.findViewById(R.id.btn_submit_review);
         Button btnBack = view.findViewById(R.id.btn_back_review);
 
-        courseApi = ApiClient.createAuthenticatedService(CourseApi.class);
-
         tvTitle.setText(courseTitle);
-        bindSavedReview(ratingBar, etComment, tvSavedReview);
+        loadReviews(tvSavedReview);
 
         btnBack.setOnClickListener(v -> NavHostFragment.findNavController(this).popBackStack());
         btnSubmit.setOnClickListener(v -> {
+            if (courseId == null || courseId.isEmpty()) {
+                Toast.makeText(requireContext(), "Invalid course.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             float rating = ratingBar.getRating();
             String comment = etComment.getText() == null ? "" : etComment.getText().toString().trim();
 
@@ -76,70 +76,98 @@ public class CourseReviewFragment extends Fragment {
                 return;
             }
 
-            btnSubmit.setEnabled(false);
-            String userId = new TokenManager(requireContext()).getUserId();
-            ReviewRequest request = new ReviewRequest(courseId, userId, (int) rating, comment);
-            courseApi.submitReview(request).enqueue(new Callback<ReviewResponse>() {
-                @Override
-                public void onResponse(@NonNull Call<ReviewResponse> call, @NonNull Response<ReviewResponse> response) {
-                    if (!isAdded()) return;
-                    btnSubmit.setEnabled(true);
-                    saveReview(rating, comment);
-                    bindSavedReview(ratingBar, etComment, tvSavedReview);
-                    Toast.makeText(requireContext(), "Review submitted.", Toast.LENGTH_SHORT).show();
-                }
-
-                @Override
-                public void onFailure(@NonNull Call<ReviewResponse> call, @NonNull Throwable t) {
-                    if (!isAdded()) return;
-                    btnSubmit.setEnabled(true);
-                    Toast.makeText(requireContext(), "Failed to submit review. Try again.", Toast.LENGTH_SHORT).show();
-                }
-            });
+            submitReview(btnSubmit, tvSavedReview, (int) rating, comment);
         });
     }
 
-    private void bindSavedReview(RatingBar ratingBar, EditText etComment, TextView tvSavedReview) {
+    private void submitReview(Button btnSubmit, TextView tvSavedReview, int rating, String comment) {
+        btnSubmit.setEnabled(false);
+        courseReviewApi.submitReview(courseId, new CourseReviewRequest(rating, comment))
+                .enqueue(new Callback<CourseReviewSubmitResponse>() {
+                    @Override
+                    public void onResponse(@NonNull Call<CourseReviewSubmitResponse> call,
+                                           @NonNull Response<CourseReviewSubmitResponse> response) {
+                        if (!isAdded()) {
+                            return;
+                        }
+                        btnSubmit.setEnabled(true);
+                        if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                            Toast.makeText(requireContext(), "Review submitted.", Toast.LENGTH_SHORT).show();
+                            loadReviews(tvSavedReview);
+                        } else {
+                            String message = response.body() != null ? response.body().getMessage() : "Failed to submit review.";
+                            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<CourseReviewSubmitResponse> call, @NonNull Throwable t) {
+                        if (!isAdded()) {
+                            return;
+                        }
+                        btnSubmit.setEnabled(true);
+                        Toast.makeText(requireContext(), "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void loadReviews(TextView tvSavedReview) {
         if (courseId == null || courseId.isEmpty()) {
             tvSavedReview.setText("No course selected.");
             return;
         }
 
-        SharedPreferences prefs = requireContext().getSharedPreferences(PREF_COURSE_REVIEW, Context.MODE_PRIVATE);
-        float savedRating = prefs.getFloat(courseId + "_rating", 0f);
-        String savedComment = prefs.getString(courseId + "_comment", "");
-        String savedTime = prefs.getString(courseId + "_time", "");
+        courseReviewApi.getCourseReviews(courseId).enqueue(new Callback<CourseReviewListResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<CourseReviewListResponse> call,
+                                   @NonNull Response<CourseReviewListResponse> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (!response.isSuccessful() || response.body() == null || !response.body().isSuccess()) {
+                    tvSavedReview.setText("No review yet.");
+                    return;
+                }
 
-        if (savedRating > 0f) {
-            ratingBar.setRating(savedRating);
-        }
-        if (!savedComment.isEmpty()) {
-            etComment.setText(savedComment);
-        }
+                List<CourseReviewItem> reviews = response.body().getReviews();
+                if (reviews == null || reviews.isEmpty()) {
+                    tvSavedReview.setText("No review yet.");
+                    return;
+                }
 
-        if (!savedComment.isEmpty() && !savedTime.isEmpty()) {
-            tvSavedReview.setText(String.format(
-                    Locale.getDefault(),
-                    "Last review: %.1f★ • %s\n%s",
-                    savedRating,
-                    savedTime,
-                    savedComment
-            ));
-        } else {
-            tvSavedReview.setText("No review yet.");
-        }
-    }
+                StringBuilder builder = new StringBuilder("Recent feedback\n");
+                int maxItems = Math.min(3, reviews.size());
+                for (int i = 0; i < maxItems; i++) {
+                    CourseReviewItem review = reviews.get(i);
+                    String reviewer = review.getReviewerName() == null || review.getReviewerName().trim().isEmpty()
+                            ? "Learner"
+                            : review.getReviewerName().trim();
+                    String time = review.getCreatedAt() == null ? "" : review.getCreatedAt();
+                    String reviewComment = review.getComment() == null ? "" : review.getComment();
 
-    private void saveReview(float rating, String comment) {
-        if (courseId == null || courseId.isEmpty()) {
-            return;
-        }
-        String time = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(new Date());
-        SharedPreferences prefs = requireContext().getSharedPreferences(PREF_COURSE_REVIEW, Context.MODE_PRIVATE);
-        prefs.edit()
-                .putFloat(courseId + "_rating", rating)
-                .putString(courseId + "_comment", comment)
-                .putString(courseId + "_time", time)
-                .apply();
+                    builder.append(String.format(
+                            Locale.getDefault(),
+                            "%d★ • %s • %s\n%s",
+                            review.getRating(),
+                            reviewer,
+                            time,
+                            reviewComment
+                    ));
+                    if (i < maxItems - 1) {
+                        builder.append("\n\n");
+                    }
+                }
+
+                tvSavedReview.setText(builder.toString());
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<CourseReviewListResponse> call, @NonNull Throwable t) {
+                if (!isAdded()) {
+                    return;
+                }
+                tvSavedReview.setText("Failed to load reviews.");
+            }
+        });
     }
 }
