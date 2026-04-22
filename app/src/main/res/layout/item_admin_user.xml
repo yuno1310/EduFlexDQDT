@@ -16,16 +16,29 @@
         android:gravity="center_vertical"
         android:padding="14dp">
 
-        <!-- Avatar circle with first letter -->
-        <TextView
-            android:id="@+id/tv_avatar_letter"
+        <!-- Avatar circle with first letter or Image -->
+        <FrameLayout
             android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:gravity="center"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_on_brand"
-            android:background="@drawable/bg_rank_circle" />
+            android:layout_height="44dp">
+
+            <TextView
+                android:id="@+id/tv_avatar_letter"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_on_brand"
+                android:background="@drawable/bg_rank_circle" />
+
+            <ImageView
+                android:id="@+id/iv_user_avatar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:visibility="gone"
+                android:contentDescription="User Avatar" />
+        </FrameLayout>
 
         <!-- User info -->
         <LinearLayout
@@ -114,13 +127,13 @@
         </LinearLayout>
 
         <!-- Delete button -->
-        <ImageView
+        <ImageButton
             android:id="@+id/btn_delete_user"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_delete"
-            android:padding="6dp"
-            android:contentDescription="Delete user"
-            android:background="?attr/selectableItemBackgroundBorderless" />
+            app:tint="@color/danger"
+            android:contentDescription="Delete user" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>

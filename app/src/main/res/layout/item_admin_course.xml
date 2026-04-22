@@ -21,18 +21,34 @@
         <!-- Course Icon/Avatar -->
         <FrameLayout
             android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="@drawable/bg_circle_avatar">
-            
-            <TextView
-                android:id="@+id/tv_course_initial"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                tools:text="C"
-                android:textColor="@color/cyan_primary_dark"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+            android:layout_height="48dp">
+
+            <!-- Fallback: initial letter circle -->
+            <FrameLayout
+                android:id="@+id/fl_course_initial"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_circle_avatar">
+
+                <TextView
+                    android:id="@+id/tv_course_initial"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    tools:text="C"
+                    android:textColor="@color/cyan_primary_dark"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+            </FrameLayout>
+
+            <!-- Course image (loaded from URL) -->
+            <ImageView
+                android:id="@+id/iv_course_image"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:visibility="gone"
+                android:contentDescription="Course image" />
         </FrameLayout>
 
         <!-- Course Details -->
@@ -70,6 +86,16 @@
                 android:textSize="12sp"
                 android:layout_marginTop="4dp" />
         </LinearLayout>
+
+        <!-- Edit Action -->
+        <ImageButton
+            android:id="@+id/btn_edit_course"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_edit"
+            app:tint="@color/cyan_primary_dark"
+            android:contentDescription="Edit course" />
 
         <!-- Delete Action -->
         <ImageButton

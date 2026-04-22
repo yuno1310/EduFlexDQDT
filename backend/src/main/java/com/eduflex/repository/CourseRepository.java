@@ -34,13 +34,18 @@ public class CourseRepository {
         Courses.COURSES.COURSE_ID,
         Courses.COURSES.TITLE,
         Courses.COURSES.LEARNING_MODEL,
-        Courses.COURSES.STATUS)
+        Courses.COURSES.STATUS,
+        Courses.COURSES.DESCRIPTION,
+        Courses.COURSES.IMAGE_URL,
+        Courses.COURSES.PRICE)
         .from(Courses.COURSES)
         .fetch();
     if (records != null) {
       List<CourseInfo> list = new ArrayList<CourseInfo>();
       for (var record : records) {
-        CourseInfo course = new CourseInfo(record.value1(), record.value2(), record.value3(), record.value4());
+        CourseInfo course = new CourseInfo(
+            record.value1(), record.value2(), record.value3(), record.value4(),
+            record.value5(), record.value6(), record.value7());
         list.add(course);
       }
       return list;
@@ -94,6 +99,19 @@ public class CourseRepository {
     return dsl.deleteFrom(Courses.COURSES)
         .where(Courses.COURSES.COURSE_ID.eq(courseId))
         .execute() > 0;
+  }
+
+  public boolean updateCourse(UUID courseId, String title, String learningModel, String status,
+                               String imageUrl, Long price, String description) {
+    var update = dsl.update(Courses.COURSES);
+    var step = update.set(Courses.COURSES.TITLE, title)
+        .set(Courses.COURSES.LEARNING_MODEL, learningModel)
+        .set(Courses.COURSES.STATUS, status)
+        .set(Courses.COURSES.IMAGE_URL, imageUrl)
+        .set(Courses.COURSES.PRICE, price)
+        .set(Courses.COURSES.DESCRIPTION, description)
+        .where(Courses.COURSES.COURSE_ID.eq(courseId));
+    return step.execute() > 0;
   }
 
   public List<CourseSuggestionResponse> searchCoursesByKeyword(String keyword, int limit) {

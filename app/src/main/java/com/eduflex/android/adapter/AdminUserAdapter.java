@@ -9,6 +9,7 @@ import android.text.style.StyleSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -17,6 +18,8 @@ import androidx.core.content.ContextCompat;
 import androidx.core.widget.ImageViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.eduflex.android.R;
 import com.eduflex.android.model.AdminUserResponse.AdminUser;
 
@@ -52,17 +55,29 @@ public class AdminUserAdapter extends RecyclerView.Adapter<AdminUserAdapter.View
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         AdminUser user = filteredUsers.get(position);
 
-        // Avatar letter
         String name = user.getFullName();
-        String letter = (name != null && !name.isEmpty())
-                ? name.substring(0, 1).toUpperCase()
-                : "?";
-        holder.tvAvatarLetter.setText(letter);
+        // Avatar logic: Image or fallback letter
+        String avatarUrl = user.getAvatarUrl();
+        if (avatarUrl != null && !avatarUrl.isEmpty()) {
+            holder.ivUserAvatar.setVisibility(View.VISIBLE);
+            holder.tvAvatarLetter.setVisibility(View.GONE);
+            Glide.with(holder.itemView.getContext())
+                    .load(avatarUrl)
+                    .transform(new CircleCrop())
+                    .into(holder.ivUserAvatar);
+        } else {
+            holder.ivUserAvatar.setVisibility(View.GONE);
+            holder.tvAvatarLetter.setVisibility(View.VISIBLE);
+            String letter = (name != null && !name.isEmpty())
+                    ? name.substring(0, 1).toUpperCase()
+                    : "?";
+            holder.tvAvatarLetter.setText(letter);
 
-        // Color avatar based on position
-        int[] colors = {0xFF00BCD4, 0xFF9C27B0, 0xFF4CAF50, 0xFFFF9800, 0xFFE91E63};
-        int bgColor = colors[position % colors.length];
-        holder.tvAvatarLetter.getBackground().setTint(bgColor);
+            // Color avatar based on position
+            int[] colors = {0xFF00BCD4, 0xFF9C27B0, 0xFF4CAF50, 0xFFFF9800, 0xFFE91E63};
+            int bgColor = colors[position % colors.length];
+            holder.tvAvatarLetter.getBackground().setTint(bgColor);
+        }
 
         // User name + admin tag
         String displayName = name != null ? name : "Unknown";
@@ -152,11 +167,13 @@ public class AdminUserAdapter extends RecyclerView.Adapter<AdminUserAdapter.View
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvAvatarLetter, tvName, tvEmail, tvXp, tvLevel, tvStreak;
-        ImageView ivFireIcon, btnDelete;
+        ImageView ivUserAvatar, ivFireIcon;
+        ImageButton btnDelete;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvAvatarLetter = itemView.findViewById(R.id.tv_avatar_letter);
+            ivUserAvatar = itemView.findViewById(R.id.iv_user_avatar);
             tvName = itemView.findViewById(R.id.tv_user_name);
             tvEmail = itemView.findViewById(R.id.tv_user_email);
             tvXp = itemView.findViewById(R.id.tv_user_xp);

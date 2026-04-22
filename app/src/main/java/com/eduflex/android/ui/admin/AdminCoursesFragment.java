@@ -1,19 +1,21 @@
 package com.eduflex.android.ui.admin;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -25,6 +27,8 @@ import com.eduflex.android.api.CourseApi;
 import com.eduflex.android.model.Course;
 import com.eduflex.android.model.CourseListResponse;
 import com.eduflex.android.model.DeleteCourseResponse;
+import com.eduflex.android.model.UpdateCourseRequest;
+import com.eduflex.android.model.UpdateCourseResponse;
 
 import java.util.List;
 
@@ -56,7 +60,7 @@ public class AdminCoursesFragment extends Fragment {
 
         adminApi = ApiClient.createAuthenticatedService(AdminApi.class);
         courseApi = ApiClient.createAuthenticatedService(CourseApi.class);
-        
+
         bindViews(view);
         setupSearch();
         fetchCourses();
@@ -128,13 +132,136 @@ public class AdminCoursesFragment extends Fragment {
     private void showCourses(List<Course> courses) {
         rvCourses.setVisibility(View.VISIBLE);
         llEmptyState.setVisibility(View.GONE);
-
         tvTotalCourses.setText(String.valueOf(courses.size()));
 
-        adapter = new AdminCourseAdapter(courses, this::confirmDeleteCourse);
+        adapter = new AdminCourseAdapter(courses,
+                this::confirmDeleteCourse,
+                this::showEditCourseDialog,
+                this::navigateToLessons);
         rvCourses.setAdapter(adapter);
     }
 
+    // ===== Navigate to Lessons =====
+    private void navigateToLessons(Course course) {
+        Bundle args = new Bundle();
+        args.putString("courseId", course.getCourseID());
+        args.putString("courseTitle", course.getTitle());
+
+        Navigation.findNavController(requireView())
+                .navigate(R.id.action_courses_to_lessons, args);
+    }
+
+    // ===== Edit Course Dialog =====
+    private void showEditCourseDialog(Course course, int position) {
+        if (!isAdded()) return;
+
+        LinearLayout layout = new LinearLayout(requireContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(60, 40, 60, 20);
+
+        addLabel(layout, "Title");
+        EditText etTitle = new EditText(requireContext());
+        etTitle.setHint("Enter course title");
+        etTitle.setText(course.getTitle());
+        layout.addView(etTitle);
+
+        addLabel(layout, "Learning Model");
+        EditText etModel = new EditText(requireContext());
+        etModel.setHint("e.g. Visual, Reading, Kinesthetic");
+        etModel.setText(course.getLearningMode());
+        layout.addView(etModel);
+
+        addLabel(layout, "Status");
+        EditText etStatus = new EditText(requireContext());
+        etStatus.setHint("draft / active");
+        etStatus.setText(course.getStatus());
+        layout.addView(etStatus);
+
+        addLabel(layout, "Description");
+        EditText etDescription = new EditText(requireContext());
+        etDescription.setHint("Enter course description");
+        etDescription.setText(course.getDescription());
+        etDescription.setMinLines(2);
+        layout.addView(etDescription);
+
+        addLabel(layout, "Image URL");
+        EditText etImageUrl = new EditText(requireContext());
+        etImageUrl.setHint("https://...");
+        etImageUrl.setText(course.getImageUrl());
+        layout.addView(etImageUrl);
+
+        addLabel(layout, "Price");
+        EditText etPrice = new EditText(requireContext());
+        etPrice.setHint("0");
+        etPrice.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        if (course.getPrice() != null) {
+            etPrice.setText(String.valueOf(course.getPrice()));
+        }
+        layout.addView(etPrice);
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Edit Course")
+                .setView(layout)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    String title = etTitle.getText().toString().trim();
+                    String model = etModel.getText().toString().trim();
+                    String status = etStatus.getText().toString().trim();
+                    String description = etDescription.getText().toString().trim();
+                    String imageUrl = etImageUrl.getText().toString().trim();
+                    Long price = null;
+                    try {
+                        if (!etPrice.getText().toString().trim().isEmpty()) {
+                            price = Long.parseLong(etPrice.getText().toString().trim());
+                        }
+                    } catch (NumberFormatException ignored) {}
+
+                    if (title.isEmpty()) {
+                        Toast.makeText(getContext(), "Title cannot be empty", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    UpdateCourseRequest request = new UpdateCourseRequest(
+                            title,
+                            model.isEmpty() ? null : model,
+                            status.isEmpty() ? null : status,
+                            imageUrl.isEmpty() ? null : imageUrl,
+                            price,
+                            description.isEmpty() ? null : description
+                    );
+
+                    adminApi.updateCourse(course.getCourseID(), request)
+                            .enqueue(new Callback<UpdateCourseResponse>() {
+                                @Override
+                                public void onResponse(@NonNull Call<UpdateCourseResponse> call,
+                                                       @NonNull Response<UpdateCourseResponse> response) {
+                                    if (!isAdded()) return;
+                                    if (response.isSuccessful() && response.body() != null
+                                            && response.body().isSuccess()) {
+                                        // Update local data
+                                        Course updated = new Course(
+                                                course.getCourseID(), title,
+                                                model.isEmpty() ? course.getLearningMode() : model,
+                                                status.isEmpty() ? course.getStatus() : status
+                                        );
+                                        adapter.updateCourse(position, updated);
+                                        Toast.makeText(getContext(), "Course updated", Toast.LENGTH_SHORT).show();
+                                    } else {
+                                        Toast.makeText(getContext(), "Failed to update", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(@NonNull Call<UpdateCourseResponse> call, @NonNull Throwable t) {
+                                    if (!isAdded()) return;
+                                    Toast.makeText(getContext(), "Network error", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    // ===== Delete Course =====
     private void confirmDeleteCourse(Course course, int position) {
         if (!isAdded()) return;
 
@@ -157,13 +284,11 @@ public class AdminCoursesFragment extends Fragment {
                         && response.body().isSuccess()) {
                     adapter.removeCourse(position);
 
-                    // Update total count
                     int current = Integer.parseInt(tvTotalCourses.getText().toString());
                     tvTotalCourses.setText(String.valueOf(Math.max(0, current - 1)));
 
                     Toast.makeText(getContext(), "Course deleted", Toast.LENGTH_SHORT).show();
                 } else {
-                    Log.e(TAG, "Delete failed: " + response.code());
                     Toast.makeText(getContext(), "Failed to delete course", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -171,7 +296,6 @@ public class AdminCoursesFragment extends Fragment {
             @Override
             public void onFailure(@NonNull Call<DeleteCourseResponse> call, @NonNull Throwable t) {
                 if (!isAdded()) return;
-                Log.e(TAG, "Delete network error: " + t.getMessage());
                 Toast.makeText(getContext(), "Network error while deleting", Toast.LENGTH_SHORT).show();
             }
         });
@@ -181,5 +305,18 @@ public class AdminCoursesFragment extends Fragment {
         rvCourses.setVisibility(View.GONE);
         llEmptyState.setVisibility(View.VISIBLE);
         tvTotalCourses.setText("0");
+    }
+
+    private void addLabel(LinearLayout parent, String text) {
+        TextView label = new TextView(requireContext());
+        label.setText(text);
+        label.setTextSize(13);
+        label.setTextColor(getResources().getColor(R.color.text_title, null));
+        label.setTypeface(null, android.graphics.Typeface.BOLD);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.topMargin = 16;
+        label.setLayoutParams(params);
+        parent.addView(label);
     }
 }
