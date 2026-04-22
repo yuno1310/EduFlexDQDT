@@ -63,6 +63,14 @@ public class UserRepository {
         .map(UsersDbO::new);
   }
 
+  public boolean updatePasswordByEmail(String email, String newPasswordHash) {
+    int rows = dsl.update(Users.USERS)
+        .set(Users.USERS.PASSWORD_HASH, newPasswordHash)
+        .where(Users.USERS.EMAIL.eq(email))
+        .execute();
+    return rows > 0;
+  }
+
   /**
    * Delete a user by ID. Returns true if deleted.
    */
