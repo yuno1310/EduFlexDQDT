@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginBottom="10dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="@color/card_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="14dp">
+
+        <!-- Lesson number circle -->
+        <TextView
+            android:id="@+id/tv_lesson_number"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:gravity="center"
+            tools:text="1"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_on_brand"
+            android:background="@drawable/bg_rank_circle" />
+
+        <!-- Lesson info -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="12dp">
+
+            <TextView
+                android:id="@+id/tv_lesson_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="Lesson Title"
+                android:textColor="@color/text_title"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:maxLines="2"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/tv_lesson_type"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="quiz"
+                android:textColor="@color/text_muted"
+                android:textSize="12sp"
+                android:layout_marginTop="2dp" />
+        </LinearLayout>
+
+        <!-- Edit button -->
+        <ImageButton
+            android:id="@+id/btn_edit_lesson"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_edit"
+            app:tint="@color/cyan_primary_dark"
+            android:contentDescription="Edit lesson" />
+
+        <!-- Quiz edit button (only visible for quiz lessons) -->
+        <ImageButton
+            android:id="@+id/btn_edit_quiz"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_manage"
+            app:tint="@color/fire_active"
+            android:contentDescription="Edit quiz"
+            android:visibility="gone" />
+
+        <!-- Delete button -->
+        <ImageButton
+            android:id="@+id/btn_delete_lesson"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_delete"
+            app:tint="@color/danger"
+            android:contentDescription="Delete lesson" />
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

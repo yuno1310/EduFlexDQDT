@@ -28,6 +28,9 @@ public class AdminUserResponse {
         @SerializedName("fullName")
         private String fullName;
 
+        @SerializedName("avatarUrl")
+        private String avatarUrl;
+
         @SerializedName("createdAt")
         private String createdAt;
 
@@ -49,6 +52,7 @@ public class AdminUserResponse {
         public String getUserId() { return userId; }
         public String getEmail() { return email; }
         public String getFullName() { return fullName; }
+        public String getAvatarUrl() { return avatarUrl; }
         public String getCreatedAt() { return createdAt; }
         public int getXp() { return xp; }
         public int getLevel() { return level; }

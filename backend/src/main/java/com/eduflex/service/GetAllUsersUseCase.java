@@ -50,6 +50,7 @@ public class GetAllUsersUseCase {
                     record.getUserId(),
                     record.getEmail(),
                     record.getFullName(),
+                    record.getAvatarUrl(),
                     record.getCreatedAt(),
                     xp,
                     level,

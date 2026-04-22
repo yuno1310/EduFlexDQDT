@@ -10,6 +10,7 @@ public class GetCourseDTO {
   public record GetCourseResponse(boolean success, String message, List<CourseInfo> listCourse) {
   }
 
-  public record CourseInfo(UUID courseID, String title, String learningMode, String status) {
+  public record CourseInfo(UUID courseID, String title, String learningMode, String status,
+                           String description, String imageUrl, Long price) {
   }
 }

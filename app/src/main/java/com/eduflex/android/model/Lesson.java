@@ -4,6 +4,8 @@ public class Lesson {
     private String lessonID;
     private String title;
     private String contentType;
+    private String videoUrl;
+    private String content;
 
     public Lesson(String lessonID, String title, String contentType) {
         this.lessonID = lessonID;
@@ -15,27 +17,18 @@ public class Lesson {
         this("", title, contentType);
     }
 
-    public String getLessonID() {
-        return lessonID;
-    }
+    public String getLessonID() { return lessonID; }
+    public void setLessonID(String lessonID) { this.lessonID = lessonID; }
 
-    public void setLessonID(String lessonID) {
-        this.lessonID = lessonID;
-    }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
 
-    public String getTitle() {
-        return title;
-    }
+    public String getContentType() { return contentType; }
+    public void setContentType(String contentType) { this.contentType = contentType; }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
+    public String getVideoUrl() { return videoUrl; }
+    public void setVideoUrl(String videoUrl) { this.videoUrl = videoUrl; }
 
-    public String getContentType() {
-        return contentType;
-    }
-
-    public void setContentType(String contentType) {
-        this.contentType = contentType;
-    }
+    public String getContent() { return content; }
+    public void setContent(String content) { this.content = content; }
 }

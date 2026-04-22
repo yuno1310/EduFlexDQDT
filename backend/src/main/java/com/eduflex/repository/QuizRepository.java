@@ -105,4 +105,27 @@ public class QuizRepository {
       return null;
     }
   }
+
+  public boolean updateQuestion(Long questionId, String questionText, int points) {
+    return dsl.update(Questions.QUESTIONS)
+        .set(Questions.QUESTIONS.QUESTION_TEXT, questionText)
+        .set(Questions.QUESTIONS.POINTS, points)
+        .where(Questions.QUESTIONS.QUESTION_ID.eq(questionId))
+        .execute() > 0;
+  }
+
+  public boolean updateOption(Long optionId, String optionText, boolean isCorrect) {
+    return dsl.update(QuestionOptions.QUESTION_OPTIONS)
+        .set(QuestionOptions.QUESTION_OPTIONS.OPTION_TEXT, optionText)
+        .set(QuestionOptions.QUESTION_OPTIONS.IS_CORRECT, isCorrect)
+        .where(QuestionOptions.QUESTION_OPTIONS.OPTION_ID.eq(optionId))
+        .execute() > 0;
+  }
+
+  public boolean questionExistsById(Long questionId) {
+    return dsl.fetchExists(
+        dsl.selectOne()
+            .from(Questions.QUESTIONS)
+            .where(Questions.QUESTIONS.QUESTION_ID.eq(questionId)));
+  }
 }

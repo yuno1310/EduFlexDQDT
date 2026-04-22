@@ -19,7 +19,8 @@ public class GetCourseUseCase {
     if (courses != null) {
       var listCourses = new ArrayList<CourseInfo>();
       for (var record : courses) {
-        var course = new CourseInfo(record.courseID(), record.title(), record.learningMode(), record.status());
+        var course = new CourseInfo(record.courseID(), record.title(), record.learningMode(), record.status(),
+            record.description(), record.imageUrl(), record.price());
         listCourses.add(course);
       }
       return new GetCourseResponse(true, "Loading list courses successfuly", listCourses);
