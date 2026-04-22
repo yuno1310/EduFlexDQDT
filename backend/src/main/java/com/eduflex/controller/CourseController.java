@@ -23,6 +23,7 @@ import com.eduflex.dto.ReviewDTO.SubmitReviewRequest;
 import com.eduflex.dto.ReviewDTO.SubmitReviewResponse;
 import com.eduflex.service.CreateCourseUseCase;
 import com.eduflex.service.GetCourseUseCase;
+import com.eduflex.service.GetMyCoursesUseCase;
 import com.eduflex.service.ProcessPaymentUseCase;
 import com.eduflex.service.SearchCourseUseCase;
 import com.eduflex.service.SubmitReviewUseCase;
@@ -45,9 +46,6 @@ public class CourseController {
 
   @Autowired
   private SearchCourseUseCase searchCourseUseCase;
-
-  @Autowired
-    private SearchCourseUseCase searchCourseUseCase;
 
   @Autowired
   private GetMyCoursesUseCase getMyCoursesUseCase;
@@ -97,7 +95,7 @@ public class CourseController {
 
   @GetMapping("/search")
     public ResponseEntity<List<CourseSuggestionResponse>> searchCourses(
-            @RequestHeader("X-User-Id") UUID userId, r
+            @RequestHeader("X-User-Id") UUID userId,
             @RequestParam(name = "keyword", defaultValue = "") String keyword) {
         
         List<CourseSuggestionResponse> suggestions = searchCourseUseCase.execute(userId, keyword);

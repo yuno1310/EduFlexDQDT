@@ -69,6 +69,10 @@ public class ApiClient {
                             if (token != null) {
                                 builder.addHeader("Authorization", "Bearer " + token);
                             }
+                            String userId = tokenManager.getUserId();
+                            if (userId != null) {
+                                builder.addHeader("X-User-Id", userId);
+                            }
                         }
                         return chain.proceed(builder.build());
                     })

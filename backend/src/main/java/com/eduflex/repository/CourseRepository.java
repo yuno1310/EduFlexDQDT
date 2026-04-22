@@ -12,8 +12,8 @@ import com.eduflex.dto.CourseSearchDTO.CourseSuggestionResponse;
 import com.eduflex.dto.GetCourseDTO.CourseInfo;
 import com.eduflex.entity.CourseDbO;
 import com.eduflex.generated.tables.Courses;
+import com.eduflex.generated.tables.Enrollments;
 import com.eduflex.generated.tables.records.CoursesRecord;
-import com.eduflex.generated.tables.Enrollments.ENROLLMENTS;
 
 @Repository
 public class CourseRepository {
