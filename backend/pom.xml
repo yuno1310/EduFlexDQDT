@@ -148,8 +148,8 @@
                 <configuration>
                     <jdbc>
                         <driver>org.postgresql.Driver</driver>
-                        <url>jdbc:postgresql://aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres</url>
-                        <user>postgres.pkcsfpmyyzilmeolygor</user>
+                        <url>jdbc:postgresql://db.pkcsfpmyyzilmeolygor.supabase.co:5432/postgres</url>
+                        <user>postgres</user>
                         <password>AR8S8uPXZ7LVx1VT</password>
                     </jdbc>
                     <generator>

@@ -6,6 +6,8 @@ import com.eduflex.android.model.CourseSearchResult;
 import com.eduflex.android.model.EnrollRequest;
 import com.eduflex.android.model.EnrollResponse;
 import com.eduflex.android.model.EnrolledCoursesResponse;
+import com.eduflex.android.model.ReviewRequest;
+import com.eduflex.android.model.ReviewResponse;
 
 import java.util.List;
 import retrofit2.Call;
@@ -31,4 +33,7 @@ public interface CourseApi {
 
     @POST("api/enrollment/{courseId}/register")
     Call<EnrollResponse> enrollCourse(@Path("courseId") String courseId, @Body EnrollRequest request);
+
+    @POST("api/course/reviews")
+    Call<ReviewResponse> submitReview(@Body ReviewRequest request);
 }

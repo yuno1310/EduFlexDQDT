@@ -15,7 +15,13 @@ import com.eduflex.dto.PaymentDTO.ProcessPaymentRequest;
 import com.eduflex.dto.PaymentDTO.ProcessPaymentResponse;
 import com.eduflex.dto.ReviewDTO.SubmitReviewRequest;
 import com.eduflex.dto.ReviewDTO.SubmitReviewResponse;
-import com.eduflex.service.*;
+import com.eduflex.service.CreateCourseUseCase;
+import com.eduflex.service.GetCourseUseCase;
+import com.eduflex.service.GetMyCoursesUseCase;
+import com.eduflex.service.ProcessPaymentUseCase;
+import com.eduflex.service.SearchCourseUseCase;
+import com.eduflex.service.SubmitReviewUseCase;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 
 @RestController
 @RequestMapping("api/course")
@@ -78,23 +84,19 @@ public class CourseController {
   }
 
   @GetMapping("/search")
-  public ResponseEntity<List<CourseSuggestionResponse>> searchCourses(
-      @RequestHeader("X-User-Id") UUID userId,
-      @RequestParam(name = "keyword", defaultValue = "") String keyword) {
+    public ResponseEntity<List<CourseSuggestionResponse>> searchCourses(
+            @RequestHeader("X-User-Id") UUID userId,
+            @RequestParam(name = "keyword", defaultValue = "") String keyword) {
+        
+        List<CourseSuggestionResponse> suggestions = searchCourseUseCase.execute(userId, keyword);
+        return ResponseEntity.ok(suggestions);
+    }
 
-    List<CourseSuggestionResponse> suggestions =
-        searchCourseUseCase.execute(userId, keyword);
-
-    return ResponseEntity.ok(suggestions);
-  }
-
-  @GetMapping("/my-courses")
-  public ResponseEntity<List<CourseSuggestionResponse>> getMyCourses(
-      @RequestHeader("X-User-Id") UUID userId) {
-
-    List<CourseSuggestionResponse> myCourses =
-        getMyCoursesUseCase.execute(userId);
-
-    return ResponseEntity.ok(myCourses);
-  }
+    @GetMapping("/my-courses")
+    public ResponseEntity<List<CourseSuggestionResponse>> getMyCourses(
+            @RequestHeader("X-User-Id") UUID userId) { 
+        
+        List<CourseSuggestionResponse> myCourses = getMyCoursesUseCase.execute(userId);
+        return ResponseEntity.ok(myCourses);
+    }
 }
