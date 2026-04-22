@@ -37,6 +37,7 @@ public class CourseDetailFragment extends Fragment {
     private String courseId;
     private String courseTitle;
     private String courseDescription;
+    private String courseImageUrl;
     private int initialProgress;
     private int sourceTab;
     private LessonApi lessonApi;
@@ -61,6 +62,7 @@ public class CourseDetailFragment extends Fragment {
             courseId = getArguments().getString("courseId", "");
             courseTitle = getArguments().getString("courseTitle", "Course Title");
             courseDescription = getArguments().getString("courseDescription", "Course Description");
+            courseImageUrl = getArguments().getString("imageUrl", null);
             initialProgress = getArguments().getInt("progressPercent", -1);
             sourceTab = getArguments().getInt("sourceTab", 0);
         }
@@ -175,7 +177,7 @@ public class CourseDetailFragment extends Fragment {
     }
 
     private void addToCart(Button btn) {
-        CartManager.getInstance().addItem(new CartItem(courseId, courseTitle, ""));
+        CartManager.getInstance().addItem(new CartItem(courseId, courseTitle, "", courseImageUrl));
         btn.setText("In Cart ✓");
         btn.setEnabled(false);
         Toast.makeText(requireContext(), courseTitle + " added to cart.", Toast.LENGTH_SHORT).show();

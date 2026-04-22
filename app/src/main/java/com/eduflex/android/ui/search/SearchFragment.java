@@ -118,7 +118,9 @@ public class SearchFragment extends Fragment {
                 displayedCourses.clear();
                 if (response.isSuccessful() && response.body() != null) {
                     for (CourseSearchResult result : response.body()) {
-                        displayedCourses.add(new Course(result.getCourseId(), result.getTitle(), "", "Available"));
+                        Course c = new Course(result.getCourseId(), result.getTitle(), "", "Available");
+                        c.setImageUrl(result.getImageUrl());
+                        displayedCourses.add(c);
                     }
                 }
                 adapter.notifyDataSetChanged();
@@ -163,6 +165,7 @@ public class SearchFragment extends Fragment {
         args.putString("courseId", course.getCourseID());
         args.putString("courseTitle", course.getTitle());
         args.putString("courseDescription", course.getLearningMode());
+        args.putString("imageUrl", course.getImageUrl());
         NavController nav = NavHostFragment.findNavController(this);
         nav.navigate(R.id.courseDetailFragment, args);
     }
