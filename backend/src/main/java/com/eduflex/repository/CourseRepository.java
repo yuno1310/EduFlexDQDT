@@ -8,6 +8,7 @@ import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import com.eduflex.dto.CourseSearchDTO.CourseSuggestionResponse;
 import com.eduflex.dto.GetCourseDTO.CourseInfo;
 import com.eduflex.entity.CourseDbO;
 import com.eduflex.generated.tables.Courses;
@@ -65,5 +66,15 @@ public class CourseRepository {
     return dsl.deleteFrom(Courses.COURSES)
         .where(Courses.COURSES.COURSE_ID.eq(courseId))
         .execute() > 0;
+  }
+
+  public List<CourseSuggestionResponse> searchCoursesByKeyword(String keyword, int limit) {
+    var c = com.eduflex.generated.tables.Courses.COURSES;
+
+    return dsl.select(c.COURSE_ID, c.TITLE, c.IMAGE_URL)
+        .from(c)
+        .where(c.TITLE.likeIgnoreCase("%" + keyword + "%"))
+        .limit(limit)
+        .fetchInto(CourseSuggestionResponse.class);
   }
 }
