@@ -5,13 +5,7 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.eduflex.dto.CourseSearchDTO.CourseSuggestionResponse;
 import com.eduflex.dto.CreateCourseDTO.CreateCourseRequest;
@@ -32,6 +26,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 @RestController
 @RequestMapping("api/course")
 public class CourseController {
+
   @Autowired
   private CreateCourseUseCase createCourseUseCase;
 
@@ -51,33 +46,31 @@ public class CourseController {
   private GetMyCoursesUseCase getMyCoursesUseCase;
 
   @PostMapping
-  public ResponseEntity<CreateCourseResponse> createCourse(CreateCourseRequest request) {
+  public ResponseEntity<CreateCourseResponse> createCourse(
+      @RequestBody CreateCourseRequest request) {
+
     var response = createCourseUseCase.execute(request);
-    if (response.sucess() == true) {
-      return ResponseEntity.ok(response);
-    } else {
-      return ResponseEntity.badRequest().body(response);
-    }
+    return response.sucess()
+        ? ResponseEntity.ok(response)
+        : ResponseEntity.badRequest().body(response);
   }
 
   @GetMapping
   public ResponseEntity<GetCourseResponse> getListCourse() {
     var response = getCourseUseCase.execute();
-    if (response.success() == true) {
-      return ResponseEntity.ok(response);
-    } else {
-      return ResponseEntity.badRequest().body(response);
-    }
+    return response.success()
+        ? ResponseEntity.ok(response)
+        : ResponseEntity.badRequest().body(response);
   }
 
   @PostMapping("/payment")
-  public ResponseEntity<ProcessPaymentResponse> processPayemnt(ProcessPaymentRequest request) {
+  public ResponseEntity<ProcessPaymentResponse> processPayment(
+      @RequestBody ProcessPaymentRequest request) {
+
     var response = paymentUseCase.execute(request);
-    if (response.success() == true) {
-      return ResponseEntity.ok(response);
-    } else {
-      return ResponseEntity.badRequest().body(response);
-    }
+    return response.success()
+        ? ResponseEntity.ok(response)
+        : ResponseEntity.badRequest().body(response);
   }
 
   @PostMapping("/reviews")
@@ -85,12 +78,9 @@ public class CourseController {
       @RequestBody SubmitReviewRequest request) {
 
     var response = submitReviewUseCase.execute(request);
-
-    if (response.success()) {
-      return ResponseEntity.ok(response);
-    } else {
-      return ResponseEntity.badRequest().body(response);
-    }
+    return response.success()
+        ? ResponseEntity.ok(response)
+        : ResponseEntity.badRequest().body(response);
   }
 
   @GetMapping("/search")
