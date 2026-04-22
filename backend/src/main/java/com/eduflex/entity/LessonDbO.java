@@ -8,11 +8,12 @@ import com.eduflex.generated.tables.records.LessonRecord;
 public class LessonDbO {
   public LessonRecord record;
 
-  public LessonDbO(UUID courseID, String title, String contentType) {
+  public LessonDbO(UUID courseID, String title, String contentType, String content) {
     record = Lesson.LESSON.newRecord();
     record.setCourseId(courseID);
     record.setTitle(title);
     record.setContentType(contentType);
+    record.setContent(content);
   }
 
   public LessonDbO(LessonRecord record) {

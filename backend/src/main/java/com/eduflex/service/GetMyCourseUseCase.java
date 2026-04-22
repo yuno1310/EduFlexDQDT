@@ -8,16 +8,15 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class SearchCourseUseCase {
+public class GetMyCoursesUseCase {
 
     @Autowired
     private CourseRepository courseRepository;
 
-    public List<CourseSuggestionResponse> execute(UUID userId, String keyword) {
-        if (keyword == null || keyword.trim().isEmpty() || userId == null) {
+    public List<CourseSuggestionResponse> execute(UUID userId) {
+        if (userId == null) {
             return List.of();
         }
-      
-        return courseRepository.searchUnenrolledCourses(userId, keyword.trim(), 5);
+        return courseRepository.getMyCourses(userId);
     }
 }
