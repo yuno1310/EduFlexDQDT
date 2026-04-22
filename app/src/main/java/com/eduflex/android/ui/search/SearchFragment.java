@@ -20,6 +20,7 @@ import com.eduflex.android.adapter.CourseCardAdapter;
 import com.eduflex.android.api.ApiClient;
 import com.eduflex.android.api.CourseApi;
 import com.eduflex.android.model.Course;
+import com.eduflex.android.model.CourseListResponse;
 import com.eduflex.android.model.CourseSearchResult;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,8 +36,11 @@ public class SearchFragment extends Fragment {
     private CourseCardAdapter adapter;
     private CourseApi courseApi;
     private Call<List<CourseSearchResult>> pendingCall;
+    private Call<CourseListResponse> allCoursesCall;
     private final Handler debounceHandler = new Handler(Looper.getMainLooper());
     private Runnable pendingSearch;
+    private RecyclerView rvResults;
+    private TextView tvEmpty;
 
     public SearchFragment() {
         super(R.layout.fragment_search);
@@ -49,12 +53,14 @@ public class SearchFragment extends Fragment {
         courseApi = ApiClient.createAuthenticatedService(CourseApi.class);
 
         EditText etSearch = view.findViewById(R.id.et_search);
-        TextView tvEmpty = view.findViewById(R.id.tv_search_empty);
-        RecyclerView rvResults = view.findViewById(R.id.rv_search_results);
+        tvEmpty = view.findViewById(R.id.tv_search_empty);
+        rvResults = view.findViewById(R.id.rv_search_results);
 
         rvResults.setLayoutManager(new LinearLayoutManager(requireContext()));
         adapter = new CourseCardAdapter(displayedCourses, course -> openCourseDetail(course));
         rvResults.setAdapter(adapter);
+
+        loadAllCourses();
 
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -67,21 +73,41 @@ public class SearchFragment extends Fragment {
                 if (query.isEmpty()) {
                     debounceHandler.removeCallbacks(pendingSearch);
                     cancelPending();
-                    displayedCourses.clear();
-                    adapter.notifyDataSetChanged();
-                    rvResults.setVisibility(View.GONE);
-                    tvEmpty.setVisibility(View.GONE);
+                    loadAllCourses();
                     return;
                 }
 
                 debounceHandler.removeCallbacks(pendingSearch);
-                pendingSearch = () -> searchCourses(query, rvResults, tvEmpty);
+                pendingSearch = () -> searchCourses(query);
                 debounceHandler.postDelayed(pendingSearch, DEBOUNCE_MS);
             }
         });
     }
 
-    private void searchCourses(String keyword, RecyclerView rvResults, TextView tvEmpty) {
+    private void loadAllCourses() {
+        if (allCoursesCall != null) allCoursesCall.cancel();
+        allCoursesCall = courseApi.getCourses();
+        allCoursesCall.enqueue(new Callback<CourseListResponse>() {
+            @Override
+            public void onResponse(Call<CourseListResponse> call, Response<CourseListResponse> response) {
+                if (!isAdded()) return;
+                displayedCourses.clear();
+                if (response.isSuccessful() && response.body() != null && response.body().getListCourse() != null) {
+                    displayedCourses.addAll(response.body().getListCourse());
+                }
+                adapter.notifyDataSetChanged();
+                tvEmpty.setVisibility(View.GONE);
+                rvResults.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onFailure(Call<CourseListResponse> call, Throwable t) {
+                if (!isAdded() || call.isCanceled()) return;
+            }
+        });
+    }
+
+    private void searchCourses(String keyword) {
         cancelPending();
 
         pendingCall = courseApi.searchCourses(keyword);
@@ -129,6 +155,7 @@ public class SearchFragment extends Fragment {
         super.onDestroyView();
         debounceHandler.removeCallbacks(pendingSearch);
         cancelPending();
+        if (allCoursesCall != null) allCoursesCall.cancel();
     }
 
     private void openCourseDetail(Course course) {

@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -21,8 +22,9 @@ import com.eduflex.android.api.ApiClient;
 import com.eduflex.android.api.CourseApi;
 import com.eduflex.android.api.LessonApi;
 import com.eduflex.android.auth.TokenManager;
-import com.eduflex.android.model.EnrollRequest;
-import com.eduflex.android.model.EnrollResponse;
+import com.eduflex.android.cart.CartManager;
+import com.eduflex.android.model.CartItem;
+import com.eduflex.android.model.EnrolledCoursesResponse;
 import com.eduflex.android.model.Lesson;
 import com.eduflex.android.model.LessonListResponse;
 import retrofit2.Call;
@@ -43,6 +45,8 @@ public class CourseDetailFragment extends Fragment {
     private TextView tvLessonsEmpty;
     private ProgressBar progressCourse;
     private TextView tvCourseProgressValue;
+    private Button btnEnroll;
+    private LinearLayout llEnrolledContent;
 
     public CourseDetailFragment() {
         super(R.layout.fragment_course_detail);
@@ -73,28 +77,20 @@ public class CourseDetailFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Setup back button
         Button btnBack = view.findViewById(R.id.btn_back);
-        btnBack.setOnClickListener(v -> {
-            NavController navController = NavHostFragment.findNavController(this);
-            navController.popBackStack();
-        });
+        btnBack.setOnClickListener(v -> NavHostFragment.findNavController(this).popBackStack());
 
-        // Setup header
         TextView tvTitle = view.findViewById(R.id.tv_course_title);
         TextView tvDescription = view.findViewById(R.id.tv_course_description);
-        
         tvTitle.setText(courseTitle);
         tvDescription.setText(courseDescription);
 
-        Button btnEnroll = view.findViewById(R.id.btn_enroll);
-        btnEnroll.setOnClickListener(v -> enrollCourse(btnEnroll));
+        btnEnroll = view.findViewById(R.id.btn_enroll);
+        llEnrolledContent = view.findViewById(R.id.ll_enrolled_content);
 
         Button btnAiSummary = view.findViewById(R.id.btn_ai_summary);
         btnAiSummary.setOnClickListener(v -> openAiSummary());
 
-        Button btnTestFillBlankQuiz = view.findViewById(R.id.btn_test_fill_blank_quiz);
-        btnTestFillBlankQuiz.setOnClickListener(v -> openFillBlankQuizMock());
         Button btnCourseReview = view.findViewById(R.id.btn_course_review);
         btnCourseReview.setOnClickListener(v -> openCourseReview());
         Button btnCourseCertificate = view.findViewById(R.id.btn_course_certificate);
@@ -106,50 +102,83 @@ public class CourseDetailFragment extends Fragment {
         tvCourseProgressValue = view.findViewById(R.id.tv_course_progress_value);
         rvLessons.setLayoutManager(new LinearLayoutManager(getContext()));
 
+        checkEnrollmentAndSetup();
+    }
+
+    private void checkEnrollmentAndSetup() {
+        String userId = new TokenManager(requireContext()).getUserId();
+        if (userId == null) {
+            showUnenrolledState();
+            return;
+        }
+
+        courseApi.getEnrolledCourses(userId).enqueue(new Callback<EnrolledCoursesResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<EnrolledCoursesResponse> call,
+                                   @NonNull Response<EnrolledCoursesResponse> response) {
+                if (!isAdded()) return;
+                boolean enrolled = false;
+                if (response.isSuccessful() && response.body() != null
+                        && response.body().getEnrolledCourses() != null) {
+                    for (var c : response.body().getEnrolledCourses()) {
+                        if (courseId.equals(c.getCourseId())) {
+                            enrolled = true;
+                            break;
+                        }
+                    }
+                }
+                if (enrolled) {
+                    showEnrolledState();
+                } else {
+                    showUnenrolledState();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<EnrolledCoursesResponse> call, @NonNull Throwable t) {
+                if (!isAdded()) return;
+                showUnenrolledState();
+            }
+        });
+    }
+
+    private void showEnrolledState() {
+        btnEnroll.setVisibility(View.GONE);
+        llEnrolledContent.setVisibility(View.VISIBLE);
         updateCourseProgressUi();
-        
-        // Load lessons from API
         loadLessons();
+    }
+
+    private void showUnenrolledState() {
+        llEnrolledContent.setVisibility(View.GONE);
+        updateAddToCartButton(btnEnroll);
+        btnEnroll.setOnClickListener(v -> addToCart(btnEnroll));
+        btnEnroll.setVisibility(View.VISIBLE);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        updateCourseProgressUi();
+        if (llEnrolledContent != null && llEnrolledContent.getVisibility() == View.VISIBLE) {
+            updateCourseProgressUi();
+        }
     }
 
-    private void enrollCourse(Button btnEnroll) {
-        TokenManager tokenManager = new TokenManager(requireContext());
-        String userId = tokenManager.getUserId();
-        if (userId == null) {
-            Toast.makeText(requireContext(), "Please log in to enroll.", Toast.LENGTH_SHORT).show();
-            return;
+    private void updateAddToCartButton(Button btn) {
+        if (CartManager.getInstance().contains(courseId)) {
+            btn.setText("In Cart ✓");
+            btn.setEnabled(false);
+        } else {
+            btn.setText("Add to Cart");
+            btn.setEnabled(true);
         }
-        btnEnroll.setEnabled(false);
-        btnEnroll.setText("Enrolling...");
-        courseApi.enrollCourse(courseId, new EnrollRequest(userId)).enqueue(new Callback<EnrollResponse>() {
-            @Override
-            public void onResponse(Call<EnrollResponse> call, Response<EnrollResponse> response) {
-                if (!isAdded()) return;
-                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
-                    btnEnroll.setText("Enrolled ✓");
-                    Toast.makeText(requireContext(), "Enrolled in " + courseTitle + "!", Toast.LENGTH_SHORT).show();
-                } else {
-                    btnEnroll.setEnabled(true);
-                    btnEnroll.setText("Enroll");
-                    String msg = (response.body() != null) ? response.body().getMessage() : "Enrollment failed.";
-                    Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
-                }
-            }
+    }
 
-            @Override
-            public void onFailure(Call<EnrollResponse> call, Throwable t) {
-                if (!isAdded()) return;
-                btnEnroll.setEnabled(true);
-                btnEnroll.setText("Enroll");
-                Toast.makeText(requireContext(), "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
+    private void addToCart(Button btn) {
+        CartManager.getInstance().addItem(new CartItem(courseId, courseTitle, ""));
+        btn.setText("In Cart ✓");
+        btn.setEnabled(false);
+        Toast.makeText(requireContext(), courseTitle + " added to cart.", Toast.LENGTH_SHORT).show();
     }
 
     private void loadLessons() {
@@ -158,10 +187,10 @@ public class CourseDetailFragment extends Fragment {
             return;
         }
 
-        // Call API to get lessons for this course
         lessonApi.getLessons(courseId).enqueue(new Callback<LessonListResponse>() {
             @Override
             public void onResponse(Call<LessonListResponse> call, Response<LessonListResponse> response) {
+                if (!isAdded()) return;
                 if (response.isSuccessful() && response.body() != null) {
                     LessonListResponse lessonResponse = response.body();
                     if (lessonResponse.isSuccess()) {
@@ -183,6 +212,7 @@ public class CourseDetailFragment extends Fragment {
 
             @Override
             public void onFailure(Call<LessonListResponse> call, Throwable t) {
+                if (!isAdded()) return;
                 showError("Network error: " + t.getMessage());
             }
         });
@@ -213,12 +243,10 @@ public class CourseDetailFragment extends Fragment {
             navController.navigate(R.id.fillBlankQuizMockFragment, args);
             return;
         }
-
         if ("quiz".equals(type)) {
             navController.navigate(R.id.quizFragment, args);
             return;
         }
-
         args.putString("lessonContent", getMockContent(lesson.getTitle(), type));
         navController.navigate(R.id.lessonStudyFragment, args);
     }
@@ -230,15 +258,6 @@ public class CourseDetailFragment extends Fragment {
         args.putString("courseDescription", courseDescription == null ? "" : courseDescription);
         args.putInt("sourceTab", sourceTab);
         NavHostFragment.findNavController(this).navigate(R.id.aiCourseSummaryFragment, args);
-    }
-
-    private void openFillBlankQuizMock() {
-        Bundle args = new Bundle();
-        args.putString("courseId", courseId == null ? "" : courseId);
-        args.putString("lessonId", "mock_fill_blank_lesson");
-        args.putString("lessonTitle", "Quiz điền từ");
-        args.putInt("sourceTab", sourceTab);
-        NavHostFragment.findNavController(this).navigate(R.id.fillBlankQuizMockFragment, args);
     }
 
     private void openCourseReview() {
@@ -255,7 +274,6 @@ public class CourseDetailFragment extends Fragment {
             Toast.makeText(requireContext(), "Complete 100% progress to unlock certificate.", Toast.LENGTH_SHORT).show();
             return;
         }
-
         Bundle args = new Bundle();
         args.putString("courseId", courseId == null ? "" : courseId);
         args.putString("courseTitle", courseTitle == null ? "Course" : courseTitle);
@@ -264,10 +282,7 @@ public class CourseDetailFragment extends Fragment {
     }
 
     private void updateCourseProgressUi() {
-        if (progressCourse == null || tvCourseProgressValue == null) {
-            return;
-        }
-
+        if (progressCourse == null || tvCourseProgressValue == null) return;
         int progress = getCurrentCourseProgress();
         progressCourse.setProgress(progress);
         tvCourseProgressValue.setText(progress + "%");
@@ -278,9 +293,7 @@ public class CourseDetailFragment extends Fragment {
     }
 
     private String getMockContent(String lessonTitle, String contentType) {
-        if ("video".equals(contentType)) {
-            return "VIDEO_PLACEHOLDER";
-        }
+        if ("video".equals(contentType)) return "VIDEO_PLACEHOLDER";
         return "This is lesson content for: " + lessonTitle
                 + "\n\nIn this lesson, you will learn key concepts and practical examples."
                 + "\n\n- Topic overview"

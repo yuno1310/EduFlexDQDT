@@ -16,10 +16,19 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.eduflex.android.R;
+import com.eduflex.android.api.ApiClient;
+import com.eduflex.android.api.CourseApi;
+import com.eduflex.android.auth.TokenManager;
+import com.eduflex.android.model.ReviewRequest;
+import com.eduflex.android.model.ReviewResponse;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class CourseReviewFragment extends Fragment {
 
@@ -27,6 +36,7 @@ public class CourseReviewFragment extends Fragment {
 
     private String courseId;
     private String courseTitle;
+    private CourseApi courseApi;
 
     public CourseReviewFragment() {
         super(R.layout.fragment_course_review);
@@ -47,6 +57,8 @@ public class CourseReviewFragment extends Fragment {
         Button btnSubmit = view.findViewById(R.id.btn_submit_review);
         Button btnBack = view.findViewById(R.id.btn_back_review);
 
+        courseApi = ApiClient.createAuthenticatedService(CourseApi.class);
+
         tvTitle.setText(courseTitle);
         bindSavedReview(ratingBar, etComment, tvSavedReview);
 
@@ -64,9 +76,26 @@ public class CourseReviewFragment extends Fragment {
                 return;
             }
 
-            saveReview(rating, comment);
-            bindSavedReview(ratingBar, etComment, tvSavedReview);
-            Toast.makeText(requireContext(), "Review submitted.", Toast.LENGTH_SHORT).show();
+            btnSubmit.setEnabled(false);
+            String userId = new TokenManager(requireContext()).getUserId();
+            ReviewRequest request = new ReviewRequest(courseId, userId, (int) rating, comment);
+            courseApi.submitReview(request).enqueue(new Callback<ReviewResponse>() {
+                @Override
+                public void onResponse(@NonNull Call<ReviewResponse> call, @NonNull Response<ReviewResponse> response) {
+                    if (!isAdded()) return;
+                    btnSubmit.setEnabled(true);
+                    saveReview(rating, comment);
+                    bindSavedReview(ratingBar, etComment, tvSavedReview);
+                    Toast.makeText(requireContext(), "Review submitted.", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<ReviewResponse> call, @NonNull Throwable t) {
+                    if (!isAdded()) return;
+                    btnSubmit.setEnabled(true);
+                    Toast.makeText(requireContext(), "Failed to submit review. Try again.", Toast.LENGTH_SHORT).show();
+                }
+            });
         });
     }
 
