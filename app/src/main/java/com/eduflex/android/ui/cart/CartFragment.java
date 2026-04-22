@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import com.bumptech.glide.Glide;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -66,7 +67,32 @@ public class CartFragment extends Fragment {
         }
 
         llCartEmpty.setVisibility(View.GONE);
-        llCartContent.setVisibility(View.VISIBLE);
+        llCartItems.setVisibility(View.VISIBLE);
+        llCheckoutBar.setVisibility(View.VISIBLE);
+
+        llCartItems.removeAllViews();
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+        for (CartItem item : items) {
+            View itemView = inflater.inflate(R.layout.item_cart, llCartItems, false);
+
+            TextView tvTitle = itemView.findViewById(R.id.tv_cart_item_title);
+            ImageView ivRemove = itemView.findViewById(R.id.iv_remove_item);
+            ImageView ivThumbnail = itemView.findViewById(R.id.iv_cart_thumbnail);
+
+            tvTitle.setText(item.getCourseTitle());
+            Glide.with(requireContext())
+                    .load(item.getImageUrl())
+                    .placeholder(android.R.color.darker_gray)
+                    .error(android.R.color.darker_gray)
+                    .centerCrop()
+                    .into(ivThumbnail);
+            ivRemove.setOnClickListener(v -> {
+                CartManager.getInstance().removeItem(item.getCourseId());
+                refreshCart();
+            });
+
+            llCartItems.addView(itemView);
+        }
     }
 
     private void showEmptyCart() {
