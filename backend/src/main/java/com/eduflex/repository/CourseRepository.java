@@ -13,6 +13,7 @@ import com.eduflex.dto.GetCourseDTO.CourseInfo;
 import com.eduflex.entity.CourseDbO;
 import com.eduflex.generated.tables.Courses;
 import com.eduflex.generated.tables.records.CoursesRecord;
+import com.eduflex.generated.tables.Enrollments.ENROLLMENTS;
 
 @Repository
 public class CourseRepository {
@@ -47,6 +48,33 @@ public class CourseRepository {
       return null;
     }
   }
+
+  public List<CourseSuggestionResponse> searchUnenrolledCourses(UUID userId, String keyword, int limit) {
+        var c = Courses.COURSES;
+        var e = Enrollments.ENROLLMENTS;
+
+        return dsl.select(c.COURSE_ID, c.TITLE, c.IMAGE_URL)
+                  .from(c)
+                  .where(c.TITLE.likeIgnoreCase("%" + keyword + "%"))
+                  .and(c.COURSE_ID.notIn(
+                      dsl.select(e.COURSE_ID)
+                         .from(e)
+                         .where(e.USER_ID.eq(userId))
+                  ))
+                  .limit(limit)
+                  .fetchInto(CourseSuggestionResponse.class);
+    }
+
+    public List<CourseSuggestionResponse> getMyCourses(UUID userId) {
+        var c = Courses.COURSES;
+        var e = Enrollments.ENROLLMENTS;
+
+        return dsl.select(c.COURSE_ID, c.TITLE, c.IMAGE_URL)
+                  .from(c)
+                  .join(e).on(c.COURSE_ID.eq(e.COURSE_ID))
+                  .where(e.USER_ID.eq(userId))
+                  .fetchInto(CourseSuggestionResponse.class);
+    }
 
   public boolean existsById(UUID courseId) {
     return dsl.fetchExists(

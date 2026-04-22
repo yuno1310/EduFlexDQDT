@@ -46,6 +46,12 @@ public class CourseController {
   @Autowired
   private SearchCourseUseCase searchCourseUseCase;
 
+  @Autowired
+    private SearchCourseUseCase searchCourseUseCase;
+
+  @Autowired
+  private GetMyCoursesUseCase getMyCoursesUseCase;
+
   @PostMapping
   public ResponseEntity<CreateCourseResponse> createCourse(CreateCourseRequest request) {
     var response = createCourseUseCase.execute(request);
@@ -90,9 +96,19 @@ public class CourseController {
   }
 
   @GetMapping("/search")
-  public ResponseEntity<List<CourseSuggestionResponse>> searchCourses(
-      @RequestParam(name = "keyword", defaultValue = "") String keyword) {
-    List<CourseSuggestionResponse> suggestions = searchCourseUseCase.execute(keyword);
-    return ResponseEntity.ok(suggestions);
-  }
+    public ResponseEntity<List<CourseSuggestionResponse>> searchCourses(
+            @RequestHeader("X-User-Id") UUID userId, r
+            @RequestParam(name = "keyword", defaultValue = "") String keyword) {
+        
+        List<CourseSuggestionResponse> suggestions = searchCourseUseCase.execute(userId, keyword);
+        return ResponseEntity.ok(suggestions);
+    }
+
+    @GetMapping("/my-courses")
+    public ResponseEntity<List<CourseSuggestionResponse>> getMyCourses(
+            @RequestHeader("X-User-Id") UUID userId) { 
+        
+        List<CourseSuggestionResponse> myCourses = getMyCoursesUseCase.execute(userId);
+        return ResponseEntity.ok(myCourses);
+    }
 }
