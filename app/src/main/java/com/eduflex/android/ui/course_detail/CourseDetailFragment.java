@@ -18,11 +18,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.eduflex.android.R;
 import com.eduflex.android.adapter.LessonAdapter;
 import com.eduflex.android.api.ApiClient;
-import com.eduflex.android.api.CourseApi;
 import com.eduflex.android.api.LessonApi;
-import com.eduflex.android.auth.TokenManager;
-import com.eduflex.android.model.EnrollRequest;
-import com.eduflex.android.model.EnrollResponse;
+import com.eduflex.android.cart.CartManager;
+import com.eduflex.android.model.CartItem;
 import com.eduflex.android.model.Lesson;
 import com.eduflex.android.model.LessonListResponse;
 import retrofit2.Call;
@@ -38,7 +36,6 @@ public class CourseDetailFragment extends Fragment {
     private int initialProgress;
     private int sourceTab;
     private LessonApi lessonApi;
-    private CourseApi courseApi;
     private RecyclerView rvLessons;
     private TextView tvLessonsEmpty;
     private ProgressBar progressCourse;
@@ -52,7 +49,6 @@ public class CourseDetailFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         lessonApi = ApiClient.createAuthenticatedService(LessonApi.class);
-        courseApi = ApiClient.createAuthenticatedService(CourseApi.class);
         if (getArguments() != null) {
             courseId = getArguments().getString("courseId", "");
             courseTitle = getArguments().getString("courseTitle", "Course Title");
@@ -88,7 +84,8 @@ public class CourseDetailFragment extends Fragment {
         tvDescription.setText(courseDescription);
 
         Button btnEnroll = view.findViewById(R.id.btn_enroll);
-        btnEnroll.setOnClickListener(v -> enrollCourse(btnEnroll));
+        updateAddToCartButton(btnEnroll);
+        btnEnroll.setOnClickListener(v -> addToCart(btnEnroll));
 
         Button btnAiSummary = view.findViewById(R.id.btn_ai_summary);
         btnAiSummary.setOnClickListener(v -> openAiSummary());
@@ -118,38 +115,21 @@ public class CourseDetailFragment extends Fragment {
         updateCourseProgressUi();
     }
 
-    private void enrollCourse(Button btnEnroll) {
-        TokenManager tokenManager = new TokenManager(requireContext());
-        String userId = tokenManager.getUserId();
-        if (userId == null) {
-            Toast.makeText(requireContext(), "Please log in to enroll.", Toast.LENGTH_SHORT).show();
-            return;
+    private void updateAddToCartButton(Button btn) {
+        if (CartManager.getInstance().contains(courseId)) {
+            btn.setText("In Cart ✓");
+            btn.setEnabled(false);
+        } else {
+            btn.setText("Add to Cart");
+            btn.setEnabled(true);
         }
-        btnEnroll.setEnabled(false);
-        btnEnroll.setText("Enrolling...");
-        courseApi.enrollCourse(courseId, new EnrollRequest(userId)).enqueue(new Callback<EnrollResponse>() {
-            @Override
-            public void onResponse(Call<EnrollResponse> call, Response<EnrollResponse> response) {
-                if (!isAdded()) return;
-                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
-                    btnEnroll.setText("Enrolled ✓");
-                    Toast.makeText(requireContext(), "Enrolled in " + courseTitle + "!", Toast.LENGTH_SHORT).show();
-                } else {
-                    btnEnroll.setEnabled(true);
-                    btnEnroll.setText("Enroll");
-                    String msg = (response.body() != null) ? response.body().getMessage() : "Enrollment failed.";
-                    Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
-                }
-            }
+    }
 
-            @Override
-            public void onFailure(Call<EnrollResponse> call, Throwable t) {
-                if (!isAdded()) return;
-                btnEnroll.setEnabled(true);
-                btnEnroll.setText("Enroll");
-                Toast.makeText(requireContext(), "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
+    private void addToCart(Button btn) {
+        CartManager.getInstance().addItem(new CartItem(courseId, courseTitle, ""));
+        btn.setText("In Cart ✓");
+        btn.setEnabled(false);
+        Toast.makeText(requireContext(), courseTitle + " added to cart.", Toast.LENGTH_SHORT).show();
     }
 
     private void loadLessons() {

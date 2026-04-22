@@ -16,10 +16,18 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.eduflex.android.R;
 import com.eduflex.android.api.ApiClient;
+import com.eduflex.android.api.CourseApi;
 import com.eduflex.android.api.PaymentApi;
 import com.eduflex.android.auth.TokenManager;
+import com.eduflex.android.cart.CartManager;
+import com.eduflex.android.model.CartItem;
+import com.eduflex.android.model.EnrollRequest;
+import com.eduflex.android.model.EnrollResponse;
 import com.eduflex.android.model.PaymentRequest;
 import com.eduflex.android.model.PaymentResponse;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -38,6 +46,7 @@ public class PaymentFragment extends Fragment {
     private String courseId;
 
     private PaymentApi paymentApi;
+    private CourseApi courseApi;
     private TokenManager tokenManager;
 
     public PaymentFragment() {
@@ -53,6 +62,7 @@ public class PaymentFragment extends Fragment {
         }
 
         paymentApi = ApiClient.createAuthenticatedService(PaymentApi.class);
+        courseApi = ApiClient.createAuthenticatedService(CourseApi.class);
         tokenManager = new TokenManager(requireContext());
 
         bindViews(view);
@@ -146,31 +156,42 @@ public class PaymentFragment extends Fragment {
             return;
         }
 
+        List<CartItem> cartItems = CartManager.getInstance().getItems();
+        if (cartItems.isEmpty()) {
+            Toast.makeText(requireContext(), "Your cart is empty.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         setLoading(true);
 
-        // Trigger backend with userId + courseId; show success on the UI regardless (UI-only flow)
-        PaymentRequest request = new PaymentRequest(userId, courseId != null ? courseId : "");
-        paymentApi.processPayment(request).enqueue(new Callback<PaymentResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<PaymentResponse> call,
-                                   @NonNull Response<PaymentResponse> response) {
-                if (!isAdded()) return;
-                setLoading(false);
-                // Always show success as this is a UI demo with mock backend
-                Toast.makeText(requireContext(), "Payment successful!", Toast.LENGTH_LONG).show();
-                NavHostFragment.findNavController(PaymentFragment.this).popBackStack();
-            }
+        // Fake checkout: fire enroll API for each cart item, then clear cart and show success
+        AtomicInteger pending = new AtomicInteger(cartItems.size());
+        for (CartItem item : cartItems) {
+            courseApi.enrollCourse(item.getCourseId(), new EnrollRequest(userId))
+                    .enqueue(new Callback<EnrollResponse>() {
+                        @Override
+                        public void onResponse(@NonNull Call<EnrollResponse> call,
+                                               @NonNull Response<EnrollResponse> response) {
+                            if (!isAdded()) return;
+                            Log.d(TAG, "Enrolled in " + item.getCourseId() + ": " + response.code());
+                            if (pending.decrementAndGet() == 0) onAllEnrolled();
+                        }
 
-            @Override
-            public void onFailure(@NonNull Call<PaymentResponse> call, @NonNull Throwable t) {
-                if (!isAdded()) return;
-                setLoading(false);
-                Log.e(TAG, "Payment network error: " + t.getMessage());
-                // Still show success for UI demo even if network fails
-                Toast.makeText(requireContext(), "Payment successful!", Toast.LENGTH_LONG).show();
-                NavHostFragment.findNavController(PaymentFragment.this).popBackStack();
-            }
-        });
+                        @Override
+                        public void onFailure(@NonNull Call<EnrollResponse> call, @NonNull Throwable t) {
+                            if (!isAdded()) return;
+                            Log.e(TAG, "Enroll failed for " + item.getCourseId() + ": " + t.getMessage());
+                            if (pending.decrementAndGet() == 0) onAllEnrolled();
+                        }
+                    });
+        }
+    }
+
+    private void onAllEnrolled() {
+        setLoading(false);
+        CartManager.getInstance().clear();
+        Toast.makeText(requireContext(), "Payment successful! You are now enrolled.", Toast.LENGTH_LONG).show();
+        NavHostFragment.findNavController(PaymentFragment.this).popBackStack();
     }
 
     private void setLoading(boolean loading) {
