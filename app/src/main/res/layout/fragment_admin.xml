@@ -184,7 +184,9 @@
             android:background="@drawable/bg_search_input"
             android:inputType="text"
             android:maxLines="1"
-            android:importantForAutofill="no" />
+            android:importantForAutofill="no"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_secondary" />
     </LinearLayout>
 
     <!-- Divider -->

@@ -71,7 +71,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Full Name"
-                android:inputType="textPersonName"/>
+                android:inputType="textPersonName"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_secondary"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Email -->
@@ -86,7 +88,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Email"
-                android:inputType="textEmailAddress"/>
+                android:inputType="textEmailAddress"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_secondary"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Password -->
@@ -102,7 +106,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/password_hint"
-                android:inputType="textPassword"/>
+                android:inputType="textPassword"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_secondary"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Confirm Password -->
@@ -118,7 +124,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/confirm_password_hint"
-                android:inputType="textPassword"/>
+                android:inputType="textPassword"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_secondary"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Learning Goal Section -->

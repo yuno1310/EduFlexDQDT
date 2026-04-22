@@ -313,7 +313,9 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:hint="@string/cardholder_hint"
-                            android:inputType="textPersonName" />
+                            android:inputType="textPersonName"
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_secondary" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <!-- Card Number -->
@@ -329,7 +331,9 @@
                             android:layout_height="wrap_content"
                             android:hint="@string/card_number_hint"
                             android:inputType="number"
-                            android:maxLength="19" />
+                            android:maxLength="19"
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_secondary" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <!-- Expiry + CVV Row -->
@@ -351,7 +355,9 @@
                                 android:layout_height="wrap_content"
                                 android:hint="@string/expiry_hint"
                                 android:inputType="number"
-                                android:maxLength="5" />
+                                android:maxLength="5"
+                                android:textColor="@color/text_primary"
+                                android:textColorHint="@color/text_secondary" />
                         </com.google.android.material.textfield.TextInputLayout>
 
                         <com.google.android.material.textfield.TextInputLayout
@@ -366,7 +372,9 @@
                                 android:layout_height="wrap_content"
                                 android:hint="@string/cvv_hint"
                                 android:inputType="numberPassword"
-                                android:maxLength="4" />
+                                android:maxLength="4"
+                                android:textColor="@color/text_primary"
+                                android:textColorHint="@color/text_secondary" />
                         </com.google.android.material.textfield.TextInputLayout>
                     </LinearLayout>
                 </LinearLayout>
