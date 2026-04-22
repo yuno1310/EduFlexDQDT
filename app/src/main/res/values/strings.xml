@@ -40,8 +40,8 @@
     <string name="your_cart">Your Cart</string>
     <string name="cart_simple_subtitle">Review your order and continue to payment.</string>
     <string name="cart_empty">Your cart is empty</string>
-    <string name="cart_empty_subtitle">Browse courses and add them to your cart</string>
-    <string name="browse_courses">Browse Courses</string>
+    <string name="cart_empty_subtitle">Search for courses and add them to your cart</string>
+    <string name="browse_courses">Go to Search</string>
 
     <!-- Courses -->
     <string name="my_courses_title">My Courses</string>

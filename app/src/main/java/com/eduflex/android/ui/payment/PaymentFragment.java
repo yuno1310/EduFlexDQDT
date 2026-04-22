@@ -7,10 +7,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
@@ -27,6 +29,7 @@ import com.eduflex.android.model.PaymentRequest;
 import com.eduflex.android.model.PaymentResponse;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import retrofit2.Call;
@@ -39,9 +42,11 @@ public class PaymentFragment extends Fragment {
 
     private LinearLayout optionCreditCard, optionPaypal, optionBank;
     private LinearLayout llCardForm;
+    private LinearLayout llSummaryItems;
     private EditText etCardholder, etCardNumber, etExpiry, etCvv;
     private Button btnPayNow;
     private ProgressBar progressBar;
+    private TextView tvSubtotal, tvDiscount, tvTotal;
     private String selectedMethod = "credit_card";
     private String courseId;
 
@@ -66,6 +71,7 @@ public class PaymentFragment extends Fragment {
         tokenManager = new TokenManager(requireContext());
 
         bindViews(view);
+        renderOrderSummary();
         setupPaymentMethodSelection();
         setupPayButton();
     }
@@ -81,6 +87,16 @@ public class PaymentFragment extends Fragment {
         etCvv = view.findViewById(R.id.et_cvv);
         btnPayNow = view.findViewById(R.id.btn_pay_now);
         progressBar = view.findViewById(R.id.progress_bar_payment);
+        llSummaryItems = view.findViewById(R.id.ll_summary_items);
+        tvSubtotal = view.findViewById(R.id.tv_subtotal);
+        tvDiscount = view.findViewById(R.id.tv_discount);
+        tvTotal = view.findViewById(R.id.tv_total);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        renderOrderSummary();
     }
 
     private void setupPaymentMethodSelection() {
@@ -184,6 +200,77 @@ public class PaymentFragment extends Fragment {
                             if (pending.decrementAndGet() == 0) onAllEnrolled();
                         }
                     });
+        }
+    }
+
+    private void renderOrderSummary() {
+        if (!isAdded()) {
+            return;
+        }
+        List<CartItem> cartItems = CartManager.getInstance().getItems();
+        llSummaryItems.removeAllViews();
+
+        double subtotal = 0d;
+        for (CartItem item : cartItems) {
+            double price = parsePrice(item.getPrice());
+            subtotal += price;
+            llSummaryItems.addView(createSummaryItemView(item, price));
+        }
+
+        tvSubtotal.setText(formatCurrency(subtotal));
+        tvDiscount.setText("-$0.00");
+        tvTotal.setText(formatCurrency(subtotal));
+    }
+
+    private View createSummaryItemView(CartItem item, double price) {
+        LinearLayout row = new LinearLayout(requireContext());
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+        row.setPadding(0, 0, 0, 12);
+
+        TextView title = new TextView(requireContext());
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1f);
+        title.setLayoutParams(titleParams);
+        title.setText(item.getCourseTitle());
+        title.setTextSize(14f);
+        title.setMaxLines(1);
+        title.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        title.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary));
+
+        TextView priceView = new TextView(requireContext());
+        priceView.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+        priceView.setText(formatCurrency(price));
+        priceView.setTextSize(14f);
+        priceView.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary));
+
+        row.addView(title);
+        row.addView(priceView);
+        return row;
+    }
+
+    private String formatCurrency(double amount) {
+        return String.format(Locale.US, "$%.2f", amount);
+    }
+
+    private double parsePrice(String rawPrice) {
+        if (rawPrice == null || rawPrice.trim().isEmpty()) {
+            return 0d;
+        }
+        String normalized = rawPrice.replaceAll("[^\\d,.-]", "").replace(",", "");
+        if (normalized.isEmpty() || "-".equals(normalized) || ".".equals(normalized)) {
+            return 0d;
+        }
+        try {
+            return Double.parseDouble(normalized);
+        } catch (NumberFormatException e) {
+            return 0d;
         }
     }
 

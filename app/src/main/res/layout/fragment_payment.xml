@@ -46,55 +46,12 @@
                     android:textColor="@color/text_title"
                     android:layout_marginBottom="16dp" />
 
-                <!-- Course item -->
                 <LinearLayout
+                    android:id="@+id/ll_summary_items"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="12dp">
-
-                    <View
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:background="@drawable/bg_stat_card"
-                        android:layout_marginEnd="12dp" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/tv_course_name"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Android Development"
-                            android:textSize="14sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/text_primary"
-                            android:maxLines="1"
-                            android:ellipsize="end" />
-
-                        <TextView
-                            android:id="@+id/tv_course_instructor"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="By EduFlex Team"
-                            android:textSize="12sp"
-                            android:textColor="@color/text_muted" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/tv_course_price"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="$49.99"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/text_primary" />
-                </LinearLayout>
+                    android:layout_marginBottom="12dp"
+                    android:orientation="vertical" />
 
                 <!-- Divider -->
                 <View
@@ -122,7 +79,7 @@
                         android:id="@+id/tv_subtotal"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="$49.99"
+                        android:text="$0.00"
                         android:textSize="14sp"
                         android:textColor="@color/text_body" />
                 </LinearLayout>
@@ -177,7 +134,7 @@
                         android:id="@+id/tv_total"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="$49.99"
+                        android:text="$0.00"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="@color/cyan_primary_dark" />

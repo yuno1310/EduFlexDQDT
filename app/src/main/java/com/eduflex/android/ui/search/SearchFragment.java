@@ -120,6 +120,7 @@ public class SearchFragment extends Fragment {
                     for (CourseSearchResult result : response.body()) {
                         Course c = new Course(result.getCourseId(), result.getTitle(), "", "Available");
                         c.setImageUrl(result.getImageUrl());
+                        c.setPrice(result.getPrice());
                         displayedCourses.add(c);
                     }
                 }
@@ -166,6 +167,9 @@ public class SearchFragment extends Fragment {
         args.putString("courseTitle", course.getTitle());
         args.putString("courseDescription", course.getLearningMode());
         args.putString("imageUrl", course.getImageUrl());
+        if (course.getPrice() != null) {
+            args.putLong("coursePrice", course.getPrice());
+        }
         NavController nav = NavHostFragment.findNavController(this);
         nav.navigate(R.id.courseDetailFragment, args);
     }

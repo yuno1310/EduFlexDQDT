@@ -12,7 +12,11 @@ public class CourseSearchResult {
     @SerializedName("imageUrl")
     private String imageUrl;
 
+    @SerializedName("price")
+    private Long price;
+
     public String getCourseId() { return courseId; }
     public String getTitle() { return title; }
     public String getImageUrl() { return imageUrl; }
+    public Long getPrice() { return price; }
 }

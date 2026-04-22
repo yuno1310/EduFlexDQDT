@@ -70,68 +70,24 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/ll_cart_content"
+            android:id="@+id/ll_cart_items"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:visibility="gone" />
 
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="14dp"
-                app:cardElevation="2dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="14dp">
-
-                    <View
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:layout_marginEnd="12dp"
-                        android:background="@drawable/bg_stat_card" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Android Development"
-                            android:textColor="@color/text_primary"
-                            android:textSize="15sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:text="By EduFlex Team"
-                            android:textColor="@color/text_muted"
-                            android:textSize="12sp" />
-                    </LinearLayout>
-
-                    <ImageView
-                        android:id="@+id/iv_remove_item"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:padding="4dp"
-                        android:src="@android:drawable/ic_menu_close_clear_cancel" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
+        <LinearLayout
+            android:id="@+id/ll_checkout_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:orientation="vertical"
+            android:visibility="gone">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -147,7 +103,7 @@
                     android:id="@+id/tv_cart_total"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="$49.99"
+                    android:text="$0.00"
                     android:textColor="@color/cyan_primary_dark"
                     android:textSize="18sp"
                     android:textStyle="bold" />

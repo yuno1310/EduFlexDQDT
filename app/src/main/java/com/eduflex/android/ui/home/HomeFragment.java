@@ -275,6 +275,9 @@ public class HomeFragment extends Fragment {
         args.putString("courseTitle", courseTitle);
         args.putString("courseDescription", description);
         args.putString("imageUrl", course.getImageUrl());
+        if (course.getPrice() != null) {
+            args.putLong("coursePrice", course.getPrice());
+        }
 
         NavHostFragment.findNavController(this).navigate(R.id.courseDetailFragment, args);
     }
