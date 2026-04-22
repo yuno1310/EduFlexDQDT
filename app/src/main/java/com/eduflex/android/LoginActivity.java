@@ -30,7 +30,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private EditText etEmail, etPassword;
     private Button btnLogin;
-    private TextView tvGoToRegister;
+    private TextView tvGoToRegister, tvForgotPassword;
     private ProgressBar progressBar;
     private TokenManager tokenManager;
 
@@ -58,6 +58,7 @@ public class LoginActivity extends AppCompatActivity {
         etPassword = findViewById(R.id.et_password);
         btnLogin = findViewById(R.id.btn_login);
         tvGoToRegister = findViewById(R.id.tv_go_to_register);
+        tvForgotPassword = findViewById(R.id.tv_forgot_password);
         progressBar = findViewById(R.id.progress_bar);
 
         btnLogin.setOnClickListener(v -> attemptLogin());
@@ -65,6 +66,9 @@ public class LoginActivity extends AppCompatActivity {
         tvGoToRegister.setOnClickListener(v -> {
             startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
         });
+
+        tvForgotPassword.setOnClickListener(v ->
+            startActivity(new Intent(LoginActivity.this, ForgotPasswordActivity.class)));
     }
 
     private void attemptLogin() {
@@ -88,6 +92,7 @@ public class LoginActivity extends AppCompatActivity {
                     tokenManager.saveRole(response.body().getRole());
                     tokenManager.saveFullName(response.body().getFullName());
                     tokenManager.saveEmail(response.body().getEmail());
+                    tokenManager.saveAvatarUrl(response.body().getAvatarUrl());
                     SessionManager.resetLogoutState();
                     Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
 

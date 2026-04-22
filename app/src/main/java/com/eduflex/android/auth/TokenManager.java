@@ -15,6 +15,7 @@ public class TokenManager {
     private static final String KEY_ROLE = "user_role";
     private static final String KEY_FULL_NAME = "user_full_name";
     private static final String KEY_EMAIL = "user_email";
+    private static final String KEY_AVATAR_URL = "user_avatar_url";
 
     private final SharedPreferences prefs;
 
@@ -62,8 +63,16 @@ public class TokenManager {
         return getToken() != null;
     }
 
+    public void saveAvatarUrl(String url) {
+        prefs.edit().putString(KEY_AVATAR_URL, url).apply();
+    }
+
+    public String getAvatarUrl() {
+        return prefs.getString(KEY_AVATAR_URL, null);
+    }
+
     public void clearToken() {
-        prefs.edit().remove(KEY_TOKEN).remove(KEY_ROLE).remove(KEY_FULL_NAME).remove(KEY_EMAIL).apply();
+        prefs.edit().remove(KEY_TOKEN).remove(KEY_ROLE).remove(KEY_FULL_NAME).remove(KEY_EMAIL).remove(KEY_AVATAR_URL).apply();
     }
 
     /**

@@ -8,6 +8,7 @@ public class LoginResponse {
     private String role;
     private String fullName;
     private String email;
+    private String avatarUrl;
 
     public boolean isSuccess() { return success; }
     public String getMessage() { return message; }
@@ -15,4 +16,5 @@ public class LoginResponse {
     public String getRole() { return role != null ? role : "user"; }
     public String getFullName() { return fullName; }
     public String getEmail() { return email; }
+    public String getAvatarUrl() { return avatarUrl; }
 }

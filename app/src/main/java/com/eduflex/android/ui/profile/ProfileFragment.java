@@ -20,8 +20,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.NavController;
-import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -31,16 +29,24 @@ import com.eduflex.android.adapter.BadgeAdapter;
 import com.eduflex.android.api.ApiClient;
 import com.eduflex.android.api.BadgeApi;
 import com.eduflex.android.api.GamificationApi;
+import com.eduflex.android.api.MediaApi;
+import com.eduflex.android.api.UserApi;
 import com.eduflex.android.auth.TokenManager;
 import com.eduflex.android.model.BadgeResponse;
 import com.eduflex.android.model.GamificationStatsResponse;
+import com.eduflex.android.model.UpdateProfileRequest;
+import com.eduflex.android.model.UpdateProfileResponse;
 import com.eduflex.android.model.UserBadgeResponse;
 import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
+import okhttp3.MediaType;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -57,6 +63,8 @@ public class ProfileFragment extends Fragment {
     private TokenManager tokenManager;
     private GamificationApi gamificationApi;
     private BadgeApi badgeApi;
+    private UserApi userApi;
+    private MediaApi mediaApi;
     private SharedPreferences profilePrefs;
 
     // Views
@@ -91,17 +99,18 @@ public class ProfileFragment extends Fragment {
                     if (result.getResultCode() == android.app.Activity.RESULT_OK
                             && result.getData() != null) {
                         Uri imageUri = result.getData().getData();
-                        if (imageUri != null) {
-                            try {
-                                requireContext().getContentResolver()
-                                        .takePersistableUriPermission(imageUri,
-                                                Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                            } catch (SecurityException e) {
-                                Log.w(TAG, "Could not persist URI permission: " + e.getMessage());
-                            }
-                            profilePrefs.edit().putString(KEY_PHOTO_URI, imageUri.toString()).apply();
-                            ivProfileAvatar.setImageURI(imageUri);
+                        if (imageUri == null) return;
+                        try {
+                            requireContext().getContentResolver()
+                                    .takePersistableUriPermission(imageUri,
+                                            Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        } catch (SecurityException e) {
+                            Log.w(TAG, "Could not persist URI permission: " + e.getMessage());
                         }
+                        // Show locally immediately
+                        ivProfileAvatar.setImageURI(imageUri);
+                        // Upload to Supabase via backend
+                        uploadAvatar(imageUri);
                     }
                 });
     }
@@ -113,6 +122,8 @@ public class ProfileFragment extends Fragment {
         tokenManager = new TokenManager(requireContext());
         gamificationApi = ApiClient.createAuthenticatedService(GamificationApi.class);
         badgeApi = ApiClient.createAuthenticatedService(BadgeApi.class);
+        userApi = ApiClient.createAuthenticatedService(UserApi.class);
+        mediaApi = ApiClient.createAuthenticatedService(MediaApi.class);
         profilePrefs = requireContext().getSharedPreferences(PREF_PROFILE, Context.MODE_PRIVATE);
 
         bindViews(view);
@@ -152,6 +163,17 @@ public class ProfileFragment extends Fragment {
     }
 
     private void loadProfile() {
+        // Seed from TokenManager on first load so login data is reflected
+        if (profilePrefs.getString(KEY_NAME, null) == null && tokenManager.getFullName() != null) {
+            profilePrefs.edit().putString(KEY_NAME, tokenManager.getFullName()).apply();
+        }
+        if (profilePrefs.getString(KEY_EMAIL, null) == null && tokenManager.getEmail() != null) {
+            profilePrefs.edit().putString(KEY_EMAIL, tokenManager.getEmail()).apply();
+        }
+        if (profilePrefs.getString(KEY_PHOTO_URI, null) == null && tokenManager.getAvatarUrl() != null) {
+            profilePrefs.edit().putString(KEY_PHOTO_URI, tokenManager.getAvatarUrl()).apply();
+        }
+
         String name = profilePrefs.getString(KEY_NAME, "Student");
         String email = profilePrefs.getString(KEY_EMAIL, "");
         String goal = profilePrefs.getString(KEY_GOAL, "");
@@ -167,10 +189,14 @@ public class ProfileFragment extends Fragment {
         }
 
         if (photoUri != null) {
-            try {
-                ivProfileAvatar.setImageURI(Uri.parse(photoUri));
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to load saved photo: " + e.getMessage());
+            if (photoUri.startsWith("http")) {
+                com.bumptech.glide.Glide.with(this).load(photoUri).circleCrop().into(ivProfileAvatar);
+            } else {
+                try {
+                    ivProfileAvatar.setImageURI(Uri.parse(photoUri));
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to load saved photo: " + e.getMessage());
+                }
             }
         }
     }
@@ -211,7 +237,6 @@ public class ProfileFragment extends Fragment {
         String userId = tokenManager.getUserId();
         if (userId == null) return;
 
-        // Step 1: Fetch all badges
         badgeApi.getAllBadges().enqueue(new Callback<List<BadgeResponse>>() {
             @Override
             public void onResponse(@NonNull Call<List<BadgeResponse>> call,
@@ -246,7 +271,6 @@ public class ProfileFragment extends Fragment {
                     }
                 }
 
-                // Update UI
                 tvBadgeCount.setText(String.valueOf(earnedIds.size()));
                 rvBadges.setAdapter(new BadgeAdapter(allBadges, earnedIds));
             }
@@ -255,7 +279,6 @@ public class ProfileFragment extends Fragment {
             public void onFailure(@NonNull Call<List<UserBadgeResponse>> call, @NonNull Throwable t) {
                 if (!isAdded()) return;
                 Log.e(TAG, "User badges network error: " + t.getMessage());
-                // Still show all badges as locked
                 tvBadgeCount.setText("0");
                 rvBadges.setAdapter(new BadgeAdapter(allBadges, new HashSet<>()));
             }
@@ -270,12 +293,37 @@ public class ProfileFragment extends Fragment {
 
         btnSaveName.setOnClickListener(v -> {
             String newName = etEditName.getText().toString().trim();
-            if (!newName.isEmpty()) {
-                profilePrefs.edit().putString(KEY_NAME, newName).apply();
-                tvProfileName.setText(newName);
-                Toast.makeText(requireContext(), "Name updated", Toast.LENGTH_SHORT).show();
+            if (newName.isEmpty()) {
+                toggleEditMode(false);
+                return;
             }
-            toggleEditMode(false);
+            String userId = tokenManager.getUserId();
+            if (userId == null) {
+                Toast.makeText(requireContext(), "Session expired, please log in again", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            userApi.updateProfile(userId, new UpdateProfileRequest(newName))
+                .enqueue(new Callback<UpdateProfileResponse>() {
+                    @Override
+                    public void onResponse(@NonNull Call<UpdateProfileResponse> call,
+                                           @NonNull Response<UpdateProfileResponse> response) {
+                        if (!isAdded()) return;
+                        if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                            profilePrefs.edit().putString(KEY_NAME, newName).apply();
+                            tvProfileName.setText(newName);
+                            Toast.makeText(requireContext(), "Name updated", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(requireContext(), "Failed to update name", Toast.LENGTH_SHORT).show();
+                        }
+                        toggleEditMode(false);
+                    }
+                    @Override
+                    public void onFailure(@NonNull Call<UpdateProfileResponse> call, @NonNull Throwable t) {
+                        if (!isAdded()) return;
+                        Toast.makeText(requireContext(), "Network error", Toast.LENGTH_SHORT).show();
+                        toggleEditMode(false);
+                    }
+                });
         });
 
         // Goal chips
@@ -322,6 +370,56 @@ public class ProfileFragment extends Fragment {
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
                 | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
         imagePickerLauncher.launch(intent);
+    }
+
+    private void uploadAvatar(Uri imageUri) {
+        String userId = tokenManager.getUserId();
+        if (userId == null) return;
+
+        try {
+            android.content.ContentResolver resolver = requireContext().getContentResolver();
+            String mimeType = resolver.getType(imageUri);
+            if (mimeType == null) mimeType = "image/jpeg";
+
+            java.io.InputStream inputStream = resolver.openInputStream(imageUri);
+            if (inputStream == null) return;
+            byte[] bytes = inputStream.readAllBytes();
+            inputStream.close();
+
+            String ext = mimeType.contains("png") ? ".png" : ".jpg";
+            String filename = "avatar_" + userId + ext;
+
+            RequestBody requestBody = RequestBody.create(bytes, MediaType.parse(mimeType));
+            MultipartBody.Part part = MultipartBody.Part.createFormData("file", filename, requestBody);
+
+            mediaApi.uploadAvatar(userId, part).enqueue(new Callback<Map<String, Object>>() {
+                @Override
+                public void onResponse(@NonNull Call<Map<String, Object>> call,
+                                       @NonNull Response<Map<String, Object>> response) {
+                    if (!isAdded()) return;
+                    if (response.isSuccessful() && response.body() != null) {
+                        Object urlObj = response.body().get("url");
+                        if (urlObj instanceof String) {
+                            String url = (String) urlObj;
+                            profilePrefs.edit().putString(KEY_PHOTO_URI, url).apply();
+                            com.bumptech.glide.Glide.with(ProfileFragment.this).load(url).circleCrop().into(ivProfileAvatar);
+                        }
+                        Toast.makeText(requireContext(), "Avatar updated", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(requireContext(), "Failed to upload avatar", Toast.LENGTH_SHORT).show();
+                    }
+                }
+                @Override
+                public void onFailure(@NonNull Call<Map<String, Object>> call, @NonNull Throwable t) {
+                    if (!isAdded()) return;
+                    Log.e(TAG, "Avatar upload error: " + t.getMessage());
+                    Toast.makeText(requireContext(), "Network error uploading avatar", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to read image: " + e.getMessage());
+            Toast.makeText(requireContext(), "Could not read image", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void toggleEditMode(boolean editing) {

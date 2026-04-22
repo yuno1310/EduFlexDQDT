@@ -32,6 +32,10 @@
             android:name=".AdminActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".ForgotPasswordActivity"
+            android:exported="false" />
+
         <service
             android:name=".service.MyFirebaseMessagingService"
             android:exported="false">

@@ -33,11 +33,11 @@ public class LogInUseCase {
   public LogInResponse execute(LogInRequest request) {
     var user = userRepository.find_by_email(request.email());
     if (user == null) {
-      return new LogInResponse(false, "User not existed", null, null, null, null);
+      return new LogInResponse(false, "User not existed", null, null, null, null, null);
     }
     boolean isMatch = passwordEncoder.matches(request.password(), user.record.getPasswordHash());
     if (isMatch == false) {
-      return new LogInResponse(false, "Password is incorrect", null, null, null, null);
+      return new LogInResponse(false, "Password is incorrect", null, null, null, null, null);
     }
     String token = jwtUtils.generateToken(user.record.getUserId(), user.record.getEmail());
 
@@ -55,7 +55,7 @@ public class LogInUseCase {
     String role = user.record.getRole();
     if (role == null) role = "user";
 
-    return new LogInResponse(true, "Log in successfully", token, role, user.record.getFullName(), user.record.getEmail());
+    return new LogInResponse(true, "Log in successfully", token, role, user.record.getFullName(), user.record.getEmail(), user.record.getAvatarUrl());
   }
 }
 
