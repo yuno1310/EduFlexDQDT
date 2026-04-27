@@ -30,6 +30,7 @@ import com.eduflex.android.model.LessonListResponse;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import java.util.ArrayList;
 import java.util.List;
 
 public class CourseDetailFragment extends Fragment {
@@ -43,6 +44,7 @@ public class CourseDetailFragment extends Fragment {
     private int sourceTab;
     private LessonApi lessonApi;
     private CourseApi courseApi;
+    private List<Lesson> loadedLessons = new ArrayList<>();
     private RecyclerView rvLessons;
     private TextView tvLessonsEmpty;
     private ProgressBar progressCourse;
@@ -203,6 +205,7 @@ public class CourseDetailFragment extends Fragment {
                         if (lessons == null || lessons.isEmpty()) {
                             showEmptyState("Lessons are being updated. Please check back later.");
                         } else {
+                            loadedLessons = lessons;
                             rvLessons.setVisibility(View.VISIBLE);
                             tvLessonsEmpty.setVisibility(View.GONE);
                             rvLessons.setAdapter(new LessonAdapter(lessons, CourseDetailFragment.this::openLesson));
@@ -234,18 +237,28 @@ public class CourseDetailFragment extends Fragment {
     }
 
     private void openLesson(Lesson lesson) {
+        int index = loadedLessons.indexOf(lesson);
+        navigateToLesson(index < 0 ? 0 : index);
+    }
+
+    private void navigateToLesson(int index) {
+        if (index < 0 || index >= loadedLessons.size()) return;
+        Lesson lesson = loadedLessons.get(index);
+
         Bundle args = new Bundle();
         args.putString("lessonId", lesson.getLessonID());
         args.putString("lessonTitle", lesson.getTitle());
         args.putString("courseId", courseId);
         args.putString("contentType", lesson.getContentType());
         args.putInt("sourceTab", sourceTab);
+        args.putInt("lessonIndex", index);
+        args.putSerializable("lessonList", new ArrayList<>(loadedLessons));
         NavController navController = NavHostFragment.findNavController(this);
 
         String type = lesson.getContentType() == null ? "" : lesson.getContentType().toLowerCase();
         if ("quiz_fill_blank".equals(type) || "quiz_dien_tu".equals(type)
                 || "quiz_new".equals(type) || "quiz_new_type".equals(type)) {
-            navController.navigate(R.id.fillBlankQuizMockFragment, args);
+            navController.navigate(R.id.fillBlankQuizFragment, args);
             return;
         }
         if ("quiz".equals(type)) {

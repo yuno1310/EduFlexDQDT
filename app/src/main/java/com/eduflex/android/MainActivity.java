@@ -157,8 +157,8 @@ public class MainActivity extends AppCompatActivity {
         if (id == R.id.courseDetailFragment
                 || id == R.id.lessonStudyFragment || id == R.id.quizFragment
                 || id == R.id.leaderboardFragment || id == R.id.courseReviewFragment
-                || id == R.id.certificateFragment || id == R.id.quizResultFragment
-                || id == R.id.fillBlankQuizMockFragment || id == R.id.aiCourseSummaryFragment) {
+                || id == R.id.certificateFragment
+                || id == R.id.fillBlankQuizFragment || id == R.id.aiCourseSummaryFragment) {
             int sourceTab = arguments != null ? arguments.getInt("sourceTab", 0) : 0;
             return sourceTab != 0 ? sourceTab : R.id.homeFragment;
         }
