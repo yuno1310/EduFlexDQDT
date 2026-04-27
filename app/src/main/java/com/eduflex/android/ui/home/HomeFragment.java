@@ -1,5 +1,6 @@
 package com.eduflex.android.ui.home;
 
+import android.animation.ObjectAnimator;
 import android.os.Bundle;
 import android.content.res.ColorStateList;
 import android.util.Log;
@@ -7,6 +8,7 @@ import android.util.TypedValue;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.graphics.drawable.GradientDrawable;
 
@@ -49,7 +51,9 @@ public class HomeFragment extends Fragment {
     private ImageView ivFireIcon;
     private TextView tvStreak;
     private TextView tvXp;
+    private TextView tvXpNext;
     private TextView tvLevel;
+    private ProgressBar pbXp;
     private LinearLayout llStreakDays;
     private GamificationApi gamificationApi;
     private TokenManager tokenManager;
@@ -67,7 +71,9 @@ public class HomeFragment extends Fragment {
         ivFireIcon = view.findViewById(R.id.iv_fire_icon);
         tvStreak = view.findViewById(R.id.tv_streak);
         tvXp = view.findViewById(R.id.tv_xp);
+        tvXpNext = view.findViewById(R.id.tv_xp_next);
         tvLevel = view.findViewById(R.id.tv_level);
+        pbXp = view.findViewById(R.id.pb_xp);
         llStreakDays = view.findViewById(R.id.ll_streak_days);
 
         // Init API (use authenticated client so the JWT is attached)
@@ -142,8 +148,17 @@ public class HomeFragment extends Fragment {
         tvStreak.setText(streak > 0
             ? streak + " day streak"
             : "Start your streak today");
-        tvXp.setText("XP: " + xp + " | Keep going");
+
+        int xpInLevel = xp % 100;
+        int nextLevelXp = (level) * 100;
+        tvXp.setText(xp + " XP");
+        tvXpNext.setText("Lv." + (level + 1) + " at " + nextLevelXp);
         tvLevel.setText("Lv." + level);
+
+        ObjectAnimator.ofInt(pbXp, "progress", 0, xpInLevel)
+                .setDuration(600)
+                .start();
+
         renderStreakDays(streak, studiedToday);
     }
 

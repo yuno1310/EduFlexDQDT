@@ -1,6 +1,6 @@
 package com.eduflex.android.model;
 
-public class Lesson {
+public class Lesson implements java.io.Serializable {
     private String lessonID;
     private String title;
     private String contentType;

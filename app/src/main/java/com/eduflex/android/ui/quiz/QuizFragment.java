@@ -18,6 +18,7 @@ import com.eduflex.android.R;
 import com.eduflex.android.api.ApiClient;
 import com.eduflex.android.api.QuizApi;
 import com.eduflex.android.auth.TokenManager;
+import com.eduflex.android.model.Lesson;
 import com.eduflex.android.model.QuizGetResponse;
 import com.eduflex.android.model.SubmitQuizRequest;
 import com.eduflex.android.model.SubmitQuizResponse;
@@ -39,6 +40,9 @@ public class QuizFragment extends Fragment {
     private String courseId;
     private long questionId;
     private List<QuizGetResponse.OptionResponse> options = new ArrayList<>();
+    private int lessonIndex;
+    private List<Lesson> lessonList = new ArrayList<>();
+    private Bundle originalArgs;
 
     private TextView tvQuizTitle;
     private TextView tvQuizQuestion;
@@ -61,9 +65,12 @@ public class QuizFragment extends Fragment {
         tokenManager = new TokenManager(requireContext());
 
         Bundle args = getArguments();
+        originalArgs = args;
         lessonId = args != null ? args.getString("lessonId", "") : "";
         courseId = args != null ? args.getString("courseId", "") : "";
         String lessonTitle = args != null ? args.getString("lessonTitle", "Quiz") : "Quiz";
+        lessonIndex = args != null ? args.getInt("lessonIndex", 0) : 0;
+        lessonList = getLessonList(args);
 
         tvQuizTitle = view.findViewById(R.id.tv_quiz_title);
         tvQuizQuestion = view.findViewById(R.id.tv_quiz_question);
@@ -73,6 +80,8 @@ public class QuizFragment extends Fragment {
         rbOption3 = view.findViewById(R.id.rb_option_3);
         rbOption4 = view.findViewById(R.id.rb_option_4);
         btnSubmit = view.findViewById(R.id.btn_submit_quiz);
+        Button btnPrev = view.findViewById(R.id.btn_prev_lesson);
+        Button btnNext = view.findViewById(R.id.btn_next_lesson);
 
         tvQuizTitle.setText(lessonTitle + " - Quiz");
 
@@ -80,6 +89,11 @@ public class QuizFragment extends Fragment {
             NavController navController = NavHostFragment.findNavController(this);
             navController.popBackStack();
         });
+
+        btnPrev.setEnabled(lessonIndex > 0);
+        btnNext.setEnabled(lessonIndex < lessonList.size() - 1);
+        btnPrev.setOnClickListener(v -> navigateToLesson(lessonIndex - 1));
+        btnNext.setOnClickListener(v -> navigateToLesson(lessonIndex + 1));
 
         if (lessonId == null || lessonId.isEmpty()) {
             tvQuizQuestion.setText("Quiz is unavailable for this lesson.");
@@ -242,16 +256,60 @@ public class QuizFragment extends Fragment {
         }
 
         String message = result.getMessage() == null ? "Quiz submitted." : result.getMessage();
-        Bundle args = new Bundle();
-        args.putString("lessonTitle", tvQuizTitle.getText().toString().replace(" - Quiz", ""));
-        args.putString("message", message);
-        args.putInt("correctCount", result.getCorrectCount());
-        args.putInt("totalQuestions", result.getTotalQuestions());
-        args.putFloat("scorePercent", (float) result.getScorePercent());
-        args.putInt("xpRewarded", result.getXpRewarded());
-        args.putBoolean("passed", result.isPassed());
+        String lessonTitle = tvQuizTitle.getText().toString().replace(" - Quiz", "");
 
-        NavController navController = NavHostFragment.findNavController(this);
-        navController.navigate(R.id.quizResultFragment, args);
+        QuizResultDialog.newInstance(
+                lessonTitle,
+                result.isPassed(),
+                (float) result.getScorePercent(),
+                result.getCorrectCount(),
+                result.getTotalQuestions(),
+                result.getXpRewarded(),
+                message
+        ).show(getParentFragmentManager(), "quiz_result");
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Lesson> getLessonList(Bundle args) {
+        if (args == null) return new ArrayList<>();
+        Object raw = args.getSerializable("lessonList");
+        if (raw instanceof ArrayList) return (ArrayList<Lesson>) raw;
+        return new ArrayList<>();
+    }
+
+    private void navigateToLesson(int index) {
+        if (index < 0 || index >= lessonList.size() || !isAdded()) return;
+        Lesson lesson = lessonList.get(index);
+
+        String type = lesson.getContentType() == null ? "" : lesson.getContentType().toLowerCase();
+        String courseId = originalArgs != null ? originalArgs.getString("courseId", "") : "";
+        int sourceTab = originalArgs != null ? originalArgs.getInt("sourceTab", 0) : 0;
+
+        Bundle args = new Bundle();
+        args.putString("lessonId", lesson.getLessonID());
+        args.putString("lessonTitle", lesson.getTitle());
+        args.putString("courseId", courseId);
+        args.putString("contentType", lesson.getContentType());
+        args.putInt("sourceTab", sourceTab);
+        args.putInt("lessonIndex", index);
+        args.putSerializable("lessonList", new ArrayList<>(lessonList));
+
+        NavController nav = NavHostFragment.findNavController(this);
+        if ("quiz_fill_blank".equals(type) || "quiz_dien_tu".equals(type)
+                || "quiz_new".equals(type) || "quiz_new_type".equals(type)) {
+            nav.navigate(R.id.fillBlankQuizFragment, args);
+        } else if ("quiz".equals(type)) {
+            nav.navigate(R.id.quizFragment, args);
+        } else {
+            args.putString("lessonContent", getMockContent(lesson.getTitle(), type));
+            nav.navigate(R.id.lessonStudyFragment, args);
+        }
+    }
+
+    private String getMockContent(String title, String type) {
+        if ("video".equals(type)) return "VIDEO_PLACEHOLDER";
+        return "This is lesson content for: " + title
+                + "\n\nIn this lesson, you will learn key concepts and practical examples."
+                + "\n\n- Topic overview\n- Main ideas\n- Practical notes";
     }
 }

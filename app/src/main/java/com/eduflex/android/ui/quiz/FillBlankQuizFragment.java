@@ -10,24 +10,26 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.eduflex.android.R;
 import com.eduflex.android.api.ApiClient;
 import com.eduflex.android.api.QuizApi;
 import com.eduflex.android.auth.TokenManager;
+import com.eduflex.android.model.Lesson;
 import com.eduflex.android.model.QuizGetResponse;
 import com.eduflex.android.model.SubmitFillBlankRequest;
 import com.eduflex.android.model.SubmitFillBlankResponse;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class FillBlankQuizMockFragment extends Fragment {
+public class FillBlankQuizFragment extends Fragment {
 
     private QuizApi quizApi;
     private TokenManager tokenManager;
@@ -36,14 +38,17 @@ public class FillBlankQuizMockFragment extends Fragment {
     private String courseId;
     private String lessonTitle;
     private long questionId;
+    private int lessonIndex;
+    private List<Lesson> lessonList = new ArrayList<>();
+    private Bundle originalArgs;
 
     private TextView tvTitle;
     private TextView tvQuestion;
     private EditText etAnswer;
     private Button btnSubmit;
 
-    public FillBlankQuizMockFragment() {
-        super(R.layout.fragment_fill_blank_quiz_mock);
+    public FillBlankQuizFragment() {
+        super(R.layout.fragment_fill_blank_quiz);
     }
 
     @Override
@@ -54,19 +59,29 @@ public class FillBlankQuizMockFragment extends Fragment {
         tokenManager = new TokenManager(requireContext());
 
         Bundle args = getArguments();
+        originalArgs = args;
         lessonId = args != null ? args.getString("lessonId", "") : "";
         courseId = args != null ? args.getString("courseId", "") : "";
         lessonTitle = args != null ? args.getString("lessonTitle", "Quiz điền từ") : "Quiz điền từ";
+        lessonIndex = args != null ? args.getInt("lessonIndex", 0) : 0;
+        lessonList = getLessonList(args);
 
         tvTitle = view.findViewById(R.id.tv_fill_blank_quiz_title);
         tvQuestion = view.findViewById(R.id.tv_fill_blank_quiz_question);
         etAnswer = view.findViewById(R.id.et_fill_blank_answer);
         btnSubmit = view.findViewById(R.id.btn_submit_fill_blank_quiz);
+        Button btnPrev = view.findViewById(R.id.btn_prev_lesson);
+        Button btnNext = view.findViewById(R.id.btn_next_lesson);
 
         tvTitle.setText(lessonTitle + " - Điền từ");
 
         view.findViewById(R.id.btn_back_fill_blank_quiz)
                 .setOnClickListener(v -> NavHostFragment.findNavController(this).popBackStack());
+
+        btnPrev.setEnabled(lessonIndex > 0);
+        btnNext.setEnabled(lessonIndex < lessonList.size() - 1);
+        btnPrev.setOnClickListener(v -> navigateToLesson(lessonIndex - 1));
+        btnNext.setOnClickListener(v -> navigateToLesson(lessonIndex + 1));
 
         btnSubmit.setOnClickListener(v -> submitQuiz());
 
@@ -169,16 +184,58 @@ public class FillBlankQuizMockFragment extends Fragment {
         String message = result.getMessage() != null ? result.getMessage()
                 : (passed ? "Bạn đã trả lời đúng!" : "Câu trả lời chưa đúng.");
 
-        Bundle args = new Bundle();
-        args.putString("lessonTitle", lessonTitle);
-        args.putString("message", message);
-        args.putInt("correctCount", result.getCorrectCount());
-        args.putInt("totalQuestions", result.getTotalQuestions());
-        args.putFloat("scorePercent", scorePercent);
-        args.putInt("xpRewarded", xpRewarded);
-        args.putBoolean("passed", passed);
+        QuizResultDialog.newInstance(
+                lessonTitle,
+                passed,
+                scorePercent,
+                result.getCorrectCount(),
+                result.getTotalQuestions(),
+                xpRewarded,
+                message
+        ).show(getParentFragmentManager(), "quiz_result");
+    }
 
-        NavController navController = NavHostFragment.findNavController(this);
-        navController.navigate(R.id.quizResultFragment, args);
+    @SuppressWarnings("unchecked")
+    private List<Lesson> getLessonList(Bundle args) {
+        if (args == null) return new ArrayList<>();
+        Object raw = args.getSerializable("lessonList");
+        if (raw instanceof ArrayList) return (ArrayList<Lesson>) raw;
+        return new ArrayList<>();
+    }
+
+    private void navigateToLesson(int index) {
+        if (index < 0 || index >= lessonList.size() || !isAdded()) return;
+        Lesson lesson = lessonList.get(index);
+
+        String type = lesson.getContentType() == null ? "" : lesson.getContentType().toLowerCase();
+        String courseIdArg = originalArgs != null ? originalArgs.getString("courseId", "") : "";
+        int sourceTab = originalArgs != null ? originalArgs.getInt("sourceTab", 0) : 0;
+
+        Bundle args = new Bundle();
+        args.putString("lessonId", lesson.getLessonID());
+        args.putString("lessonTitle", lesson.getTitle());
+        args.putString("courseId", courseIdArg);
+        args.putString("contentType", lesson.getContentType());
+        args.putInt("sourceTab", sourceTab);
+        args.putInt("lessonIndex", index);
+        args.putSerializable("lessonList", new ArrayList<>(lessonList));
+
+        androidx.navigation.NavController nav = NavHostFragment.findNavController(this);
+        if ("quiz_fill_blank".equals(type) || "quiz_dien_tu".equals(type)
+                || "quiz_new".equals(type) || "quiz_new_type".equals(type)) {
+            nav.navigate(R.id.fillBlankQuizFragment, args);
+        } else if ("quiz".equals(type)) {
+            nav.navigate(R.id.quizFragment, args);
+        } else {
+            args.putString("lessonContent", getMockContent(lesson.getTitle(), type));
+            nav.navigate(R.id.lessonStudyFragment, args);
+        }
+    }
+
+    private String getMockContent(String title, String type) {
+        if ("video".equals(type)) return "VIDEO_PLACEHOLDER";
+        return "This is lesson content for: " + title
+                + "\n\nIn this lesson, you will learn key concepts and practical examples."
+                + "\n\n- Topic overview\n- Main ideas\n- Practical notes";
     }
 }
