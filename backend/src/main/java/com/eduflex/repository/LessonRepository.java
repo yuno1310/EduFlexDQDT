@@ -51,13 +51,16 @@ public class LessonRepository {
             .where(Lesson.LESSON.LESSON_ID.eq(lessonId)));
   }
 
-  public boolean updateLesson(UUID lessonId, String title, String contentType, String videoUrl, String content) {
-    return dsl.update(Lesson.LESSON)
+  public boolean updateLesson(UUID lessonId, String title, String contentType, String videoUrl, String content, UUID parentLessonId) {
+    var update = dsl.update(Lesson.LESSON)
         .set(Lesson.LESSON.TITLE, title)
         .set(Lesson.LESSON.CONTENT_TYPE, contentType)
         .set(Lesson.LESSON.VIDEO_URL, videoUrl)
-        .set(Lesson.LESSON.CONTENT, content)
-        .where(Lesson.LESSON.LESSON_ID.eq(lessonId))
+        .set(Lesson.LESSON.CONTENT, content);
+    if (parentLessonId != null) {
+        update.set(Lesson.LESSON.PARENT_LESSON_ID, parentLessonId);
+    }
+    return update.where(Lesson.LESSON.LESSON_ID.eq(lessonId))
         .execute() > 0;
   }
 

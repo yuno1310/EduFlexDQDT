@@ -6,6 +6,7 @@ public class Lesson implements java.io.Serializable {
     private String contentType;
     private String videoUrl;
     private String content;
+    private String parentLessonId;
 
     public Lesson(String lessonID, String title, String contentType) {
         this.lessonID = lessonID;
@@ -31,4 +32,7 @@ public class Lesson implements java.io.Serializable {
 
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
+
+    public String getParentLessonId() { return parentLessonId; }
+    public void setParentLessonId(String parentLessonId) { this.parentLessonId = parentLessonId; }
 }

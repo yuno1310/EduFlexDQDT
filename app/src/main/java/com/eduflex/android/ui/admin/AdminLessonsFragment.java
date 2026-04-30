@@ -229,7 +229,8 @@ public class AdminLessonsFragment extends Fragment {
                             title,
                             contentType.isEmpty() ? null : contentType,
                             videoUrl.isEmpty() ? null : videoUrl,
-                            content.isEmpty() ? null : content
+                            content.isEmpty() ? null : content,
+                            lesson.getParentLessonId()
                     );
 
                     adminApi.updateLesson(lesson.getLessonID(), request)
