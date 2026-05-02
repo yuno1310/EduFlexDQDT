@@ -55,7 +55,8 @@ public class AdminDTO {
             String title,
             String contentType,
             String videoUrl,
-            String content
+            String content,
+            UUID parentLessonId
     ) {}
 
     public record UpdateLessonResponse(

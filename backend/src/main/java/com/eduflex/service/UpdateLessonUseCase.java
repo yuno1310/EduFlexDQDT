@@ -26,7 +26,8 @@ public class UpdateLessonUseCase {
                 request.title(),
                 request.contentType(),
                 request.videoUrl(),
-                request.content()
+                request.content(),
+                request.parentLessonId()
         );
 
         return updated
