@@ -93,6 +93,10 @@ public class AdminLessonAdapter extends RecyclerView.Adapter<AdminLessonAdapter.
         }
     }
 
+    public List<Lesson> getLessons() {
+        return lessons;
+    }
+
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvLessonNumber;
         TextView tvLessonTitle;

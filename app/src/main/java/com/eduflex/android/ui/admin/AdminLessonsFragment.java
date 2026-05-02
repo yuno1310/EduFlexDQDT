@@ -211,6 +211,35 @@ public class AdminLessonsFragment extends Fragment {
         etContent.setMinLines(3);
         layout.addView(etContent);
 
+        addLabel(layout, "Parent Lesson (optional - for quiz lessons)");
+        android.widget.Spinner spinnerParentLesson = new android.widget.Spinner(requireContext());
+        layout.addView(spinnerParentLesson);
+
+        // Populate parent lesson options (exclude current lesson to avoid self-reference)
+        java.util.List<Lesson> allLessons = (adapter != null) ? adapter.getLessons() : new java.util.ArrayList<>();
+        java.util.List<String> parentOptions = new java.util.ArrayList<>();
+        parentOptions.add("None (quiz lesson)"); // null option
+        int selectedPosition = 0; // default: no parent
+
+        // Add existing lessons as options
+        for (int i = 0; i < allLessons.size(); i++) {
+            Lesson l = allLessons.get(i);
+            // Skip current lesson and lessons with existing parent
+            if (!l.getLessonID().equals(lesson.getLessonID()) && l.getParentLessonId() == null) {
+                parentOptions.add(l.getTitle());
+                if (lesson.getParentLessonId() != null && l.getLessonID().equals(lesson.getParentLessonId())) {
+                    selectedPosition = i + 1; // +1 because index 0 is "None"
+                }
+            }
+        }
+
+        android.widget.ArrayAdapter<String> adapterSpinner = new android.widget.ArrayAdapter<>(
+                requireContext(),
+                android.R.layout.simple_spinner_item,
+                parentOptions);
+        spinnerParentLesson.setAdapter(adapterSpinner);
+        spinnerParentLesson.setSelection(selectedPosition);
+
         new AlertDialog.Builder(requireContext())
                 .setTitle("Edit Lesson")
                 .setView(layout)
@@ -219,6 +248,16 @@ public class AdminLessonsFragment extends Fragment {
                     String contentType = etContentType.getText().toString().trim();
                     String videoUrl = etVideoUrl.getText().toString().trim();
                     String content = etContent.getText().toString().trim();
+
+                    // Get selected parent lesson ID (use final array for lambda capture)
+                    final String[] parentLessonIdRef = new String[1];
+                    int selectedIdx = spinnerParentLesson.getSelectedItemPosition();
+                    if (selectedIdx > 0) { // index 0 is "None"
+                        Lesson selectedParent = allLessons.get(selectedIdx - 1);
+                        parentLessonIdRef[0] = selectedParent.getLessonID();
+                    } else {
+                        parentLessonIdRef[0] = null;
+                    }
 
                     if (title.isEmpty()) {
                         Toast.makeText(getContext(), "Title cannot be empty", Toast.LENGTH_SHORT).show();
@@ -230,7 +269,7 @@ public class AdminLessonsFragment extends Fragment {
                             contentType.isEmpty() ? null : contentType,
                             videoUrl.isEmpty() ? null : videoUrl,
                             content.isEmpty() ? null : content,
-                            lesson.getParentLessonId()
+                            parentLessonIdRef[0]
                     );
 
                     adminApi.updateLesson(lesson.getLessonID(), request)
@@ -243,6 +282,7 @@ public class AdminLessonsFragment extends Fragment {
                                             && response.body().isSuccess()) {
                                         lesson.setTitle(title);
                                         lesson.setContentType(contentType.isEmpty() ? lesson.getContentType() : contentType);
+                                        lesson.setParentLessonId(parentLessonIdRef[0]);
                                         adapter.updateLesson(position, lesson);
                                         Toast.makeText(getContext(), "Lesson updated", Toast.LENGTH_SHORT).show();
                                     } else {
