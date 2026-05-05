@@ -38,11 +38,12 @@ public class QuizResultDialog extends DialogFragment {
     private static final String ARG_TOTAL = "totalQuestions";
     private static final String ARG_XP = "xpRewarded";
     private static final String ARG_MESSAGE = "message";
+    private static final String ARG_NEXT_LESSON = "nextLessonArgs";
 
     public static QuizResultDialog newInstance(String lessonTitle, boolean passed,
                                                float scorePercent, int correctCount,
                                                int totalQuestions, int xpRewarded,
-                                               String message) {
+                                               String message, Bundle nextLessonArgs) {
         QuizResultDialog dialog = new QuizResultDialog();
         Bundle args = new Bundle();
         args.putString(ARG_LESSON_TITLE, lessonTitle);
@@ -52,6 +53,7 @@ public class QuizResultDialog extends DialogFragment {
         args.putInt(ARG_TOTAL, totalQuestions);
         args.putInt(ARG_XP, xpRewarded);
         args.putString(ARG_MESSAGE, message);
+        if (nextLessonArgs != null) args.putBundle(ARG_NEXT_LESSON, nextLessonArgs);
         dialog.setArguments(args);
         return dialog;
     }
@@ -133,10 +135,16 @@ public class QuizResultDialog extends DialogFragment {
         animateXp(tvXp, xpRewarded);
         fetchXpToNextLevel(tvXpToNext, xpRewarded);
 
+        Bundle nextLessonArgs = args != null ? args.getBundle(ARG_NEXT_LESSON) : null;
+
         setCancelable(false);
         btnContinue.setOnClickListener(v -> {
             dismiss();
-            navigateBackToCourse();
+            if (nextLessonArgs != null) {
+                navigateToNextLesson(nextLessonArgs);
+            } else {
+                navigateBackToCourse();
+            }
         });
         btnRetry.setOnClickListener(v -> dismiss());
     }
@@ -182,6 +190,12 @@ public class QuizResultDialog extends DialogFragment {
         animator.setDuration(800);
         animator.addUpdateListener(a -> tvXp.setText("+" + a.getAnimatedValue() + " XP"));
         animator.start();
+    }
+
+    private void navigateToNextLesson(Bundle nextLessonArgs) {
+        if (!isAdded()) return;
+        NavController nav = NavHostFragment.findNavController(this);
+        nav.navigate(R.id.lessonStudyFragment, nextLessonArgs);
     }
 
     private void navigateBackToCourse() {

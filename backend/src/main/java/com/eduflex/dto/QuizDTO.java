@@ -52,12 +52,13 @@ public class QuizDTO {
   public record OptionResponse(Long optionId, String optionText) {
   }
 
+  public record QuestionResponse(Long questionId, String questionText, int points, List<OptionResponse> options) {
+  }
+
   public record GetQuizResponse(
       boolean success,
       String message,
-      Long questionId,
-      String questionText,
-      int points,
-      List<OptionResponse> options) {
+      List<QuestionResponse> questions,
+      UUID parentLessonId) {
   }
 }

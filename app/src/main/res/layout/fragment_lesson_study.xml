@@ -97,10 +97,10 @@
                 android:layout_height="48dp"
                 android:layout_weight="1"
                 android:layout_marginEnd="8dp"
-                android:background="@drawable/bg_button_outline_rounded"
-                android:text="← Previous"
+                android:background="@drawable/bg_button_primary_rounded"
+                android:text="Previous"
                 android:textAllCaps="false"
-                android:textColor="@color/brand_primary"
+                android:textColor="@color/text_on_brand"
                 android:textSize="14sp" />
 
             <Button
@@ -109,7 +109,7 @@
                 android:layout_height="48dp"
                 android:layout_weight="1"
                 android:background="@drawable/bg_button_primary_rounded"
-                android:text="Next →"
+                android:text="Next"
                 android:textAllCaps="false"
                 android:textColor="@color/text_on_brand"
                 android:textSize="14sp" />

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import com.eduflex.entity.QuestionDbO;
 import com.eduflex.entity.QuestionOptionDbO;
 import com.eduflex.generated.tables.GamificationStats;
+import com.eduflex.generated.tables.Lesson;
 import com.eduflex.generated.tables.QuestionOptions;
 import com.eduflex.generated.tables.Questions;
 import com.eduflex.generated.tables.QuizAttempts;
@@ -61,10 +62,17 @@ public class QuizRepository {
     option.record.store();
   }
 
-  public QuestionsRecord getQuestionByLessonId(UUID lessonId) {
+  public List<QuestionsRecord> getQuestionsByLessonId(UUID lessonId) {
     return dsl.selectFrom(Questions.QUESTIONS)
         .where(Questions.QUESTIONS.LESSON_ID.eq(lessonId))
-        .fetchOne();
+        .fetch();
+  }
+
+  public UUID getParentLessonId(UUID quizLessonId) {
+    return dsl.select(Lesson.LESSON.PARENT_LESSON_ID)
+        .from(Lesson.LESSON)
+        .where(Lesson.LESSON.LESSON_ID.eq(quizLessonId))
+        .fetchOneInto(UUID.class);
   }
 
   public List<QuestionOptionsRecord> getOptionsByQuestionId(Long questionId) {

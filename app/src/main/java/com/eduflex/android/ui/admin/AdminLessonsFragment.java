@@ -8,6 +8,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -313,8 +314,10 @@ public class AdminLessonsFragment extends Fragment {
                 if (!isAdded()) return;
 
                 if (response.isSuccessful() && response.body() != null
-                        && response.body().isSuccess()) {
-                    showQuizEditForm(response.body());
+                        && response.body().isSuccess()
+                        && response.body().getQuestions() != null
+                        && !response.body().getQuestions().isEmpty()) {
+                    showQuizEditForm(response.body().getQuestions());
                 } else {
                     Toast.makeText(getContext(), "No quiz found for this lesson", Toast.LENGTH_SHORT).show();
                 }
@@ -328,38 +331,52 @@ public class AdminLessonsFragment extends Fragment {
         });
     }
 
-    private void showQuizEditForm(QuizGetResponse quiz) {
+    private void showQuizEditForm(List<QuizGetResponse.QuestionResponse> questions) {
+        ScrollView scrollView = new ScrollView(requireContext());
         LinearLayout layout = new LinearLayout(requireContext());
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(60, 40, 60, 20);
+        scrollView.addView(layout);
 
-        // Question text
-        TextView lblQuestion = new TextView(requireContext());
-        lblQuestion.setText("Question:");
-        lblQuestion.setTextColor(getResources().getColor(R.color.text_title, null));
-        layout.addView(lblQuestion);
+        // Per-question fields stored for save
+        EditText[] etQuestions = new EditText[questions.size()];
+        EditText[] etPointsList = new EditText[questions.size()];
+        EditText[][] optionFields = new EditText[questions.size()][];
 
-        EditText etQuestion = new EditText(requireContext());
-        etQuestion.setText(quiz.getQuestionText());
-        etQuestion.setMinLines(2);
-        layout.addView(etQuestion);
+        for (int qi = 0; qi < questions.size(); qi++) {
+            QuizGetResponse.QuestionResponse q = questions.get(qi);
 
-        // Points
-        TextView lblPoints = new TextView(requireContext());
-        lblPoints.setText("Points:");
-        lblPoints.setTextColor(getResources().getColor(R.color.text_title, null));
-        layout.addView(lblPoints);
+            TextView lblHeader = new TextView(requireContext());
+            lblHeader.setText("Question " + (qi + 1));
+            lblHeader.setTextColor(getResources().getColor(R.color.text_title, null));
+            lblHeader.setTypeface(null, android.graphics.Typeface.BOLD);
+            lblHeader.setPadding(0, qi == 0 ? 0 : 32, 0, 8);
+            layout.addView(lblHeader);
 
-        EditText etPoints = new EditText(requireContext());
-        etPoints.setText(String.valueOf(quiz.getPoints()));
-        etPoints.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
-        layout.addView(etPoints);
+            TextView lblQuestion = new TextView(requireContext());
+            lblQuestion.setText("Question text:");
+            lblQuestion.setTextColor(getResources().getColor(R.color.text_secondary, null));
+            layout.addView(lblQuestion);
 
-        // Options
-        List<QuizGetResponse.OptionResponse> options = quiz.getOptions();
-        EditText[] optionFields = new EditText[options != null ? options.size() : 0];
+            EditText etQuestion = new EditText(requireContext());
+            etQuestion.setText(q.getQuestionText());
+            etQuestion.setMinLines(2);
+            layout.addView(etQuestion);
+            etQuestions[qi] = etQuestion;
 
-        if (options != null) {
+            TextView lblPoints = new TextView(requireContext());
+            lblPoints.setText("Points:");
+            lblPoints.setTextColor(getResources().getColor(R.color.text_secondary, null));
+            layout.addView(lblPoints);
+
+            EditText etPoints = new EditText(requireContext());
+            etPoints.setText(String.valueOf(q.getPoints()));
+            etPoints.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+            layout.addView(etPoints);
+            etPointsList[qi] = etPoints;
+
+            List<QuizGetResponse.OptionResponse> options = q.getOptions() != null ? q.getOptions() : new java.util.ArrayList<>();
+            optionFields[qi] = new EditText[options.size()];
             for (int i = 0; i < options.size(); i++) {
                 TextView lblOpt = new TextView(requireContext());
                 lblOpt.setText("Option " + (i + 1) + ":");
@@ -369,75 +386,61 @@ public class AdminLessonsFragment extends Fragment {
                 EditText etOpt = new EditText(requireContext());
                 etOpt.setText(options.get(i).getOptionText());
                 layout.addView(etOpt);
-                optionFields[i] = etOpt;
+                optionFields[qi][i] = etOpt;
             }
         }
 
         new AlertDialog.Builder(requireContext())
-                .setTitle("Edit Quiz (ID: " + quiz.getQuestionId() + ")")
-                .setView(layout)
-                .setPositiveButton("Save", (dialog, which) -> {
-                    String questionText = etQuestion.getText().toString().trim();
-                    int points;
-                    try {
-                        points = Integer.parseInt(etPoints.getText().toString().trim());
-                    } catch (NumberFormatException e) {
-                        points = quiz.getPoints();
-                    }
-
-                    // Build option updates JSON manually via Gson/Retrofit
-                    StringBuilder json = new StringBuilder();
-                    json.append("{\"questionText\":\"").append(escapeJson(questionText)).append("\",");
-                    json.append("\"points\":").append(points).append(",");
-                    json.append("\"options\":[");
-
-                    if (options != null) {
-                        for (int i = 0; i < options.size(); i++) {
-                            if (i > 0) json.append(",");
-                            json.append("{\"optionId\":").append(options.get(i).getOptionId());
-                            json.append(",\"optionText\":\"").append(escapeJson(optionFields[i].getText().toString().trim()));
-                            json.append("\",\"isCorrect\":true}"); // preserve existing correctness
+                .setTitle("Edit Quiz (" + questions.size() + " question" + (questions.size() > 1 ? "s" : "") + ")")
+                .setView(scrollView)
+                .setPositiveButton("Save All", (dialog, which) -> {
+                    for (int qi = 0; qi < questions.size(); qi++) {
+                        QuizGetResponse.QuestionResponse q = questions.get(qi);
+                        String questionText = etQuestions[qi].getText().toString().trim();
+                        int points;
+                        try {
+                            points = Integer.parseInt(etPointsList[qi].getText().toString().trim());
+                        } catch (NumberFormatException e) {
+                            points = q.getPoints();
                         }
-                    }
-                    json.append("]}");
 
-                    // Use a raw map approach via Retrofit
-                    java.util.Map<String, Object> body = new java.util.HashMap<>();
-                    body.put("questionText", questionText);
-                    body.put("points", points);
+                        List<QuizGetResponse.OptionResponse> options = q.getOptions() != null ? q.getOptions() : new java.util.ArrayList<>();
+                        java.util.Map<String, Object> body = new java.util.HashMap<>();
+                        body.put("questionText", questionText);
+                        body.put("points", points);
 
-                    java.util.List<java.util.Map<String, Object>> optList = new java.util.ArrayList<>();
-                    if (options != null) {
+                        java.util.List<java.util.Map<String, Object>> optList = new java.util.ArrayList<>();
                         for (int i = 0; i < options.size(); i++) {
                             java.util.Map<String, Object> opt = new java.util.HashMap<>();
                             opt.put("optionId", options.get(i).getOptionId());
-                            opt.put("optionText", optionFields[i].getText().toString().trim());
-                            opt.put("isCorrect", true); // TODO: let admin toggle
+                            opt.put("optionText", optionFields[qi][i].getText().toString().trim());
+                            opt.put("isCorrect", true);
                             optList.add(opt);
                         }
-                    }
-                    body.put("options", optList);
+                        body.put("options", optList);
 
-                    // Call raw endpoint
-                    adminApi.updateQuizRaw(quiz.getQuestionId(), body)
-                            .enqueue(new Callback<UpdateLessonResponse>() {
-                                @Override
-                                public void onResponse(@NonNull Call<UpdateLessonResponse> call,
-                                                       @NonNull Response<UpdateLessonResponse> r) {
-                                    if (!isAdded()) return;
-                                    if (r.isSuccessful()) {
-                                        Toast.makeText(getContext(), "Quiz updated", Toast.LENGTH_SHORT).show();
-                                    } else {
-                                        Toast.makeText(getContext(), "Failed to update quiz", Toast.LENGTH_SHORT).show();
+                        final int questionNumber = qi + 1;
+                        final int total = questions.size();
+                        adminApi.updateQuizRaw(q.getQuestionId(), body)
+                                .enqueue(new Callback<UpdateLessonResponse>() {
+                                    @Override
+                                    public void onResponse(@NonNull Call<UpdateLessonResponse> call,
+                                                           @NonNull Response<UpdateLessonResponse> r) {
+                                        if (!isAdded()) return;
+                                        if (questionNumber == total) {
+                                            Toast.makeText(getContext(),
+                                                    r.isSuccessful() ? "Quiz updated" : "Failed to update quiz",
+                                                    Toast.LENGTH_SHORT).show();
+                                        }
                                     }
-                                }
 
-                                @Override
-                                public void onFailure(@NonNull Call<UpdateLessonResponse> call, @NonNull Throwable t) {
-                                    if (!isAdded()) return;
-                                    Toast.makeText(getContext(), "Network error", Toast.LENGTH_SHORT).show();
-                                }
-                            });
+                                    @Override
+                                    public void onFailure(@NonNull Call<UpdateLessonResponse> call, @NonNull Throwable t) {
+                                        if (!isAdded()) return;
+                                        Toast.makeText(getContext(), "Network error", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                    }
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
