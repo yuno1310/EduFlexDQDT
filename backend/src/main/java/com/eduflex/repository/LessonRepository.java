@@ -28,14 +28,14 @@ public class LessonRepository {
 
   public List<LessonInfo> getLesson(UUID courseID) {
     var records = dsl.select(Lesson.LESSON.LESSON_ID, Lesson.LESSON.TITLE, Lesson.LESSON.CONTENT_TYPE,
-            Lesson.LESSON.VIDEO_URL, Lesson.LESSON.CONTENT)
+            Lesson.LESSON.VIDEO_URL, Lesson.LESSON.CONTENT, Lesson.LESSON.PARENT_LESSON_ID)
         .from(Lesson.LESSON)
         .where(Lesson.LESSON.COURSE_ID.eq(courseID)).fetch();
     if (records != null) {
       List<LessonInfo> listLesson = new ArrayList<LessonInfo>();
       for (var record : records) {
         LessonInfo lesson = new LessonInfo(record.value1(), record.value2(), record.value3(),
-            record.value4(), record.value5());
+            record.value4(), record.value5(), record.value6());
         listLesson.add(lesson);
       }
       return listLesson;

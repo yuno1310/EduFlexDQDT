@@ -104,8 +104,9 @@ public class FillBlankQuizFragment extends Fragment {
                                    @NonNull Response<QuizGetResponse> response) {
                 if (!isAdded()) return;
 
-                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
-                    QuizGetResponse quiz = response.body();
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()
+                        && response.body().getQuestions() != null && !response.body().getQuestions().isEmpty()) {
+                    QuizGetResponse.QuestionResponse quiz = response.body().getQuestions().get(0);
                     questionId = quiz.getQuestionId();
                     String text = quiz.getQuestionText();
                     if (text == null || text.trim().isEmpty()) {
@@ -191,8 +192,48 @@ public class FillBlankQuizFragment extends Fragment {
                 result.getCorrectCount(),
                 result.getTotalQuestions(),
                 xpRewarded,
-                message
+                message,
+                buildNextLessonArgs()
         ).show(getParentFragmentManager(), "quiz_result");
+    }
+
+    private Bundle buildNextLessonArgs() {
+        int nextIndex = lessonIndex + 1;
+        if (nextIndex >= lessonList.size()) return null;
+        Lesson next = lessonList.get(nextIndex);
+        List<Lesson> allLessonList = getAllLessonList(originalArgs);
+
+        Bundle args = new Bundle();
+        args.putString("lessonId", next.getLessonID());
+        args.putString("lessonTitle", next.getTitle());
+        args.putString("courseId", courseId);
+        args.putString("contentType", next.getContentType());
+        args.putInt("sourceTab", originalArgs != null ? originalArgs.getInt("sourceTab", 0) : 0);
+        args.putInt("lessonIndex", nextIndex);
+        args.putSerializable("lessonList", new ArrayList<>(lessonList));
+        args.putSerializable("allLessonList", new ArrayList<>(allLessonList));
+
+        String nextQuizId = findQuizLessonId(next.getLessonID(), allLessonList);
+        if (nextQuizId != null) args.putString("quizLessonId", nextQuizId);
+
+        String content = next.getContent();
+        args.putString("lessonContent", (content != null && !content.isEmpty()) ? content : "");
+        return args;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Lesson> getAllLessonList(Bundle args) {
+        if (args == null) return new ArrayList<>();
+        Object raw = args.getSerializable("allLessonList");
+        if (raw instanceof ArrayList) return (ArrayList<Lesson>) raw;
+        return new ArrayList<>(lessonList);
+    }
+
+    private String findQuizLessonId(String parentId, List<Lesson> allLessons) {
+        for (Lesson l : allLessons) {
+            if (parentId.equals(l.getParentLessonId())) return l.getLessonID();
+        }
+        return null;
     }
 
     @SuppressWarnings("unchecked")

@@ -188,6 +188,8 @@ public class CourseDetailFragment extends Fragment {
         Toast.makeText(requireContext(), courseTitle + " added to cart.", Toast.LENGTH_SHORT).show();
     }
 
+    private List<Lesson> allLessons = new ArrayList<>();
+
     private void loadLessons() {
         if (courseId == null || courseId.isEmpty()) {
             showEmptyState("Lessons are being updated. Please check back later.");
@@ -205,10 +207,11 @@ public class CourseDetailFragment extends Fragment {
                         if (lessons == null || lessons.isEmpty()) {
                             showEmptyState("Lessons are being updated. Please check back later.");
                         } else {
-                            loadedLessons = lessons;
+                            allLessons = lessons;
+                            loadedLessons = contentLessonsOnly(lessons);
                             rvLessons.setVisibility(View.VISIBLE);
                             tvLessonsEmpty.setVisibility(View.GONE);
-                            rvLessons.setAdapter(new LessonAdapter(lessons, CourseDetailFragment.this::openLesson));
+                            rvLessons.setAdapter(new LessonAdapter(loadedLessons, CourseDetailFragment.this::openLesson));
                         }
                     } else {
                         showError("Failed to load lessons: " + lessonResponse.getMessage());
@@ -224,6 +227,16 @@ public class CourseDetailFragment extends Fragment {
                 showError("Network error: " + t.getMessage());
             }
         });
+    }
+
+    private List<Lesson> contentLessonsOnly(List<Lesson> all) {
+        List<Lesson> content = new ArrayList<>();
+        for (Lesson l : all) {
+            if (l.getParentLessonId() == null || l.getParentLessonId().isEmpty()) {
+                content.add(l);
+            }
+        }
+        return content;
     }
 
     private void showError(String message) {
@@ -253,20 +266,21 @@ public class CourseDetailFragment extends Fragment {
         args.putInt("sourceTab", sourceTab);
         args.putInt("lessonIndex", index);
         args.putSerializable("lessonList", new ArrayList<>(loadedLessons));
-        NavController navController = NavHostFragment.findNavController(this);
+        args.putSerializable("allLessonList", new ArrayList<>(allLessons));
 
-        String type = lesson.getContentType() == null ? "" : lesson.getContentType().toLowerCase();
-        if ("quiz_fill_blank".equals(type) || "quiz_dien_tu".equals(type)
-                || "quiz_new".equals(type) || "quiz_new_type".equals(type)) {
-            navController.navigate(R.id.fillBlankQuizFragment, args);
-            return;
+        String quizLessonId = findQuizLessonId(lesson.getLessonID());
+        if (quizLessonId != null) args.putString("quizLessonId", quizLessonId);
+
+        String content = lesson.getContent();
+        args.putString("lessonContent", (content != null && !content.isEmpty()) ? content : getMockContent(lesson.getTitle(), lesson.getContentType()));
+        NavHostFragment.findNavController(this).navigate(R.id.lessonStudyFragment, args);
+    }
+
+    private String findQuizLessonId(String parentId) {
+        for (Lesson l : allLessons) {
+            if (parentId.equals(l.getParentLessonId())) return l.getLessonID();
         }
-        if ("quiz".equals(type)) {
-            navController.navigate(R.id.quizFragment, args);
-            return;
-        }
-        args.putString("lessonContent", getMockContent(lesson.getTitle(), type));
-        navController.navigate(R.id.lessonStudyFragment, args);
+        return null;
     }
 
     private void openAiSummary() {

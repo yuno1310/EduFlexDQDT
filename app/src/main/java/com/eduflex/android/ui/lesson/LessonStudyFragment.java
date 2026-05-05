@@ -1,6 +1,8 @@
 package com.eduflex.android.ui.lesson;
 
+import android.os.Build;
 import android.os.Bundle;
+import android.text.Html;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -9,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
+import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
 import com.eduflex.android.R;
 import com.eduflex.android.model.Lesson;
@@ -27,11 +30,15 @@ public class LessonStudyFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         Bundle args = getArguments();
+        String lessonId = args != null ? args.getString("lessonId", "") : "";
         String lessonTitle = args != null ? args.getString("lessonTitle", "Untitled Lesson") : "Untitled Lesson";
         String contentType = args != null ? args.getString("contentType", "reading") : "reading";
         String lessonContent = args != null ? args.getString("lessonContent", "") : "";
+        String quizLessonId = args != null ? args.getString("quizLessonId", null) : null;
         int lessonIndex = args != null ? args.getInt("lessonIndex", 0) : 0;
-        List<Lesson> lessonList = getLessonList(args);
+        List<Lesson> lessonList = getLessonList(args, "lessonList");
+        List<Lesson> allLessonList = getLessonList(args, "allLessonList");
+        if (allLessonList.isEmpty()) allLessonList = lessonList;
 
         TextView tvTitle = view.findViewById(R.id.tv_lesson_study_title);
         TextView tvType = view.findViewById(R.id.tv_lesson_study_type);
@@ -41,7 +48,7 @@ public class LessonStudyFragment extends Fragment {
         Button btnNext = view.findViewById(R.id.btn_next_lesson);
 
         view.findViewById(R.id.btn_back_lesson).setOnClickListener(v ->
-                NavHostFragment.findNavController(this).popBackStack());
+                NavHostFragment.findNavController(this).popBackStack(R.id.courseDetailFragment, false));
 
         tvTitle.setText(lessonTitle);
         tvType.setText(contentType.toUpperCase());
@@ -52,31 +59,65 @@ public class LessonStudyFragment extends Fragment {
         } else {
             ivVideoPlaceholder.setVisibility(View.GONE);
             tvTextContent.setVisibility(View.VISIBLE);
-            tvTextContent.setText(lessonContent.isEmpty() ? "No text content available." : lessonContent);
+            String display = lessonContent.isEmpty() ? "No text content available." : lessonContent;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                tvTextContent.setText(Html.fromHtml(display, Html.FROM_HTML_MODE_COMPACT));
+            } else {
+                tvTextContent.setText(Html.fromHtml(display));
+            }
         }
 
+        // Next is enabled if there's a quiz for this lesson OR there's a next content lesson
+        boolean hasNextContent = lessonIndex < lessonList.size() - 1;
+        boolean hasQuiz = quizLessonId != null && !quizLessonId.isEmpty();
         btnPrev.setEnabled(lessonIndex > 0);
-        btnNext.setEnabled(lessonIndex < lessonList.size() - 1);
+        btnNext.setEnabled(hasNextContent || hasQuiz);
 
-        btnPrev.setOnClickListener(v -> navigateToLesson(lessonIndex - 1, lessonList, args));
-        btnNext.setOnClickListener(v -> navigateToLesson(lessonIndex + 1, lessonList, args));
+        final List<Lesson> finalAllLessonList = allLessonList;
+        btnPrev.setOnClickListener(v -> navigateToLesson(lessonIndex - 1, lessonList, finalAllLessonList, args));
+        btnNext.setOnClickListener(v -> {
+            if (hasQuiz) {
+                navigateToQuiz(quizLessonId, lessonId, lessonTitle, lessonIndex, lessonList, finalAllLessonList, args);
+            } else {
+                navigateToLesson(lessonIndex + 1, lessonList, finalAllLessonList, args);
+            }
+        });
     }
 
     @SuppressWarnings("unchecked")
-    private List<Lesson> getLessonList(Bundle args) {
+    private List<Lesson> getLessonList(Bundle args, String key) {
         if (args == null) return new ArrayList<>();
-        Object raw = args.getSerializable("lessonList");
+        Object raw = args.getSerializable(key);
         if (raw instanceof ArrayList) return (ArrayList<Lesson>) raw;
         return new ArrayList<>();
     }
 
-    private void navigateToLesson(int index, List<Lesson> lessonList, Bundle originalArgs) {
+    private void navigateToQuiz(String quizLessonId, String parentLessonId, String lessonTitle,
+                                int lessonIndex, List<Lesson> lessonList, List<Lesson> allLessonList,
+                                Bundle originalArgs) {
+        String courseId = originalArgs != null ? originalArgs.getString("courseId", "") : "";
+        int sourceTab = originalArgs != null ? originalArgs.getInt("sourceTab", 0) : 0;
+
+        Bundle args = new Bundle();
+        args.putString("lessonId", quizLessonId);
+        args.putString("parentLessonId", parentLessonId);
+        args.putString("lessonTitle", lessonTitle);
+        args.putString("courseId", courseId);
+        args.putInt("sourceTab", sourceTab);
+        args.putInt("lessonIndex", lessonIndex);
+        args.putSerializable("lessonList", new ArrayList<>(lessonList));
+        args.putSerializable("allLessonList", new ArrayList<>(allLessonList));
+
+        NavController nav = NavHostFragment.findNavController(this);
+        nav.navigate(R.id.quizFragment, args);
+    }
+
+    private void navigateToLesson(int index, List<Lesson> lessonList, List<Lesson> allLessonList, Bundle originalArgs) {
         if (index < 0 || index >= lessonList.size()) return;
         Lesson lesson = lessonList.get(index);
 
         String courseId = originalArgs != null ? originalArgs.getString("courseId", "") : "";
         int sourceTab = originalArgs != null ? originalArgs.getInt("sourceTab", 0) : 0;
-        String type = lesson.getContentType() == null ? "" : lesson.getContentType().toLowerCase();
 
         Bundle args = new Bundle();
         args.putString("lessonId", lesson.getLessonID());
@@ -86,26 +127,25 @@ public class LessonStudyFragment extends Fragment {
         args.putInt("sourceTab", sourceTab);
         args.putInt("lessonIndex", index);
         args.putSerializable("lessonList", new ArrayList<>(lessonList));
+        args.putSerializable("allLessonList", new ArrayList<>(allLessonList));
+
+        String quizLessonId = findQuizLessonId(lesson.getLessonID(), allLessonList);
+        if (quizLessonId != null) args.putString("quizLessonId", quizLessonId);
+
+        String content = lesson.getContent();
+        args.putString("lessonContent", (content != null && !content.isEmpty()) ? content : "");
 
         NavController nav = NavHostFragment.findNavController(this);
-
-        if ("quiz_fill_blank".equals(type) || "quiz_dien_tu".equals(type)
-                || "quiz_new".equals(type) || "quiz_new_type".equals(type)) {
-            nav.navigate(R.id.fillBlankQuizFragment, args);
-        } else if ("quiz".equals(type)) {
-            nav.navigate(R.id.quizFragment, args);
-        } else {
-            args.putString("lessonContent", getMockContent(lesson.getTitle(), type));
-            nav.navigate(R.id.lessonStudyFragment, args);
-        }
+        NavOptions replaceOptions = new NavOptions.Builder()
+                .setPopUpTo(R.id.lessonStudyFragment, true)
+                .build();
+        nav.navigate(R.id.lessonStudyFragment, args, replaceOptions);
     }
 
-    private String getMockContent(String lessonTitle, String contentType) {
-        if ("video".equals(contentType)) return "VIDEO_PLACEHOLDER";
-        return "This is lesson content for: " + lessonTitle
-                + "\n\nIn this lesson, you will learn key concepts and practical examples."
-                + "\n\n- Topic overview"
-                + "\n- Main ideas"
-                + "\n- Practical notes";
+    private String findQuizLessonId(String parentId, List<Lesson> allLessons) {
+        for (Lesson l : allLessons) {
+            if (parentId.equals(l.getParentLessonId())) return l.getLessonID();
+        }
+        return null;
     }
 }

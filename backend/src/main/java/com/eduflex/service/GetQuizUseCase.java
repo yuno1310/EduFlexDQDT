@@ -5,10 +5,12 @@ import org.springframework.stereotype.Service;
 
 import com.eduflex.dto.QuizDTO.GetQuizResponse;
 import com.eduflex.dto.QuizDTO.OptionResponse;
-import com.eduflex.generated.tables.Questions;
+import com.eduflex.dto.QuizDTO.QuestionResponse;
 import com.eduflex.generated.tables.QuestionOptions;
+import com.eduflex.generated.tables.Questions;
 import com.eduflex.repository.QuizRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -19,22 +21,28 @@ public class GetQuizUseCase {
   private QuizRepository quizRepository;
 
   public GetQuizResponse execute(UUID lessonId) {
-    var questionRecord = quizRepository.getQuestionByLessonId(lessonId);
-    if (questionRecord == null) {
-      return new GetQuizResponse(false, "Quiz not found for this lesson", null, null, 0, null);
+    var questionRecords = quizRepository.getQuestionsByLessonId(lessonId);
+    if (questionRecords == null || questionRecords.isEmpty()) {
+      return new GetQuizResponse(false, "Quiz not found for this lesson", null, null);
     }
 
-    Long qId = questionRecord.get(Questions.QUESTIONS.QUESTION_ID);
-    String qText = questionRecord.get(Questions.QUESTIONS.QUESTION_TEXT);
-    int points = questionRecord.get(Questions.QUESTIONS.POINTS);
+    UUID parentLessonId = quizRepository.getParentLessonId(lessonId);
 
-    var optionRecords = quizRepository.getOptionsByQuestionId(qId);
-    List<OptionResponse> options = optionRecords.stream()
-        .map(opt -> new OptionResponse(
-            opt.get(QuestionOptions.QUESTION_OPTIONS.OPTION_ID),
-            opt.get(QuestionOptions.QUESTION_OPTIONS.OPTION_TEXT)))
-        .collect(Collectors.toList());
+    List<QuestionResponse> questions = new ArrayList<>();
+    for (var q : questionRecords) {
+      Long qId = q.get(Questions.QUESTIONS.QUESTION_ID);
+      String qText = q.get(Questions.QUESTIONS.QUESTION_TEXT);
+      int points = q.get(Questions.QUESTIONS.POINTS);
 
-    return new GetQuizResponse(true, "Success", qId, qText, points, options);
+      List<OptionResponse> options = quizRepository.getOptionsByQuestionId(qId).stream()
+          .map(opt -> new OptionResponse(
+              opt.get(QuestionOptions.QUESTION_OPTIONS.OPTION_ID),
+              opt.get(QuestionOptions.QUESTION_OPTIONS.OPTION_TEXT)))
+          .collect(Collectors.toList());
+
+      questions.add(new QuestionResponse(qId, qText, points, options));
+    }
+
+    return new GetQuizResponse(true, "Success", questions, parentLessonId);
   }
 }

@@ -33,7 +33,7 @@ public class GetLessonUseCase {
     var listLessons = new ArrayList<LessonInfo>();
     for (var record : lessons) {
       var lesson = new LessonInfo(record.lessonID(), record.title(), record.contentType(),
-          record.videoUrl(), record.content());
+          record.videoUrl(), record.content(), record.parentLessonId());
       listLessons.add(lesson);
     }
     return new GetLessonResponse(true, "Loading list lessons successfully", listLessons);
