@@ -29,6 +29,10 @@ import com.eduflex.android.model.CourseListResponse;
 import com.eduflex.android.model.DeleteCourseResponse;
 import com.eduflex.android.model.UpdateCourseRequest;
 import com.eduflex.android.model.UpdateCourseResponse;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 
 import java.util.List;
 
@@ -45,6 +49,7 @@ public class AdminCoursesFragment extends Fragment {
     private View llEmptyState;
     private TextView tvTotalCourses;
     private EditText etSearch;
+    private FloatingActionButton fabAddCourse;
 
     private AdminApi adminApi;
     private CourseApi courseApi;
@@ -72,8 +77,11 @@ public class AdminCoursesFragment extends Fragment {
         llEmptyState = view.findViewById(R.id.ll_empty_courses);
         tvTotalCourses = view.findViewById(R.id.tv_total_courses);
         etSearch = view.findViewById(R.id.et_search_course);
+        fabAddCourse = view.findViewById(R.id.fab_add_course);
 
         rvCourses.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        fabAddCourse.setOnClickListener(v -> showAddCourseDialog());
     }
 
     private void setupSearch() {
@@ -151,6 +159,104 @@ public class AdminCoursesFragment extends Fragment {
                 .navigate(R.id.action_courses_to_lessons, args);
     }
 
+    // ===== Add Course Dialog =====
+    private void showAddCourseDialog() {
+        if (!isAdded()) return;
+
+        LinearLayout layout = new LinearLayout(requireContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(60, 40, 60, 20);
+
+        addLabel(layout, "Title *");
+        EditText etTitle = new EditText(requireContext());
+        etTitle.setHint("Enter course title");
+        layout.addView(etTitle);
+
+        addLabel(layout, "Learning Model *");
+        Spinner spModel = new Spinner(requireContext());
+        String[] models = {"Visual", "Reading", "Kinesthetic", "Auditory"};
+        spModel.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, models));
+        layout.addView(spModel);
+
+        addLabel(layout, "Status *");
+        Spinner spStatus = new Spinner(requireContext());
+        String[] statuses = {"draft", "active", "archived"};
+        spStatus.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, statuses));
+        layout.addView(spStatus);
+
+        addLabel(layout, "Description");
+        EditText etDescription = new EditText(requireContext());
+        etDescription.setHint("Enter course description");
+        etDescription.setMinLines(2);
+        layout.addView(etDescription);
+
+        addLabel(layout, "Image URL");
+        EditText etImageUrl = new EditText(requireContext());
+        etImageUrl.setHint("https://...");
+        layout.addView(etImageUrl);
+
+        addLabel(layout, "Price");
+        EditText etPrice = new EditText(requireContext());
+        etPrice.setHint("0");
+        etPrice.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        layout.addView(etPrice);
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Add New Course")
+                .setView(layout)
+                .setPositiveButton("Create", (dialog, which) -> {
+                    String title = etTitle.getText().toString().trim();
+                    String model = spModel.getSelectedItem().toString();
+                    String status = spStatus.getSelectedItem().toString();
+                    String description = etDescription.getText().toString().trim();
+                    String imageUrl = etImageUrl.getText().toString().trim();
+                    Long price = null;
+                    try {
+                        if (!etPrice.getText().toString().trim().isEmpty()) {
+                            price = Long.parseLong(etPrice.getText().toString().trim());
+                        }
+                    } catch (NumberFormatException ignored) {}
+
+                    if (title.isEmpty()) {
+                        Toast.makeText(getContext(), "Title is required", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    UpdateCourseRequest request = new UpdateCourseRequest(
+                            title,
+                            model,
+                            status,
+                            imageUrl.isEmpty() ? null : imageUrl,
+                            price,
+                            description.isEmpty() ? null : description
+                    );
+
+                    adminApi.createCourse(request)
+                            .enqueue(new Callback<UpdateCourseResponse>() {
+                                @Override
+                                public void onResponse(@NonNull Call<UpdateCourseResponse> call,
+                                                       @NonNull Response<UpdateCourseResponse> response) {
+                                    if (!isAdded()) return;
+                                    if (response.isSuccessful() && response.body() != null
+                                            && response.body().isSuccess()) {
+                                        Toast.makeText(getContext(), "Course created!", Toast.LENGTH_SHORT).show();
+                                        fetchCourses(); // Refresh list
+                                    } else {
+                                        Toast.makeText(getContext(), "Failed to create course", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(@NonNull Call<UpdateCourseResponse> call, @NonNull Throwable t) {
+                                    if (!isAdded()) return;
+                                    Toast.makeText(getContext(), "Network error", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
     // ===== Edit Course Dialog =====
     private void showEditCourseDialog(Course course, int position) {
         if (!isAdded()) return;
@@ -166,16 +272,24 @@ public class AdminCoursesFragment extends Fragment {
         layout.addView(etTitle);
 
         addLabel(layout, "Learning Model");
-        EditText etModel = new EditText(requireContext());
-        etModel.setHint("e.g. Visual, Reading, Kinesthetic");
-        etModel.setText(course.getLearningMode());
-        layout.addView(etModel);
+        Spinner spModel = new Spinner(requireContext());
+        String[] models = {"Visual", "Reading", "Kinesthetic", "Auditory"};
+        spModel.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, models));
+        String curModel = course.getLearningMode();
+        for (int i = 0; i < models.length; i++) {
+            if (models[i].equalsIgnoreCase(curModel)) { spModel.setSelection(i); break; }
+        }
+        layout.addView(spModel);
 
         addLabel(layout, "Status");
-        EditText etStatus = new EditText(requireContext());
-        etStatus.setHint("draft / active");
-        etStatus.setText(course.getStatus());
-        layout.addView(etStatus);
+        Spinner spStatus = new Spinner(requireContext());
+        String[] statuses = {"draft", "active", "archived"};
+        spStatus.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, statuses));
+        String curStatus = course.getStatus();
+        for (int i = 0; i < statuses.length; i++) {
+            if (statuses[i].equalsIgnoreCase(curStatus)) { spStatus.setSelection(i); break; }
+        }
+        layout.addView(spStatus);
 
         addLabel(layout, "Description");
         EditText etDescription = new EditText(requireContext());
@@ -204,8 +318,8 @@ public class AdminCoursesFragment extends Fragment {
                 .setView(layout)
                 .setPositiveButton("Save", (dialog, which) -> {
                     String title = etTitle.getText().toString().trim();
-                    String model = etModel.getText().toString().trim();
-                    String status = etStatus.getText().toString().trim();
+                    String model = spModel.getSelectedItem().toString();
+                    String status = spStatus.getSelectedItem().toString();
                     String description = etDescription.getText().toString().trim();
                     String imageUrl = etImageUrl.getText().toString().trim();
                     Long price = null;
@@ -222,8 +336,8 @@ public class AdminCoursesFragment extends Fragment {
 
                     UpdateCourseRequest request = new UpdateCourseRequest(
                             title,
-                            model.isEmpty() ? null : model,
-                            status.isEmpty() ? null : status,
+                            model,
+                            status,
                             imageUrl.isEmpty() ? null : imageUrl,
                             price,
                             description.isEmpty() ? null : description
@@ -237,7 +351,6 @@ public class AdminCoursesFragment extends Fragment {
                                     if (!isAdded()) return;
                                     if (response.isSuccessful() && response.body() != null
                                             && response.body().isSuccess()) {
-                                        // Update local data
                                         Course updated = new Course(
                                                 course.getCourseID(), title,
                                                 model.isEmpty() ? course.getLearningMode() : model,

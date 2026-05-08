@@ -82,8 +82,14 @@ public class SubmitQuizUseCase {
     addXpUseCase.execute(userId, new AddXpDTO.AddXpRequest(QUIZ_PASS_XP));
     updateStreakUseCase.execute(userId);
 
-    // 6. Mark lesson as completed
+    // 6. Mark quiz lesson as completed
     progressRepository.upsertLessonProgress(userId, lessonId);
+
+    // 6b. Also mark the PARENT (content) lesson as completed
+    UUID parentLessonId = quizRepository.getParentLessonId(lessonId);
+    if (parentLessonId != null) {
+      progressRepository.upsertLessonProgress(userId, parentLessonId);
+    }
 
     // 7. Calculate Course Progress
     UUID courseId = progressRepository.getCourseIdByLessonId(lessonId);

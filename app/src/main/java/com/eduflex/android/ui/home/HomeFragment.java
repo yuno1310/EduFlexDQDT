@@ -251,7 +251,9 @@ public class HomeFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null) {
                     CourseListResponse body = response.body();
                     if (body.getListCourse() != null) {
-                        rv.setAdapter(new CourseCardAdapter(body.getListCourse(), HomeFragment.this::onCourseClick));
+                        CourseCardAdapter adapter = new CourseCardAdapter(body.getListCourse(), HomeFragment.this::onCourseClick);
+                        adapter.setShowStatus(false);
+                        rv.setAdapter(adapter);
                     }
                 } else {
                     Log.e(TAG, "Failed to load featured courses: " + response.code());

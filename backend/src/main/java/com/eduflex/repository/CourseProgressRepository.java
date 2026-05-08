@@ -27,6 +27,7 @@ public class CourseProgressRepository {
         .on(Lesson.LESSON.LESSON_ID.eq(LessonProgress.LESSON_PROGRESS.LESSON_ID)
             .and(LessonProgress.LESSON_PROGRESS.USER_ID.eq(userId)))
         .where(Lesson.LESSON.COURSE_ID.eq(courseId))
+        .and(Lesson.LESSON.PARENT_LESSON_ID.isNull())
         .orderBy(Lesson.LESSON.LESSON_ID.asc())
         .fetch();
 

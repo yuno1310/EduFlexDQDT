@@ -86,4 +86,10 @@ public class AdminDTO {
             boolean success,
             String message
     ) {}
+
+    // === Delete Question ===
+    public record DeleteQuestionResponse(
+            boolean success,
+            String message
+    ) {}
 }

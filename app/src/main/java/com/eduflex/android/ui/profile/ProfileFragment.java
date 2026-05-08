@@ -271,6 +271,13 @@ public class ProfileFragment extends Fragment {
                     }
                 }
 
+                allBadges.sort((b1, b2) -> {
+                    boolean e1 = earnedIds.contains(b1.getId());
+                    boolean e2 = earnedIds.contains(b2.getId());
+                    if (e1 == e2) return b1.getName().compareToIgnoreCase(b2.getName());
+                    return e1 ? -1 : 1;
+                });
+
                 tvBadgeCount.setText(String.valueOf(earnedIds.size()));
                 rvBadges.setAdapter(new BadgeAdapter(allBadges, earnedIds));
             }
