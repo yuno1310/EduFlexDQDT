@@ -27,9 +27,12 @@ import com.eduflex.android.R;
 import com.eduflex.android.adapter.CategoryAdapter;
 import com.eduflex.android.adapter.ContinueLearningAdapter;
 import com.eduflex.android.adapter.CourseCardAdapter;
+import com.eduflex.android.adapter.DailyQuestAdapter;
 import com.eduflex.android.api.ApiClient;
+import com.eduflex.android.api.DailyQuestApi;
 import com.eduflex.android.api.GamificationApi;
 import com.eduflex.android.auth.TokenManager;
+import com.eduflex.android.model.DailyQuestResponse;
 import com.eduflex.android.model.GamificationStatsResponse;
 
 import retrofit2.Call;
@@ -43,6 +46,7 @@ import com.eduflex.android.model.EnrolledCourse;
 import com.eduflex.android.model.EnrolledCoursesResponse;
 import java.util.Arrays;
 import java.util.List;
+import androidx.recyclerview.widget.DividerItemDecoration;
 
 public class HomeFragment extends Fragment {
 
@@ -56,6 +60,8 @@ public class HomeFragment extends Fragment {
     private ProgressBar pbXp;
     private LinearLayout llStreakDays;
     private GamificationApi gamificationApi;
+    private DailyQuestApi dailyQuestApi;
+    private DailyQuestAdapter dailyQuestAdapter;
     private TokenManager tokenManager;
     private CourseApi courseApi;
 
@@ -78,6 +84,7 @@ public class HomeFragment extends Fragment {
 
         // Init API (use authenticated client so the JWT is attached)
         gamificationApi = ApiClient.createAuthenticatedService(GamificationApi.class);
+        dailyQuestApi = ApiClient.createAuthenticatedService(DailyQuestApi.class);
         tokenManager = new TokenManager(requireContext());
         courseApi = ApiClient.createAuthenticatedService(CourseApi.class);
 
@@ -85,6 +92,7 @@ public class HomeFragment extends Fragment {
         setupContinueLearning(view);
         setupFeaturedCourses(view);
         setupCategories(view);
+        setupDailyQuests(view);
 
         // Leaderboard button
         view.findViewById(R.id.btn_leaderboard).setOnClickListener(v -> {
@@ -94,6 +102,14 @@ public class HomeFragment extends Fragment {
 
         // Fetch gamification data
         fetchGamificationStats();
+        fetchDailyQuests();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        fetchGamificationStats();
+        fetchDailyQuests();
     }
 
     // ── Gamification API ──
@@ -208,6 +224,36 @@ public class HomeFragment extends Fragment {
                 TypedValue.COMPLEX_UNIT_DIP,
                 value,
                 getResources().getDisplayMetrics());
+    }
+
+    // ── Daily Quests ──
+
+    private void setupDailyQuests(View view) {
+        RecyclerView rv = view.findViewById(R.id.rv_daily_quests);
+        rv.setLayoutManager(new LinearLayoutManager(getContext()));
+        rv.addItemDecoration(new DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL));
+        dailyQuestAdapter = new DailyQuestAdapter();
+        rv.setAdapter(dailyQuestAdapter);
+    }
+
+    private void fetchDailyQuests() {
+        String userId = tokenManager.getUserId();
+        if (userId == null) return;
+        dailyQuestApi.getDailyQuests(userId).enqueue(new Callback<List<DailyQuestResponse>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<DailyQuestResponse>> call,
+                    @NonNull Response<List<DailyQuestResponse>> response) {
+                if (!isAdded()) return;
+                if (response.isSuccessful() && response.body() != null) {
+                    dailyQuestAdapter.setQuests(response.body());
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<DailyQuestResponse>> call, @NonNull Throwable t) {
+                Log.e(TAG, "Failed to load daily quests: " + t.getMessage());
+            }
+        });
     }
 
     // ── RecyclerView setup ──

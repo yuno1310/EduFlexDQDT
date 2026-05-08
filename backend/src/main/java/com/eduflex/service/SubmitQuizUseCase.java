@@ -2,6 +2,7 @@ package com.eduflex.service;
 
 import com.eduflex.dto.AddXpDTO;
 import com.eduflex.dto.QuizDTO.AnswerItem;
+import com.eduflex.dto.QuizDTO.CompletedQuestInfo;
 import com.eduflex.dto.QuizDTO.SubmitQuizRequest;
 import com.eduflex.dto.QuizDTO.SubmitQuizResponse;
 import com.eduflex.repository.EnrollmentRepository;
@@ -11,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -32,6 +35,8 @@ public class SubmitQuizUseCase {
   private EnrollmentRepository enrollmentRepository;
   @Autowired
   private CheckAndAwardBadgesUseCase checkAndAwardBadgesUseCase;
+  @Autowired
+  private UpdateDailyQuestProgressUseCase updateDailyQuestProgressUseCase;
 
   @Transactional
   public SubmitQuizResponse execute(SubmitQuizRequest request) {
@@ -57,13 +62,22 @@ public class SubmitQuizUseCase {
     boolean alreadyPassed = quizRepository.hasPassedQuiz(userId, lessonId);
     quizRepository.saveQuizAttempt(userId, lessonId, scorePercent, passed);
 
+    // Daily quest: count every quiz submission
+    List<CompletedQuestInfo> completedQuests = new ArrayList<>();
+    CompletedQuestInfo quizCountCompleted = updateDailyQuestProgressUseCase.execute(userId, "QUIZ_COUNT", 1);
+    if (quizCountCompleted != null) completedQuests.add(quizCountCompleted);
+    // Daily quest: perfect run — increment on 100%, reset on any wrong answer
+    boolean isPerfect = correctCount == totalQuestions && totalQuestions > 0;
+    CompletedQuestInfo perfectRunCompleted = updateDailyQuestProgressUseCase.execute(userId, "PERFECT_RUN", isPerfect ? 1 : -1);
+    if (perfectRunCompleted != null) completedQuests.add(perfectRunCompleted);
+
     // 3. Handle FAILED case
     if (!passed) {
       return new SubmitQuizResponse(
           false,
           "You answered correctly " + correctCount + "/" + totalQuestions + ". Keep trying to pass this lesson!",
           correctCount, totalQuestions, scorePercent,
-          null, false, 0);
+          null, false, 0, completedQuests);
     }
 
     // 4. Handle ALREADY PASSED case (Prevent XP farming and redundant DB queries)
@@ -73,7 +87,7 @@ public class SubmitQuizUseCase {
           "Great job! You got " + correctCount + "/" + totalQuestions
               + " correct. (Note: No extra XP awarded for previously passed quizzes)",
           correctCount, totalQuestions, scorePercent,
-          null, false, 0); // Return immediately, skipping all progress calculations below
+          null, false, 0, completedQuests);
     }
 
     int totalXpRewarded = QUIZ_PASS_XP;
@@ -94,11 +108,10 @@ public class SubmitQuizUseCase {
     // 7. Calculate Course Progress
     UUID courseId = progressRepository.getCourseIdByLessonId(lessonId);
     if (courseId == null) {
-      // Orphaned data error (Lesson doesn't belong to any Course)
       return new SubmitQuizResponse(
           true, "Lesson passed! (+" + totalXpRewarded + " XP)",
           correctCount, totalQuestions, scorePercent,
-          null, false, totalXpRewarded);
+          null, false, totalXpRewarded, completedQuests);
     }
 
     int totalLessons = progressRepository.countTotalLessonsInCourse(courseId);
@@ -122,6 +135,6 @@ public class SubmitQuizUseCase {
 
     return new SubmitQuizResponse(
         true, msg, correctCount, totalQuestions, scorePercent,
-        coursePercent, isCourseCompleted, totalXpRewarded);
+        coursePercent, isCourseCompleted, totalXpRewarded, completedQuests);
   }
 }
