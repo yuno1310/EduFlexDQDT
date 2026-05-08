@@ -21,6 +21,8 @@ public class QuizDTO {
       @NotEmpty List<AnswerItem> answers) {
   }
 
+  public record CompletedQuestInfo(String title, int xpReward) {}
+
   public record SubmitQuizResponse(
       boolean passed,
       String message,
@@ -29,7 +31,8 @@ public class QuizDTO {
       double scorePercent,
       Double courseProgress,
       boolean isCourseCompleted,
-      int xpRewarded) {
+      int xpRewarded,
+      List<CompletedQuestInfo> completedQuests) {
   }
 
   // === Create Quiz (CRUD) ===

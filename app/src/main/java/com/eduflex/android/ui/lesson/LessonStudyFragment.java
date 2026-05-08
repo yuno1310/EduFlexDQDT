@@ -2,7 +2,9 @@ package com.eduflex.android.ui.lesson;
 
 import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.text.Html;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -14,20 +16,68 @@ import androidx.navigation.NavController;
 import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
 import com.eduflex.android.R;
+import com.eduflex.android.api.ApiClient;
+import com.eduflex.android.api.DailyQuestApi;
+import com.eduflex.android.auth.TokenManager;
 import com.eduflex.android.model.Lesson;
+import com.eduflex.android.model.QuestProgressRequest;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class LessonStudyFragment extends Fragment {
+
+    private static final String TAG = "LessonStudyFragment";
+
+    private long resumeTime = 0;
+    private DailyQuestApi dailyQuestApi;
+    private TokenManager tokenManager;
 
     public LessonStudyFragment() {
         super(R.layout.fragment_lesson_study);
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        resumeTime = SystemClock.elapsedRealtime();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (resumeTime > 0) {
+            int elapsedSeconds = (int) ((SystemClock.elapsedRealtime() - resumeTime) / 1000);
+            resumeTime = 0;
+            if (elapsedSeconds > 0) reportStudyTime(elapsedSeconds);
+        }
+    }
+
+    private void reportStudyTime(int seconds) {
+        if (dailyQuestApi == null || tokenManager == null) return;
+        String userId = tokenManager.getUserId();
+        if (userId == null) return;
+        dailyQuestApi.reportProgress(userId, new QuestProgressRequest("STUDY_TIME", seconds))
+            .enqueue(new Callback<Void>() {
+                @Override
+                public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {}
+                @Override
+                public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                    Log.e(TAG, "Failed to report study time: " + t.getMessage());
+                }
+            });
+    }
+
+    @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        dailyQuestApi = ApiClient.createAuthenticatedService(DailyQuestApi.class);
+        tokenManager = new TokenManager(requireContext());
 
         Bundle args = getArguments();
         String lessonId = args != null ? args.getString("lessonId", "") : "";

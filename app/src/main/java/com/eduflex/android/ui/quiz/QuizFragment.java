@@ -242,6 +242,7 @@ public class QuizFragment extends Fragment {
                 btnSubmit.setEnabled(true);
                 if (response.isSuccessful() && response.body() != null) {
                     saveCourseProgress(response.body().getCourseProgress());
+                    showQuestCompletionToasts(response.body());
                     navigateToResultScreen(response.body());
                 } else {
                     Toast.makeText(requireContext(), "Failed to submit quiz.", Toast.LENGTH_SHORT).show();
@@ -255,6 +256,15 @@ public class QuizFragment extends Fragment {
                 Toast.makeText(requireContext(), "Submit failed.", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void showQuestCompletionToasts(SubmitQuizResponse result) {
+        if (result.getCompletedQuests() == null || result.getCompletedQuests().isEmpty()) return;
+        for (SubmitQuizResponse.CompletedQuestInfo quest : result.getCompletedQuests()) {
+            Toast.makeText(requireContext(),
+                "🎯 Quest complete: " + quest.getTitle() + " +" + quest.getXpReward() + " XP",
+                Toast.LENGTH_LONG).show();
+        }
     }
 
     private void showError(String message) {
