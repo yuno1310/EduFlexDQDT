@@ -58,6 +58,7 @@ public class SearchFragment extends Fragment {
 
         rvResults.setLayoutManager(new LinearLayoutManager(requireContext()));
         adapter = new CourseCardAdapter(displayedCourses, course -> openCourseDetail(course));
+        adapter.setShowStatus(false);
         rvResults.setAdapter(adapter);
 
         loadAllCourses();

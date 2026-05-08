@@ -136,4 +136,17 @@ public class QuizRepository {
             .from(Questions.QUESTIONS)
             .where(Questions.QUESTIONS.QUESTION_ID.eq(questionId)));
   }
+
+  public boolean deleteOptionsByQuestionId(Long questionId) {
+    dsl.deleteFrom(QuestionOptions.QUESTION_OPTIONS)
+        .where(QuestionOptions.QUESTION_OPTIONS.QUESTION_ID.eq(questionId))
+        .execute();
+    return true;
+  }
+
+  public boolean deleteQuestion(Long questionId) {
+    return dsl.deleteFrom(Questions.QUESTIONS)
+        .where(Questions.QUESTIONS.QUESTION_ID.eq(questionId))
+        .execute() > 0;
+  }
 }

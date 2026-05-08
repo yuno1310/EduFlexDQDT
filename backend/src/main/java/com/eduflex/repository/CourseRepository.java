@@ -54,6 +54,32 @@ public class CourseRepository {
     }
   }
 
+  public List<CourseInfo> get_active_course() {
+    var records = dsl.select(
+        Courses.COURSES.COURSE_ID,
+        Courses.COURSES.TITLE,
+        Courses.COURSES.LEARNING_MODEL,
+        Courses.COURSES.STATUS,
+        Courses.COURSES.DESCRIPTION,
+        Courses.COURSES.IMAGE_URL,
+        Courses.COURSES.PRICE)
+        .from(Courses.COURSES)
+        .where(Courses.COURSES.STATUS.equalIgnoreCase("active"))
+        .fetch();
+    if (records != null) {
+      List<CourseInfo> list = new ArrayList<CourseInfo>();
+      for (var record : records) {
+        CourseInfo course = new CourseInfo(
+            record.value1(), record.value2(), record.value3(), record.value4(),
+            record.value5(), record.value6(), record.value7());
+        list.add(course);
+      }
+      return list;
+    } else {
+      return null;
+    }
+  }
+
   public List<CourseSuggestionResponse> searchUnenrolledCourses(UUID userId, String keyword, int limit) {
         var c = Courses.COURSES;
         var e = Enrollments.ENROLLMENTS;
@@ -61,6 +87,7 @@ public class CourseRepository {
         return dsl.select(c.COURSE_ID, c.TITLE, c.IMAGE_URL)
                   .from(c)
                   .where(c.TITLE.likeIgnoreCase("%" + keyword + "%"))
+                  .and(c.STATUS.equalIgnoreCase("active"))
                   .and(c.COURSE_ID.notIn(
                       dsl.select(e.COURSE_ID)
                          .from(e)
@@ -120,6 +147,7 @@ public class CourseRepository {
     return dsl.select(c.COURSE_ID, c.TITLE, c.IMAGE_URL)
         .from(c)
         .where(c.TITLE.likeIgnoreCase("%" + keyword + "%"))
+        .and(c.STATUS.equalIgnoreCase("active"))
         .limit(limit)
         .fetchInto(CourseSuggestionResponse.class);
   }

@@ -14,12 +14,18 @@ public class CreateCourseUseCase {
   private CourseRepository courseRepository;
 
   public CreateCourseResponse execute(CreateCourseRequest request) {
-    var course = new CourseDbO(request.title(), request.learning_mode(), request.status());
+    var course = new CourseDbO(
+        request.title(),
+        request.learningModel(),
+        request.status(),
+        request.description(),
+        request.imageUrl(),
+        request.price()
+    );
     if (courseRepository.save(course) == true) {
       return new CreateCourseResponse(true, "Create a new course sucessfully");
     } else {
       return new CreateCourseResponse(false, "Failed to create new course");
     }
   }
-
 }

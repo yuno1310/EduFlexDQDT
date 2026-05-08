@@ -52,7 +52,8 @@ public class LessonProgressRepository {
   public int countTotalLessonsInCourse(UUID courseId) {
     return dsl.fetchCount(
         dsl.selectFrom(Lesson.LESSON)
-            .where(Lesson.LESSON.COURSE_ID.eq(courseId)));
+            .where(Lesson.LESSON.COURSE_ID.eq(courseId))
+            .and(Lesson.LESSON.PARENT_LESSON_ID.isNull()));
   }
 
   public int countCompletedLessons(UUID userId, UUID courseId) {
@@ -62,6 +63,7 @@ public class LessonProgressRepository {
             .join(Lesson.LESSON).on(LessonProgress.LESSON_PROGRESS.LESSON_ID.eq(Lesson.LESSON.LESSON_ID))
             .where(LessonProgress.LESSON_PROGRESS.USER_ID.eq(userId))
             .and(Lesson.LESSON.COURSE_ID.eq(courseId))
+            .and(Lesson.LESSON.PARENT_LESSON_ID.isNull())
             .and(LessonProgress.LESSON_PROGRESS.IS_COMPLETED.isTrue()));
   }
 

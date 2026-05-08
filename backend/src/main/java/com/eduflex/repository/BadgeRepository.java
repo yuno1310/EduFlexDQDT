@@ -25,9 +25,17 @@ public class BadgeRepository {
   }
 
   public BadgesDbO save(BadgesDbO badge) {
-    badge.record.attach(dsl.configuration());
-    badge.record.store();
-    return new BadgesDbO(badge.record);
+    var result = dsl.insertInto(Badges.BADGES,
+            Badges.BADGES.NAME, Badges.BADGES.DESCRIPTION, Badges.BADGES.CONDITION_TYPE)
+        .values(badge.record.getName(), badge.record.getDescription(), badge.record.getConditionType())
+        .onConflictDoNothing()
+        .returning()
+        .fetchOne();
+    if (result != null) {
+      return new BadgesDbO(result);
+    }
+    // If conflict, return existing badge
+    return findByConditionType(badge.record.getConditionType());
   }
 
   public BadgesDbO findById(Long id) {

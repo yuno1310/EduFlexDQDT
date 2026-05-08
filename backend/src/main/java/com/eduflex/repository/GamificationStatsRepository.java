@@ -70,6 +70,7 @@ public class GamificationStatsRepository {
             GamificationStats.GAMIFICATION_STATS.LEVEL)
         .from(Users.USERS).join(GamificationStats.GAMIFICATION_STATS)
         .on(Users.USERS.USER_ID.eq(GamificationStats.GAMIFICATION_STATS.USER_ID))
+        .where(Users.USERS.ROLE.notEqualIgnoreCase("admin"))
         .orderBy(GamificationStats.GAMIFICATION_STATS.XP.desc()).limit(top).fetch();
 
     List<LeaderBoardUserInfo> list = new ArrayList<LeaderBoardUserInfo>();

@@ -69,4 +69,10 @@ public class LessonRepository {
         .where(Lesson.LESSON.LESSON_ID.eq(lessonId))
         .execute() > 0;
   }
+
+  public UUID saveAndGetId(LessonDbO lesson) {
+    lesson.record.attach(dsl.configuration());
+    lesson.record.store();
+    return lesson.record.getLessonId();
+  }
 }

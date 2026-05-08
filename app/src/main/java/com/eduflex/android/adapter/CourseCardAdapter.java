@@ -20,10 +20,15 @@ public class CourseCardAdapter extends RecyclerView.Adapter<CourseCardAdapter.Vi
 
     private final List<Course> items;
     private final OnCourseClickListener listener;
+    private boolean showStatus = true;
 
     public CourseCardAdapter(List<Course> items, OnCourseClickListener listener) {
         this.items = items;
         this.listener = listener;
+    }
+
+    public void setShowStatus(boolean showStatus) {
+        this.showStatus = showStatus;
     }
 
     @NonNull
@@ -39,7 +44,12 @@ public class CourseCardAdapter extends RecyclerView.Adapter<CourseCardAdapter.Vi
         Course course = items.get(position);
         holder.tvTitle.setText(course.getTitle());
         holder.tvInstructor.setText(course.getLearningMode());
-        holder.tvPrice.setText(course.getStatus());
+        if (showStatus) {
+            holder.tvPrice.setVisibility(View.VISIBLE);
+            holder.tvPrice.setText(course.getStatus());
+        } else {
+            holder.tvPrice.setVisibility(View.GONE);
+        }
         Glide.with(holder.itemView.getContext())
                 .load(course.getImageUrl())
                 .placeholder(android.R.color.darker_gray)

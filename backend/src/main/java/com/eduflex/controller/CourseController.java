@@ -71,14 +71,16 @@ public class CourseController {
       @RequestBody CreateCourseRequest request) {
 
     var response = createCourseUseCase.execute(request);
-    return response.sucess()
+    return response.success()
         ? ResponseEntity.ok(response)
         : ResponseEntity.badRequest().body(response);
   }
 
   @GetMapping
-  public ResponseEntity<GetCourseResponse> getListCourse() {
-    var response = getCourseUseCase.execute();
+  public ResponseEntity<GetCourseResponse> getListCourse(Authentication authentication) {
+    Object principal = authentication != null ? authentication.getPrincipal() : null;
+    UUID userId = (principal instanceof UUID) ? (UUID) principal : null;
+    var response = getCourseUseCase.execute(userId);
     return response.success()
         ? ResponseEntity.ok(response)
         : ResponseEntity.badRequest().body(response);
