@@ -6,28 +6,75 @@
     android:background="@color/surface_bg"
     android:padding="16dp">
 
-    <TextView
+    <!-- Search bar with sparkle icon -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginBottom="12dp">
+
+        <EditText
+            android:id="@+id/et_search"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_search_ai"
+            android:textColor="@color/text_title"
+            android:textColorHint="@color/text_secondary"
+            android:inputType="text"
+            android:imeOptions="actionSearch"
+            android:paddingLeft="44dp"
+            android:paddingRight="14dp"
+            android:textSize="15sp" />
+
+        <!-- Animated hint overlay (sits on top of EditText, hidden when typing) -->
+        <TextView
+            android:id="@+id/tv_animated_hint"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:paddingLeft="44dp"
+            android:paddingRight="14dp"
+            android:textColor="@color/text_secondary"
+            android:textSize="15sp"
+            android:clickable="false"
+            android:focusable="false" />
+
+        <!-- Sparkle icon -->
+        <ImageView
+            android:id="@+id/iv_sparkle"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="12dp"
+            android:src="@drawable/ic_sparkle" />
+
+    </FrameLayout>
+
+    <!-- Shimmer loading placeholder -->
+    <LinearLayout
+        android:id="@+id/shimmer_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Search Courses"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        android:textColor="@color/text_title"
-        android:layout_marginBottom="12dp" />
+        android:orientation="vertical"
+        android:visibility="gone">
 
-    <EditText
-        android:id="@+id/et_search"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:background="@color/card_background"
-        android:hint="Type to search..."
-        android:textColorHint="@color/text_body"
-        android:textColor="@color/text_title"
-        android:inputType="text"
-        android:imeOptions="actionSearch"
-        android:paddingLeft="14dp"
-        android:paddingRight="14dp"
-        android:layout_marginBottom="12dp" />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/bg_shimmer_item" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/bg_shimmer_item" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/bg_shimmer_item" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/tv_search_empty"
