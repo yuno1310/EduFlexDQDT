@@ -84,6 +84,7 @@ public class LessonStudyFragment extends Fragment {
         String lessonTitle = args != null ? args.getString("lessonTitle", "Untitled Lesson") : "Untitled Lesson";
         String contentType = args != null ? args.getString("contentType", "reading") : "reading";
         String lessonContent = args != null ? args.getString("lessonContent", "") : "";
+        String videoUrl = args != null ? args.getString("videoUrl", "") : "";
         String quizLessonId = args != null ? args.getString("quizLessonId", null) : null;
         int lessonIndex = args != null ? args.getInt("lessonIndex", 0) : 0;
         List<Lesson> lessonList = getLessonList(args, "lessonList");
@@ -94,6 +95,8 @@ public class LessonStudyFragment extends Fragment {
         TextView tvType = view.findViewById(R.id.tv_lesson_study_type);
         TextView tvTextContent = view.findViewById(R.id.tv_lesson_text_content);
         ImageView ivVideoPlaceholder = view.findViewById(R.id.iv_video_placeholder);
+        android.webkit.WebView wvVideoPlayer = view.findViewById(R.id.wv_video_player);
+        Button btnOpenYoutube = view.findViewById(R.id.btn_open_youtube);
         Button btnPrev = view.findViewById(R.id.btn_prev_lesson);
         Button btnNext = view.findViewById(R.id.btn_next_lesson);
 
@@ -104,12 +107,50 @@ public class LessonStudyFragment extends Fragment {
         tvType.setText(contentType.toUpperCase());
 
         if ("video".equals(contentType.toLowerCase())) {
-            ivVideoPlaceholder.setVisibility(View.VISIBLE);
             tvTextContent.setVisibility(View.GONE);
+            String url = videoUrl != null && !videoUrl.isEmpty() ? videoUrl.trim() : (lessonContent != null ? lessonContent.trim() : "");
+            String videoId = extractYouTubeId(url);
+
+            if (videoId != null && !videoId.isEmpty()) {
+                ivVideoPlaceholder.setVisibility(View.GONE);
+                wvVideoPlayer.setVisibility(View.VISIBLE);
+                btnOpenYoutube.setVisibility(View.VISIBLE);
+                
+                android.webkit.WebSettings webSettings = wvVideoPlayer.getSettings();
+                webSettings.setJavaScriptEnabled(true);
+                webSettings.setDomStorageEnabled(true);
+                webSettings.setMediaPlaybackRequiresUserGesture(false);
+                wvVideoPlayer.setWebChromeClient(new android.webkit.WebChromeClient());
+                
+                String html = "<!DOCTYPE html><html><head><style>body{margin:0;padding:0;background:#000;display:flex;justify-content:center;align-items:center;height:100vh;} iframe{width:100%;height:100%;border:none;}</style></head><body><iframe src=\"https://www.youtube.com/embed/" + videoId + "?enablejsapi=1&autoplay=0&controls=1&playsinline=1&origin=https://www.youtube.com\" allowfullscreen></iframe></body></html>";
+                wvVideoPlayer.loadDataWithBaseURL("https://www.youtube.com", html, "text/html", "utf-8", null);
+
+                btnOpenYoutube.setOnClickListener(v -> {
+                    try {
+                        startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("vnd.youtube:" + videoId)));
+                    } catch (android.content.ActivityNotFoundException ex) {
+                        startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://www.youtube.com/watch?v=" + videoId)));
+                    }
+                });
+            } else {
+                wvVideoPlayer.setVisibility(View.GONE);
+                btnOpenYoutube.setVisibility(View.GONE);
+                ivVideoPlaceholder.setVisibility(View.VISIBLE);
+                ivVideoPlaceholder.setOnClickListener(v -> {
+                    try {
+                        String parseUrl = url;
+                        if (!parseUrl.startsWith("http")) parseUrl = "https://" + parseUrl;
+                        startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(parseUrl)));
+                    } catch (Exception e) {
+                        Log.e(TAG, "Failed to open video URL", e);
+                    }
+                });
+            }
         } else {
+            wvVideoPlayer.setVisibility(View.GONE);
             ivVideoPlaceholder.setVisibility(View.GONE);
             tvTextContent.setVisibility(View.VISIBLE);
-            String display = lessonContent.isEmpty() ? "No text content available." : lessonContent;
+            String display = lessonContent == null || lessonContent.isEmpty() ? "No text content available." : lessonContent;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 tvTextContent.setText(Html.fromHtml(display, Html.FROM_HTML_MODE_COMPACT));
             } else {
@@ -184,6 +225,7 @@ public class LessonStudyFragment extends Fragment {
 
         String content = lesson.getContent();
         args.putString("lessonContent", (content != null && !content.isEmpty()) ? content : "");
+        args.putString("videoUrl", lesson.getVideoUrl() != null ? lesson.getVideoUrl() : "");
 
         NavController nav = NavHostFragment.findNavController(this);
         NavOptions replaceOptions = new NavOptions.Builder()
@@ -195,6 +237,18 @@ public class LessonStudyFragment extends Fragment {
     private String findQuizLessonId(String parentId, List<Lesson> allLessons) {
         for (Lesson l : allLessons) {
             if (parentId.equals(l.getParentLessonId())) return l.getLessonID();
+        }
+        return null;
+    }
+
+    private String extractYouTubeId(String url) {
+        if (url == null || url.isEmpty()) return null;
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(
+                "(?:youtu\\.be/|v/|u/\\\\w/|embed/|watch\\?v=)([^#&?]*)",
+                java.util.regex.Pattern.CASE_INSENSITIVE);
+        java.util.regex.Matcher matcher = pattern.matcher(url);
+        if (matcher.find()){
+            return matcher.group(1);
         }
         return null;
     }

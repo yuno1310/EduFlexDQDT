@@ -416,7 +416,7 @@ public class AdminLessonsFragment extends Fragment {
                             Map<String, Object> opt = new HashMap<>();
                             opt.put("optionId", options.get(i).getOptionId());
                             opt.put("optionText", optionFields[qi][i].getText().toString().trim());
-                            opt.put("isCorrect", true);
+                            opt.put("isCorrect", i == 0);
                             optList.add(opt);
                         }
                         body.put("options", optList);

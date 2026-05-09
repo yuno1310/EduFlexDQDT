@@ -273,6 +273,7 @@ public class CourseDetailFragment extends Fragment {
 
         String content = lesson.getContent();
         args.putString("lessonContent", (content != null && !content.isEmpty()) ? content : getMockContent(lesson.getTitle(), lesson.getContentType()));
+        args.putString("videoUrl", lesson.getVideoUrl() != null ? lesson.getVideoUrl() : "");
         NavHostFragment.findNavController(this).navigate(R.id.lessonStudyFragment, args);
     }
 

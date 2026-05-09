@@ -176,6 +176,7 @@ public class QuizFragment extends Fragment {
 
             List<QuizGetResponse.OptionResponse> options = q.getOptions();
             if (options != null) {
+                java.util.Collections.shuffle(options);
                 for (QuizGetResponse.OptionResponse opt : options) {
                     RadioButton rb = new RadioButton(requireContext());
                     rb.setText(opt.getOptionText());
@@ -323,6 +324,7 @@ public class QuizFragment extends Fragment {
 
         String content = next.getContent();
         args.putString("lessonContent", (content != null && !content.isEmpty()) ? content : "");
+        args.putString("videoUrl", next.getVideoUrl() != null ? next.getVideoUrl() : "");
         return args;
     }
 
@@ -369,6 +371,7 @@ public class QuizFragment extends Fragment {
 
         String content = lesson.getContent();
         args.putString("lessonContent", (content != null && !content.isEmpty()) ? content : "");
+        args.putString("videoUrl", lesson.getVideoUrl() != null ? lesson.getVideoUrl() : "");
 
         NavHostFragment.findNavController(this).navigate(R.id.lessonStudyFragment, args);
     }

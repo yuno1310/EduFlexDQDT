@@ -61,6 +61,12 @@
                 android:orientation="vertical"
                 android:padding="14dp">
 
+                <WebView
+                    android:id="@+id/wv_video_player"
+                    android:layout_width="match_parent"
+                    android:layout_height="220dp"
+                    android:visibility="gone" />
+
                 <ImageView
                     android:id="@+id/iv_video_placeholder"
                     android:layout_width="match_parent"
@@ -71,6 +77,20 @@
                     android:scaleType="center"
                     android:src="@android:drawable/ic_media_play"
                     android:visibility="gone" />
+
+                <Button
+                    android:id="@+id/btn_open_youtube"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_button_primary_rounded"
+                    android:text="Watch on YouTube App"
+                    android:textAllCaps="false"
+                    android:textColor="@color/text_on_brand"
+                    android:visibility="gone"
+                    android:drawableLeft="@android:drawable/ic_media_play"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"/>
 
                 <TextView
                     android:id="@+id/tv_lesson_text_content"
