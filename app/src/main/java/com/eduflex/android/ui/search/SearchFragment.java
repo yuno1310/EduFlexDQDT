@@ -3,13 +3,16 @@ package com.eduflex.android.ui.search;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -88,9 +91,15 @@ public class SearchFragment extends Fragment {
         adapter.setShowStatus(false);
         rvResults.setAdapter(adapter);
 
-        // Forward touch from hint overlay to EditText
-        tvAnimatedHint.setOnClickListener(v -> {
-            etSearch.requestFocus();
+        // Forward touch from hint overlay to EditText and show keyboard
+        tvAnimatedHint.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_UP) {
+                etSearch.requestFocus();
+                InputMethodManager imm = (InputMethodManager) requireContext()
+                        .getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.showSoftInput(etSearch, InputMethodManager.SHOW_IMPLICIT);
+            }
+            return true;
         });
 
         startHintRotation();

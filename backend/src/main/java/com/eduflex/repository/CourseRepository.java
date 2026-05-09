@@ -151,4 +151,13 @@ public class CourseRepository {
         .limit(limit)
         .fetchInto(CourseSuggestionResponse.class);
   }
+
+  public List<CourseSuggestionResponse> semanticSearchCourses(String pgVector, int limit) {
+    return dsl.fetch(
+        "SELECT result_id AS \"courseId\", title, NULL::text AS \"imageUrl\" " +
+        "FROM search_content({0}::vector, 0.1, {1}) " +
+        "WHERE result_type = 'course'",
+        pgVector, limit)
+        .into(CourseSuggestionResponse.class);
+  }
 }
