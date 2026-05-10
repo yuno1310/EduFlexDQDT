@@ -80,22 +80,6 @@ public class CourseRepository {
     }
   }
 
-  public List<CourseSuggestionResponse> searchUnenrolledCourses(UUID userId, String keyword, int limit) {
-        var c = Courses.COURSES;
-        var e = Enrollments.ENROLLMENTS;
-
-        return dsl.select(c.COURSE_ID, c.TITLE, c.IMAGE_URL)
-                  .from(c)
-                  .where(c.TITLE.likeIgnoreCase("%" + keyword + "%"))
-                  .and(c.STATUS.equalIgnoreCase("active"))
-                  .and(c.COURSE_ID.notIn(
-                      dsl.select(e.COURSE_ID)
-                         .from(e)
-                         .where(e.USER_ID.eq(userId))
-                  ))
-                  .limit(limit)
-                  .fetchInto(CourseSuggestionResponse.class);
-    }
 
     public List<CourseSuggestionResponse> getMyCourses(UUID userId) {
         var c = Courses.COURSES;
@@ -141,23 +125,32 @@ public class CourseRepository {
     return step.execute() > 0;
   }
 
-  public List<CourseSuggestionResponse> searchCoursesByKeyword(String keyword, int limit) {
-    var c = com.eduflex.generated.tables.Courses.COURSES;
+  public List<CourseSuggestionResponse> keywordSearchCourses(UUID userId, String keyword, int limit) {
+    var c = Courses.COURSES;
+    var e = Enrollments.ENROLLMENTS;
 
     return dsl.select(c.COURSE_ID, c.TITLE, c.IMAGE_URL)
         .from(c)
         .where(c.TITLE.likeIgnoreCase("%" + keyword + "%"))
         .and(c.STATUS.equalIgnoreCase("active"))
+        .andNotExists(
+            dsl.selectOne().from(e)
+               .where(e.COURSE_ID.eq(c.COURSE_ID))
+               .and(e.USER_ID.eq(userId))
+        )
         .limit(limit)
         .fetchInto(CourseSuggestionResponse.class);
   }
 
-  public List<CourseSuggestionResponse> semanticSearchCourses(String pgVector, int limit) {
+  public List<CourseSuggestionResponse> semanticSearchCourses(UUID userId, String pgVector, int limit) {
     return dsl.fetch(
-        "SELECT result_id AS \"courseId\", title, NULL::text AS \"imageUrl\" " +
-        "FROM search_content({0}::vector, 0.1, {1}) " +
-        "WHERE result_type = 'course'",
-        pgVector, limit)
+        "SELECT c.course_id AS \"courseId\", c.title, c.image_url AS \"imageUrl\" " +
+        "FROM search_content({0}::vector, 0.1, {1}) sc " +
+        "JOIN courses c ON c.course_id = sc.result_id " +
+        "WHERE sc.result_type = 'course' " +
+        "AND c.status ILIKE 'active' " +
+        "AND NOT EXISTS (SELECT 1 FROM enrollments e WHERE e.course_id = c.course_id AND e.user_id = {2})",
+        pgVector, limit, userId)
         .into(CourseSuggestionResponse.class);
   }
 }
