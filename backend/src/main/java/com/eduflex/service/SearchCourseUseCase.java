@@ -19,23 +19,29 @@ public class SearchCourseUseCase {
     @Autowired
     private EmbeddingService embeddingService;
 
+    private static final int LIMIT = 10;
+
     public List<CourseSuggestionResponse> execute(UUID userId, String keyword) {
         if (keyword == null || keyword.trim().isEmpty() || userId == null) {
             return List.of();
         }
         String q = keyword.trim();
 
-        float[] vector = embeddingService.embed(q);
-        String pgVector = embeddingService.toPgVector(vector);
-
-        List<CourseSuggestionResponse> semantic = courseRepository.semanticSearchCourses(userId, pgVector, 10);
-        List<CourseSuggestionResponse> keywordResults = courseRepository.keywordSearchCourses(userId, q, 10);
-
-        // Merge: semantic first, then keyword results not already included
         Map<UUID, CourseSuggestionResponse> merged = new LinkedHashMap<>();
-        for (CourseSuggestionResponse r : keywordResults) merged.put(r.courseId(), r);
-        for (CourseSuggestionResponse r : semantic) merged.putIfAbsent(r.courseId(), r);
 
-        return new ArrayList<>(merged.values());
+        // Keyword first
+        List<CourseSuggestionResponse> keywordResults = courseRepository.keywordSearchCourses(userId, q, LIMIT);
+        for (CourseSuggestionResponse r : keywordResults) merged.put(r.courseId(), r);
+
+        // Only embed + semantic search if keyword didn't fill the limit
+        if (merged.size() < LIMIT) {
+            float[] vector = embeddingService.embed(q);
+            String pgVector = embeddingService.toPgVector(vector);
+            List<CourseSuggestionResponse> semantic = courseRepository.semanticSearchCourses(userId, pgVector, LIMIT);
+            for (CourseSuggestionResponse r : semantic) merged.putIfAbsent(r.courseId(), r);
+        }
+
+        List<CourseSuggestionResponse> result = new ArrayList<>(merged.values());
+        return result.size() > LIMIT ? result.subList(0, LIMIT) : result;
     }
 }

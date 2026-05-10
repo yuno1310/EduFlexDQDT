@@ -80,22 +80,6 @@ public class CourseRepository {
     }
   }
 
-  public List<CourseSuggestionResponse> searchUnenrolledCourses(UUID userId, String keyword, int limit) {
-        var c = Courses.COURSES;
-        var e = Enrollments.ENROLLMENTS;
-
-        return dsl.select(c.COURSE_ID, c.TITLE, c.IMAGE_URL)
-                  .from(c)
-                  .where(c.TITLE.likeIgnoreCase("%" + keyword + "%"))
-                  .and(c.STATUS.equalIgnoreCase("active"))
-                  .and(c.COURSE_ID.notIn(
-                      dsl.select(e.COURSE_ID)
-                         .from(e)
-                         .where(e.USER_ID.eq(userId))
-                  ))
-                  .limit(limit)
-                  .fetchInto(CourseSuggestionResponse.class);
-    }
 
     public List<CourseSuggestionResponse> getMyCourses(UUID userId) {
         var c = Courses.COURSES;
@@ -149,9 +133,11 @@ public class CourseRepository {
         .from(c)
         .where(c.TITLE.likeIgnoreCase("%" + keyword + "%"))
         .and(c.STATUS.equalIgnoreCase("active"))
-        .and(c.COURSE_ID.notIn(
-            dsl.select(e.COURSE_ID).from(e).where(e.USER_ID.eq(userId))
-        ))
+        .andNotExists(
+            dsl.selectOne().from(e)
+               .where(e.COURSE_ID.eq(c.COURSE_ID))
+               .and(e.USER_ID.eq(userId))
+        )
         .limit(limit)
         .fetchInto(CourseSuggestionResponse.class);
   }
@@ -163,7 +149,7 @@ public class CourseRepository {
         "JOIN courses c ON c.course_id = sc.result_id " +
         "WHERE sc.result_type = 'course' " +
         "AND c.status ILIKE 'active' " +
-        "AND c.course_id NOT IN (SELECT course_id FROM enrollments WHERE user_id = {2})",
+        "AND NOT EXISTS (SELECT 1 FROM enrollments e WHERE e.course_id = c.course_id AND e.user_id = {2})",
         pgVector, limit, userId)
         .into(CourseSuggestionResponse.class);
   }
