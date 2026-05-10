@@ -31,13 +31,7 @@ public class GetCourseUseCase {
     var courses = isAdmin ? courseRepository.get_course() : courseRepository.get_active_course();
 
     if (courses != null) {
-      var listCourses = new ArrayList<CourseInfo>();
-      for (var record : courses) {
-        var course = new CourseInfo(record.courseID(), record.title(), record.learningMode(), record.status(),
-            record.description(), record.imageUrl(), record.price());
-        listCourses.add(course);
-      }
-      return new GetCourseResponse(true, "Loading list courses successfuly", listCourses);
+      return new GetCourseResponse(true, "Loading list courses successfuly", courses);
     } else {
       return new GetCourseResponse(false, "Failed to load list courses", null);
     }

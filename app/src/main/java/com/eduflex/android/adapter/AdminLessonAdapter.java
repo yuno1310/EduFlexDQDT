@@ -55,12 +55,23 @@ public class AdminLessonAdapter extends RecyclerView.Adapter<AdminLessonAdapter.
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Lesson lesson = lessons.get(position);
 
-        holder.tvLessonNumber.setText(String.valueOf(position + 1));
+        int realIndex = 1;
+        for (int i = 0; i < position; i++) {
+            if (!"QUIZ".equalsIgnoreCase(lessons.get(i).getContentType())) {
+                realIndex++;
+            }
+        }
+
+        if ("QUIZ".equalsIgnoreCase(lesson.getContentType())) {
+            holder.tvLessonNumber.setText("");
+            holder.btnEditQuiz.setVisibility(View.VISIBLE);
+        } else {
+            holder.tvLessonNumber.setText(String.valueOf(realIndex));
+            holder.btnEditQuiz.setVisibility(View.GONE);
+        }
+
         holder.tvLessonTitle.setText(lesson.getTitle());
         holder.tvLessonType.setText(lesson.getContentType() != null ? lesson.getContentType() : "reading");
-
-        // Show quiz edit button for all lessons — API will respond if quiz exists
-        holder.btnEditQuiz.setVisibility(View.VISIBLE);
 
         holder.btnEditLesson.setOnClickListener(v -> {
             if (editListener != null) {

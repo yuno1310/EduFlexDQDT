@@ -8,6 +8,7 @@ import com.eduflex.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Service
@@ -38,13 +39,21 @@ public class GetGamificationStatsUseCase {
     }
 
     public GetGamificationStatsDTO.GetGamificationStatsResponse mapToResponse(GamificationStatsDbO stats) {
+        int displayStreak = stats.record.getStreakDays() != null ? stats.record.getStreakDays() : 0;
+        LocalDate lastStudyDate = stats.record.getLastStudyDate();
+        LocalDate today = LocalDate.now();
+
+        if (lastStudyDate != null && lastStudyDate.isBefore(today.minusDays(1))) {
+            displayStreak = 0;
+        }
+
         return new GetGamificationStatsDTO.GetGamificationStatsResponse(
                 stats.record.getId(),
                 stats.record.getUserId(),
                 stats.record.getXp(),
                 stats.record.getLevel(),
-                stats.record.getStreakDays(),
-                stats.record.getLastStudyDate()
+                displayStreak,
+                lastStudyDate
         );
     }
 }

@@ -8,6 +8,7 @@ public class Course {
     private String description;
     private String imageUrl;
     private Long price;
+    private Integer enrolledUsers;
 
     public Course(String courseID, String title, String learningMode, String status) {
         this.courseID = courseID;
@@ -36,4 +37,7 @@ public class Course {
 
     public Long getPrice() { return price; }
     public void setPrice(Long price) { this.price = price; }
+
+    public Integer getEnrolledUsers() { return enrolledUsers; }
+    public void setEnrolledUsers(Integer enrolledUsers) { this.enrolledUsers = enrolledUsers; }
 }

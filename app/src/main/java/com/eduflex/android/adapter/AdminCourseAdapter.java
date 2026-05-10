@@ -64,7 +64,9 @@ public class AdminCourseAdapter extends RecyclerView.Adapter<AdminCourseAdapter.
 
         holder.tvCourseTitle.setText(course.getTitle());
         holder.tvCourseModel.setText("Mode: " + (course.getLearningMode() != null ? course.getLearningMode() : "N/A"));
-        holder.tvCourseStatus.setText("Status: " + (course.getStatus() != null ? course.getStatus() : "Active"));
+        
+        int enrolled = course.getEnrolledUsers() != null ? course.getEnrolledUsers() : 0;
+        holder.tvCourseStatus.setText("Status: " + (course.getStatus() != null ? course.getStatus() : "Active") + "  •  Users: " + enrolled);
 
         // Load course image or show initial letter
         String imageUrl = course.getImageUrl();
