@@ -37,7 +37,8 @@ public class CourseRepository {
         Courses.COURSES.STATUS,
         Courses.COURSES.DESCRIPTION,
         Courses.COURSES.IMAGE_URL,
-        Courses.COURSES.PRICE)
+        Courses.COURSES.PRICE,
+        dsl.selectCount().from(Enrollments.ENROLLMENTS).where(Enrollments.ENROLLMENTS.COURSE_ID.eq(Courses.COURSES.COURSE_ID)).asField("enrolledUsers"))
         .from(Courses.COURSES)
         .fetch();
     if (records != null) {
@@ -45,7 +46,7 @@ public class CourseRepository {
       for (var record : records) {
         CourseInfo course = new CourseInfo(
             record.value1(), record.value2(), record.value3(), record.value4(),
-            record.value5(), record.value6(), record.value7());
+            record.value5(), record.value6(), record.value7(), record.value8() != null ? ((Number) record.value8()).intValue() : 0);
         list.add(course);
       }
       return list;
@@ -62,7 +63,8 @@ public class CourseRepository {
         Courses.COURSES.STATUS,
         Courses.COURSES.DESCRIPTION,
         Courses.COURSES.IMAGE_URL,
-        Courses.COURSES.PRICE)
+        Courses.COURSES.PRICE,
+        dsl.selectCount().from(Enrollments.ENROLLMENTS).where(Enrollments.ENROLLMENTS.COURSE_ID.eq(Courses.COURSES.COURSE_ID)).asField("enrolledUsers"))
         .from(Courses.COURSES)
         .where(Courses.COURSES.STATUS.equalIgnoreCase("active"))
         .fetch();
@@ -71,7 +73,7 @@ public class CourseRepository {
       for (var record : records) {
         CourseInfo course = new CourseInfo(
             record.value1(), record.value2(), record.value3(), record.value4(),
-            record.value5(), record.value6(), record.value7());
+            record.value5(), record.value6(), record.value7(), record.value8() != null ? ((Number) record.value8()).intValue() : 0);
         list.add(course);
       }
       return list;

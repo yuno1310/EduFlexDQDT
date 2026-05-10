@@ -58,7 +58,9 @@ public class AdminLessonsFragment extends Fragment {
     private AdminLessonAdapter adapter;
     private String courseId, courseTitle;
 
-    public AdminLessonsFragment() { super(R.layout.fragment_admin_lessons); }
+    public AdminLessonsFragment() {
+        super(R.layout.fragment_admin_lessons);
+    }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
@@ -94,18 +96,25 @@ public class AdminLessonsFragment extends Fragment {
         llEmptyState.setVisibility(View.GONE);
         lessonApi.getLessons(courseId).enqueue(new Callback<LessonListResponse>() {
             @Override
-            public void onResponse(@NonNull Call<LessonListResponse> call, @NonNull Response<LessonListResponse> response) {
-                if (!isAdded()) return;
+            public void onResponse(@NonNull Call<LessonListResponse> call,
+                    @NonNull Response<LessonListResponse> response) {
+                if (!isAdded())
+                    return;
                 progressLoading.setVisibility(View.GONE);
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                     List<Lesson> lessons = response.body().getListLesson();
-                    if (lessons != null && !lessons.isEmpty()) showLessons(lessons);
-                    else showEmptyState();
-                } else showEmptyState();
+                    if (lessons != null && !lessons.isEmpty())
+                        showLessons(lessons);
+                    else
+                        showEmptyState();
+                } else
+                    showEmptyState();
             }
+
             @Override
             public void onFailure(@NonNull Call<LessonListResponse> call, @NonNull Throwable t) {
-                if (!isAdded()) return;
+                if (!isAdded())
+                    return;
                 progressLoading.setVisibility(View.GONE);
                 showEmptyState();
             }
@@ -115,8 +124,28 @@ public class AdminLessonsFragment extends Fragment {
     private void showLessons(List<Lesson> lessons) {
         rvLessons.setVisibility(View.VISIBLE);
         llEmptyState.setVisibility(View.GONE);
-        tvTotalLessons.setText(String.valueOf(lessons.size()));
-        adapter = new AdminLessonAdapter(lessons, this::showEditLessonDialog, this::showEditQuizDialog, this::showDeleteLessonConfirmation);
+
+        List<Lesson> sorted = new ArrayList<>();
+        int realCount = 0;
+        for (Lesson l : lessons) {
+            if (!"QUIZ".equalsIgnoreCase(l.getContentType())) {
+                sorted.add(l);
+                realCount++;
+                for (Lesson q : lessons) {
+                    if ("QUIZ".equalsIgnoreCase(q.getContentType()) && l.getLessonID().equals(q.getParentLessonId())) {
+                        sorted.add(q);
+                    }
+                }
+            }
+        }
+        for (Lesson l : lessons) {
+            if (!sorted.contains(l))
+                sorted.add(l);
+        }
+
+        tvTotalLessons.setText(String.valueOf(realCount));
+        adapter = new AdminLessonAdapter(sorted, this::showEditLessonDialog, this::showEditQuizDialog,
+                this::showDeleteLessonConfirmation);
         rvLessons.setAdapter(adapter);
     }
 
@@ -128,7 +157,8 @@ public class AdminLessonsFragment extends Fragment {
 
     // ===== Add Lesson =====
     private void showAddLessonDialog() {
-        if (!isAdded()) return;
+        if (!isAdded())
+            return;
         LinearLayout layout = new LinearLayout(requireContext());
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(60, 40, 60, 20);
@@ -140,7 +170,7 @@ public class AdminLessonsFragment extends Fragment {
 
         addLabel(layout, "Content Type *");
         Spinner spType = new Spinner(requireContext());
-        String[] types = {"TEXT", "VIDEO", "QUIZ"};
+        String[] types = { "TEXT", "VIDEO", "QUIZ" };
         spType.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, types));
         layout.addView(spType);
 
@@ -171,13 +201,17 @@ public class AdminLessonsFragment extends Fragment {
                     body.put("contentType", type);
                     String video = etVideo.getText().toString().trim();
                     String content = etContent.getText().toString().trim();
-                    if (!video.isEmpty()) body.put("videoUrl", video);
-                    if (!content.isEmpty()) body.put("content", content);
+                    if (!video.isEmpty())
+                        body.put("videoUrl", video);
+                    if (!content.isEmpty())
+                        body.put("content", content);
 
                     adminApi.createLesson(body).enqueue(new Callback<UpdateLessonResponse>() {
                         @Override
-                        public void onResponse(@NonNull Call<UpdateLessonResponse> call, @NonNull Response<UpdateLessonResponse> r) {
-                            if (!isAdded()) return;
+                        public void onResponse(@NonNull Call<UpdateLessonResponse> call,
+                                @NonNull Response<UpdateLessonResponse> r) {
+                            if (!isAdded())
+                                return;
                             if (r.isSuccessful() && r.body() != null && r.body().isSuccess()) {
                                 Toast.makeText(getContext(), "Lesson + Quiz created!", Toast.LENGTH_SHORT).show();
                                 fetchLessons();
@@ -185,9 +219,11 @@ public class AdminLessonsFragment extends Fragment {
                                 Toast.makeText(getContext(), "Failed to create lesson", Toast.LENGTH_SHORT).show();
                             }
                         }
+
                         @Override
                         public void onFailure(@NonNull Call<UpdateLessonResponse> call, @NonNull Throwable t) {
-                            if (!isAdded()) return;
+                            if (!isAdded())
+                                return;
                             Toast.makeText(getContext(), "Network error", Toast.LENGTH_SHORT).show();
                         }
                     });
@@ -210,8 +246,10 @@ public class AdminLessonsFragment extends Fragment {
         progressLoading.setVisibility(View.VISIBLE);
         adminApi.deleteLesson(lesson.getLessonID()).enqueue(new Callback<DeleteCourseResponse>() {
             @Override
-            public void onResponse(@NonNull Call<DeleteCourseResponse> call, @NonNull Response<DeleteCourseResponse> response) {
-                if (!isAdded()) return;
+            public void onResponse(@NonNull Call<DeleteCourseResponse> call,
+                    @NonNull Response<DeleteCourseResponse> response) {
+                if (!isAdded())
+                    return;
                 progressLoading.setVisibility(View.GONE);
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                     Toast.makeText(getContext(), "Lesson deleted", Toast.LENGTH_SHORT).show();
@@ -220,9 +258,11 @@ public class AdminLessonsFragment extends Fragment {
                     Toast.makeText(getContext(), "Failed to delete", Toast.LENGTH_SHORT).show();
                 }
             }
+
             @Override
             public void onFailure(@NonNull Call<DeleteCourseResponse> call, @NonNull Throwable t) {
-                if (!isAdded()) return;
+                if (!isAdded())
+                    return;
                 progressLoading.setVisibility(View.GONE);
                 Toast.makeText(getContext(), "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
@@ -231,7 +271,8 @@ public class AdminLessonsFragment extends Fragment {
 
     // ===== Edit Lesson Dialog =====
     private void showEditLessonDialog(Lesson lesson, int position) {
-        if (!isAdded()) return;
+        if (!isAdded())
+            return;
         LinearLayout layout = new LinearLayout(requireContext());
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(60, 40, 60, 20);
@@ -243,11 +284,14 @@ public class AdminLessonsFragment extends Fragment {
 
         addLabel(layout, "Content Type");
         Spinner spType = new Spinner(requireContext());
-        String[] types = {"TEXT", "VIDEO", "QUIZ"};
+        String[] types = { "TEXT", "VIDEO", "QUIZ" };
         spType.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, types));
         String curType = lesson.getContentType();
         for (int i = 0; i < types.length; i++) {
-            if (types[i].equalsIgnoreCase(curType)) { spType.setSelection(i); break; }
+            if (types[i].equalsIgnoreCase(curType)) {
+                spType.setSelection(i);
+                break;
+            }
         }
         layout.addView(spType);
 
@@ -281,18 +325,24 @@ public class AdminLessonsFragment extends Fragment {
 
                     adminApi.updateLesson(lesson.getLessonID(), request).enqueue(new Callback<UpdateLessonResponse>() {
                         @Override
-                        public void onResponse(@NonNull Call<UpdateLessonResponse> call, @NonNull Response<UpdateLessonResponse> r) {
-                            if (!isAdded()) return;
+                        public void onResponse(@NonNull Call<UpdateLessonResponse> call,
+                                @NonNull Response<UpdateLessonResponse> r) {
+                            if (!isAdded())
+                                return;
                             if (r.isSuccessful() && r.body() != null && r.body().isSuccess()) {
                                 lesson.setTitle(title);
-                                if (!ct.isEmpty()) lesson.setContentType(ct);
+                                if (!ct.isEmpty())
+                                    lesson.setContentType(ct);
                                 adapter.updateLesson(position, lesson);
                                 Toast.makeText(getContext(), "Lesson updated", Toast.LENGTH_SHORT).show();
-                            } else Toast.makeText(getContext(), "Failed to update", Toast.LENGTH_SHORT).show();
+                            } else
+                                Toast.makeText(getContext(), "Failed to update", Toast.LENGTH_SHORT).show();
                         }
+
                         @Override
                         public void onFailure(@NonNull Call<UpdateLessonResponse> call, @NonNull Throwable t) {
-                            if (!isAdded()) return;
+                            if (!isAdded())
+                                return;
                             Toast.makeText(getContext(), "Network error", Toast.LENGTH_SHORT).show();
                         }
                     });
@@ -303,22 +353,27 @@ public class AdminLessonsFragment extends Fragment {
 
     // ===== Edit Quiz Dialog =====
     private void showEditQuizDialog(Lesson lesson) {
-        if (!isAdded()) return;
+        if (!isAdded())
+            return;
         quizApi.getQuiz(lesson.getLessonID()).enqueue(new Callback<QuizGetResponse>() {
             @Override
             public void onResponse(@NonNull Call<QuizGetResponse> call, @NonNull Response<QuizGetResponse> response) {
-                if (!isAdded()) return;
+                if (!isAdded())
+                    return;
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()
                         && response.body().getQuestions() != null && !response.body().getQuestions().isEmpty()) {
                     showQuizEditForm(lesson, response.body().getQuestions());
                 } else {
-                    Toast.makeText(getContext(), "No quiz questions found. Add questions below.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "No quiz questions found. Add questions below.", Toast.LENGTH_SHORT)
+                            .show();
                     showAddQuestionDialog(lesson);
                 }
             }
+
             @Override
             public void onFailure(@NonNull Call<QuizGetResponse> call, @NonNull Throwable t) {
-                if (!isAdded()) return;
+                if (!isAdded())
+                    return;
                 Toast.makeText(getContext(), "Failed to load quiz", Toast.LENGTH_SHORT).show();
             }
         });
@@ -403,10 +458,14 @@ public class AdminLessonsFragment extends Fragment {
                         QuizGetResponse.QuestionResponse q = questions.get(qi);
                         String qText = etQuestions[qi].getText().toString().trim();
                         int pts;
-                        try { pts = Integer.parseInt(etPointsList[qi].getText().toString().trim()); }
-                        catch (NumberFormatException e) { pts = q.getPoints(); }
+                        try {
+                            pts = Integer.parseInt(etPointsList[qi].getText().toString().trim());
+                        } catch (NumberFormatException e) {
+                            pts = q.getPoints();
+                        }
 
-                        List<QuizGetResponse.OptionResponse> options = q.getOptions() != null ? q.getOptions() : new ArrayList<>();
+                        List<QuizGetResponse.OptionResponse> options = q.getOptions() != null ? q.getOptions()
+                                : new ArrayList<>();
                         Map<String, Object> body = new HashMap<>();
                         body.put("questionText", qText);
                         body.put("points", pts);
@@ -424,13 +483,19 @@ public class AdminLessonsFragment extends Fragment {
                         final int num = qi + 1, total = questions.size();
                         adminApi.updateQuizRaw(q.getQuestionId(), body).enqueue(new Callback<UpdateLessonResponse>() {
                             @Override
-                            public void onResponse(@NonNull Call<UpdateLessonResponse> call, @NonNull Response<UpdateLessonResponse> r) {
-                                if (!isAdded()) return;
-                                if (num == total) Toast.makeText(getContext(), r.isSuccessful() ? "Quiz updated" : "Failed", Toast.LENGTH_SHORT).show();
+                            public void onResponse(@NonNull Call<UpdateLessonResponse> call,
+                                    @NonNull Response<UpdateLessonResponse> r) {
+                                if (!isAdded())
+                                    return;
+                                if (num == total)
+                                    Toast.makeText(getContext(), r.isSuccessful() ? "Quiz updated" : "Failed",
+                                            Toast.LENGTH_SHORT).show();
                             }
+
                             @Override
                             public void onFailure(@NonNull Call<UpdateLessonResponse> call, @NonNull Throwable t) {
-                                if (!isAdded()) return;
+                                if (!isAdded())
+                                    return;
                                 Toast.makeText(getContext(), "Network error", Toast.LENGTH_SHORT).show();
                             }
                         });
@@ -442,7 +507,8 @@ public class AdminLessonsFragment extends Fragment {
 
     // ===== Add Question Dialog =====
     private void showAddQuestionDialog(Lesson lesson) {
-        if (!isAdded()) return;
+        if (!isAdded())
+            return;
         LinearLayout layout = new LinearLayout(requireContext());
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(60, 40, 60, 20);
@@ -459,15 +525,15 @@ public class AdminLessonsFragment extends Fragment {
         etPts.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
         layout.addView(etPts);
 
-        addLabel(layout, "Option A (correct answer) *");
+        addLabel(layout, "Option 1 (correct answer) *");
         EditText etA = new EditText(requireContext());
         layout.addView(etA);
 
-        addLabel(layout, "Option B");
+        addLabel(layout, "Option 2");
         EditText etB = new EditText(requireContext());
         layout.addView(etB);
 
-        addLabel(layout, "Option C");
+        addLabel(layout, "Option 3");
         EditText etC = new EditText(requireContext());
         layout.addView(etC);
 
@@ -478,19 +544,35 @@ public class AdminLessonsFragment extends Fragment {
                     String qText = etQ.getText().toString().trim();
                     String optA = etA.getText().toString().trim();
                     if (qText.isEmpty() || optA.isEmpty()) {
-                        Toast.makeText(getContext(), "Question and Option A are required", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "Question and Option 1 are required", Toast.LENGTH_SHORT).show();
                         return;
                     }
                     int pts;
-                    try { pts = Integer.parseInt(etPts.getText().toString().trim()); }
-                    catch (NumberFormatException e) { pts = 10; }
+                    try {
+                        pts = Integer.parseInt(etPts.getText().toString().trim());
+                    } catch (NumberFormatException e) {
+                        pts = 10;
+                    }
 
                     List<Map<String, Object>> options = new ArrayList<>();
-                    Map<String, Object> oA = new HashMap<>(); oA.put("optionText", optA); oA.put("isCorrect", true); options.add(oA);
+                    Map<String, Object> oA = new HashMap<>();
+                    oA.put("optionText", optA);
+                    oA.put("isCorrect", true);
+                    options.add(oA);
                     String bText = etB.getText().toString().trim();
-                    if (!bText.isEmpty()) { Map<String, Object> oB = new HashMap<>(); oB.put("optionText", bText); oB.put("isCorrect", false); options.add(oB); }
+                    if (!bText.isEmpty()) {
+                        Map<String, Object> oB = new HashMap<>();
+                        oB.put("optionText", bText);
+                        oB.put("isCorrect", false);
+                        options.add(oB);
+                    }
                     String cText = etC.getText().toString().trim();
-                    if (!cText.isEmpty()) { Map<String, Object> oC = new HashMap<>(); oC.put("optionText", cText); oC.put("isCorrect", false); options.add(oC); }
+                    if (!cText.isEmpty()) {
+                        Map<String, Object> oC = new HashMap<>();
+                        oC.put("optionText", cText);
+                        oC.put("isCorrect", false);
+                        options.add(oC);
+                    }
 
                     Map<String, Object> body = new HashMap<>();
                     body.put("lessonId", lesson.getLessonID());
@@ -500,13 +582,18 @@ public class AdminLessonsFragment extends Fragment {
 
                     adminApi.createQuiz(body).enqueue(new Callback<UpdateLessonResponse>() {
                         @Override
-                        public void onResponse(@NonNull Call<UpdateLessonResponse> call, @NonNull Response<UpdateLessonResponse> r) {
-                            if (!isAdded()) return;
-                            Toast.makeText(getContext(), r.isSuccessful() ? "Question added!" : "Failed", Toast.LENGTH_SHORT).show();
+                        public void onResponse(@NonNull Call<UpdateLessonResponse> call,
+                                @NonNull Response<UpdateLessonResponse> r) {
+                            if (!isAdded())
+                                return;
+                            Toast.makeText(getContext(), r.isSuccessful() ? "Question added!" : "Failed",
+                                    Toast.LENGTH_SHORT).show();
                         }
+
                         @Override
                         public void onFailure(@NonNull Call<UpdateLessonResponse> call, @NonNull Throwable t) {
-                            if (!isAdded()) return;
+                            if (!isAdded())
+                                return;
                             Toast.makeText(getContext(), "Network error", Toast.LENGTH_SHORT).show();
                         }
                     });
@@ -523,16 +610,21 @@ public class AdminLessonsFragment extends Fragment {
                 .setPositiveButton("Delete", (d, w) -> {
                     adminApi.deleteQuestion(questionId).enqueue(new Callback<DeleteCourseResponse>() {
                         @Override
-                        public void onResponse(@NonNull Call<DeleteCourseResponse> call, @NonNull Response<DeleteCourseResponse> r) {
-                            if (!isAdded()) return;
+                        public void onResponse(@NonNull Call<DeleteCourseResponse> call,
+                                @NonNull Response<DeleteCourseResponse> r) {
+                            if (!isAdded())
+                                return;
                             if (r.isSuccessful() && r.body() != null && r.body().isSuccess()) {
                                 Toast.makeText(getContext(), "Question deleted", Toast.LENGTH_SHORT).show();
                                 showEditQuizDialog(lesson); // Refresh
-                            } else Toast.makeText(getContext(), "Failed to delete", Toast.LENGTH_SHORT).show();
+                            } else
+                                Toast.makeText(getContext(), "Failed to delete", Toast.LENGTH_SHORT).show();
                         }
+
                         @Override
                         public void onFailure(@NonNull Call<DeleteCourseResponse> call, @NonNull Throwable t) {
-                            if (!isAdded()) return;
+                            if (!isAdded())
+                                return;
                             Toast.makeText(getContext(), "Network error", Toast.LENGTH_SHORT).show();
                         }
                     });

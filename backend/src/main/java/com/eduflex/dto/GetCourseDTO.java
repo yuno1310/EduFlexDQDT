@@ -11,6 +11,6 @@ public class GetCourseDTO {
   }
 
   public record CourseInfo(UUID courseID, String title, String learningMode, String status,
-                           String description, String imageUrl, Long price) {
+                           String description, String imageUrl, Long price, Integer enrolledUsers) {
   }
 }
