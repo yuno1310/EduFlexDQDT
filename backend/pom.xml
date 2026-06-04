@@ -100,6 +100,16 @@
             <artifactId>langchain4j-embeddings-all-minilm-l6-v2</artifactId>
             <version>0.36.2</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -123,7 +133,7 @@
                 <configuration>
                     <url>jdbc:postgresql://aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres</url>
                     <user>postgres.pkcsfpmyyzilmeolygor</user>
-                    <password>AR8S8uPXZ7LVx1VT</password>
+                    <password>141592654Duy**</password>
                     <schemas>
                         <schema>public</schema>
                     </schemas>
@@ -156,7 +166,7 @@
                         <driver>org.postgresql.Driver</driver>
                         <url>jdbc:postgresql://aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres</url>
                         <user>postgres.pkcsfpmyyzilmeolygor</user>
-                        <password>AR8S8uPXZ7LVx1VT</password>
+                        <password>141592654Duy**</password>
                     </jdbc>
                     <generator>
                         <database>
