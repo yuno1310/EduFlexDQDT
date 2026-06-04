@@ -82,4 +82,18 @@ public class GamificationStatsRepository {
     }
     return list;
   }
+
+  public LeaderBoardUserInfo getUserInfoById(UUID userId) {
+    var record = dsl
+        .select(Users.USERS.FULL_NAME, GamificationStats.GAMIFICATION_STATS.XP, GamificationStats.GAMIFICATION_STATS.LEVEL)
+        .from(Users.USERS).join(GamificationStats.GAMIFICATION_STATS)
+        .on(Users.USERS.USER_ID.eq(GamificationStats.GAMIFICATION_STATS.USER_ID))
+        .where(Users.USERS.USER_ID.eq(userId))
+        .fetchOne();
+
+    if (record != null) {
+      return new LeaderBoardUserInfo(userId, record.value1(), record.value2(), record.value3());
+    }
+    return null;
+  }
 }
