@@ -10,7 +10,7 @@ Install deps:
 import psycopg2
 from fastembed import TextEmbedding
 
-DB_URL = "postgresql://postgres.pkcsfpmyyzilmeolygor:AR8S8uPXZ7LVx1VT@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres"
+DB_URL = "postgresql://postgres.pkcsfpmyyzilmeolygor:141592654Duy**@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres"
 
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
