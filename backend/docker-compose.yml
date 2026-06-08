@@ -1,0 +1,41 @@
+services:
+  # 1. Spring Boot Backend
+  eduflex-api:
+    build: .
+    container_name: eduflex-spring-boot
+    ports:
+      - "8080:8080"
+    depends_on:
+      - eduflex-redis
+      - eduflex-rabbitmq
+    env_file:
+      - .env  
+    environment:
+     
+      - SPRING_DATA_REDIS_HOST=eduflex-redis
+      - SPRING_RABBITMQ_HOST=eduflex-rabbitmq
+    networks:
+      - eduflex-network
+
+  # 2. Redis Caching
+  eduflex-redis:
+    image: redis:alpine
+    container_name: eduflex-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - eduflex-network
+
+  # 3. RabbitMQ Message Queue
+  eduflex-rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: eduflex-rabbitmq
+    ports:
+      - "5672:5672"   # Port giao tiếp nội bộdocker compose ps
+      - "15672:15672" # Port cho giao diện Web Admin
+    networks:
+      - eduflex-network
+
+networks:
+  eduflex-network:
+    driver: bridge

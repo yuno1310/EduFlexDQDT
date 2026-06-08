@@ -4,12 +4,14 @@ import com.eduflex.dto.AdminDTO.UpdateLessonRequest;
 import com.eduflex.dto.AdminDTO.UpdateLessonResponse;
 import com.eduflex.repository.LessonRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 @Service
+@CacheEvict(value = "lessons", key = "#lessonId") 
 public class UpdateLessonUseCase {
 
     @Autowired
