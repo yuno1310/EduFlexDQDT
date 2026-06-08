@@ -49,7 +49,7 @@ public class QuizController {
     return ResponseEntity.ok(response);
   }
 
-  @PostMapping("/submit-fill-blank")
+  @PostMapping("/fill-blank")
   public ResponseEntity<SubmitFillBlankResponse> submitFillBlank(
       @RequestBody SubmitFillBlankRequest request) {
     var response = submitFillBlankUseCase.execute(request);

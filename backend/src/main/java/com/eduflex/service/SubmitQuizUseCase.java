@@ -8,6 +8,8 @@ import com.eduflex.dto.QuizDTO.SubmitQuizResponse;
 import com.eduflex.repository.EnrollmentRepository;
 import com.eduflex.repository.LessonProgressRepository;
 import com.eduflex.repository.QuizRepository;
+
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,7 @@ public class SubmitQuizUseCase {
   private static final double PASS_PERCENTAGE_THRESHOLD = 50.0;
   private static final int QUIZ_PASS_XP = 30;
   private static final int COURSE_COMPLETE_XP = 50;
+  private final RabbitTemplate rabbitTemplate;
 
   @Autowired
   private QuizRepository quizRepository;
@@ -37,6 +40,11 @@ public class SubmitQuizUseCase {
   private CheckAndAwardBadgesUseCase checkAndAwardBadgesUseCase;
   @Autowired
   private UpdateDailyQuestProgressUseCase updateDailyQuestProgressUseCase;
+
+  public SubmitQuizUseCase(RabbitTemplate rabbitTemplate) {
+    this.rabbitTemplate = rabbitTemplate;
+  }
+
 
   @Transactional
   public SubmitQuizResponse execute(SubmitQuizRequest request) {
