@@ -34,7 +34,13 @@ public class SecurityConfig {
                   "Token is not true or expired");
             }))
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/user/login", "/api/user/register", "/api/user/forgot-password").permitAll()
+            .requestMatchers(
+                "/api/user/login",
+                "/api/user/register",
+                "/api/user/forgot-password",
+                "/api/auth/refresh",
+                "/api/auth/logout"
+            ).permitAll()
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
             .anyRequest().authenticated())
         .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
