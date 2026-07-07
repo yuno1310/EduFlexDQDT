@@ -31,7 +31,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     String token = extractToken(request);
 
     if (StringUtils.hasText(token)) {
-      UUID userId = jwtUtils.getUserIdFromJWT(token);
+      // Only accept access tokens — reject refresh tokens used as access tokens
+      UUID userId = jwtUtils.getUserIdFromAccessToken(token);
       if (userId != null) {
         UsernamePasswordAuthenticationToken authentication =
             new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
