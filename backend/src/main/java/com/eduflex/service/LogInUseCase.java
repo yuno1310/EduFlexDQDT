@@ -39,7 +39,9 @@ public class LogInUseCase {
     if (isMatch == false) {
       return new LogInResponse(false, "Password is incorrect", null, null, null, null, null);
     }
-    String token = jwtUtils.generateToken(user.record.getUserId(), user.record.getEmail());
+    String role = user.record.getRole();
+    if (role == null) role = "user";
+    String token = jwtUtils.generateToken(user.record.getUserId(), user.record.getEmail(), role);
 
     var userId = user.record.getUserId();
 
@@ -51,9 +53,6 @@ public class LogInUseCase {
 
     // Award daily login XP (+10, once per day)
     dailyCheckinUseCase.execute(userId);
-
-    String role = user.record.getRole();
-    if (role == null) role = "user";
 
     return new LogInResponse(true, "Log in successfully", token, role, user.record.getFullName(), user.record.getEmail(), user.record.getAvatarUrl());
   }

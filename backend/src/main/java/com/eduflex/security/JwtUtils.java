@@ -24,7 +24,7 @@ public class JwtUtils {
 
   private final String ISSUER = "EduFlexApp";
 
-  public String generateToken(UUID userId, String email) {
+  public String generateToken(UUID userId, String email, String role) {
     try {
       Algorithm algorithm = Algorithm.HMAC256(jwtSecret);
       Date now = new Date();
@@ -33,6 +33,7 @@ public class JwtUtils {
           .withIssuer(ISSUER)
           .withSubject(userId.toString())
           .withClaim("email", email)
+          .withClaim("role", role == null ? "user" : role)
           .withIssuedAt(now)
           .withExpiresAt(expiryDate)
           .sign(algorithm);
@@ -55,6 +56,15 @@ public class JwtUtils {
 
     } catch (JWTVerificationException exception) {
       System.out.println("Token is not true or expired" + exception.getMessage());
+      return null;
+    }
+  }
+
+  public String getRoleFromJWT(String token) {
+    try {
+      Algorithm algorithm = Algorithm.HMAC256(jwtSecret);
+      return JWT.require(algorithm).withIssuer(ISSUER).build().verify(token).getClaim("role").asString();
+    } catch (JWTVerificationException exception) {
       return null;
     }
   }

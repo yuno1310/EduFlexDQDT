@@ -6,36 +6,82 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - eduflex-redis
-      - eduflex-rabbitmq
+      eduflex-postgres:
+        condition: service_healthy
+      eduflex-redis:
+        condition: service_healthy
+      eduflex-rabbitmq:
+        condition: service_healthy
     env_file:
-      - .env  
+      - .env
     environment:
-     
-      - SPRING_DATA_REDIS_HOST=eduflex-redis
-      - SPRING_RABBITMQ_HOST=eduflex-rabbitmq
+      SPRING_DATASOURCE_URL: jdbc:postgresql://eduflex-postgres:5432/${POSTGRES_DB:-eduflex}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-eduflex}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-eduflex-local}
+      SPRING_DATA_REDIS_HOST: eduflex-redis
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:-eduflex-local}
+      SPRING_RABBITMQ_HOST: eduflex-rabbitmq
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-eduflex}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-eduflex-local}
     networks:
       - eduflex-network
 
-  # 2. Redis Caching
+  # 2. PostgreSQL + pgvector for application data and semantic search
+  eduflex-postgres:
+    image: pgvector/pgvector:pg16
+    container_name: eduflex-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-eduflex}
+      POSTGRES_USER: ${POSTGRES_USER:-eduflex}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-eduflex-local}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks:
+      - eduflex-network
+
+  # 3. Redis Caching
   eduflex-redis:
     image: redis:alpine
     container_name: eduflex-redis
-    ports:
-      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-eduflex-local}"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-eduflex-local}
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", 'redis-cli -a "$$REDIS_PASSWORD" ping | grep PONG']
+      interval: 5s
+      timeout: 3s
+      retries: 10
     networks:
       - eduflex-network
 
-  # 3. RabbitMQ Message Queue
+  # 4. RabbitMQ Message Queue
   eduflex-rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: eduflex-rabbitmq
     ports:
-      - "5672:5672"   # Port giao tiếp nội bộdocker compose ps
       - "15672:15672" # Port cho giao diện Web Admin
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-eduflex}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-eduflex-local}
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
     networks:
       - eduflex-network
 
 networks:
   eduflex-network:
     driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:

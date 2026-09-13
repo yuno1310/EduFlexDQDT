@@ -7,10 +7,14 @@ Install deps:
   pip install fastembed psycopg2-binary
 """
 
+import os
+
 import psycopg2
 from fastembed import TextEmbedding
 
-DB_URL = "postgresql://postgres.pkcsfpmyyzilmeolygor:141592654Duy**@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres"
+DB_URL = os.getenv("DATABASE_URL") or os.getenv("SPRING_DATASOURCE_URL")
+if DB_URL and DB_URL.startswith("jdbc:"):
+    DB_URL = DB_URL.removeprefix("jdbc:")
 
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
@@ -18,6 +22,9 @@ def vec_to_pg(v):
     return "[" + ",".join(str(x) for x in v) + "]"
 
 def main():
+    if not DB_URL:
+        raise RuntimeError("Set DATABASE_URL or SPRING_DATASOURCE_URL before running this script")
+
     print(f"Loading model {MODEL_NAME}...")
     model = TextEmbedding(model_name=MODEL_NAME)
 

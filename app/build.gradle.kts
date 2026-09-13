@@ -23,26 +23,6 @@ val apiBaseUrl = dotenvValue("API_BASE_URL")
     ?: providers.environmentVariable("API_BASE_URL").orNull
     ?: "http://10.0.2.2:8080/"
 
-val geminiApiKey = dotenvValue("GEMINI_API_KEY")
-    ?: providers.gradleProperty("GEMINI_API_KEY").orNull
-    ?: providers.environmentVariable("GEMINI_API_KEY").orNull
-    ?: ""
-
-val openRouterApiKey = dotenvValue("OPENROUTER_API_KEY")
-    ?: providers.gradleProperty("OPENROUTER_API_KEY").orNull
-    ?: providers.environmentVariable("OPENROUTER_API_KEY").orNull
-    ?: ""
-
-val anthropicApiKey = dotenvValue("ANTHROPIC_API_KEY")
-    ?: providers.gradleProperty("ANTHROPIC_API_KEY").orNull
-    ?: providers.environmentVariable("ANTHROPIC_API_KEY").orNull
-    ?: ""
-
-val groqApiKey = dotenvValue("GROQ_API_KEY")
-    ?: providers.gradleProperty("GROQ_API_KEY").orNull
-    ?: providers.environmentVariable("GROQ_API_KEY").orNull
-    ?: ""
-
 android {
     namespace = "com.eduflex.android"
     compileSdk = 35
@@ -55,17 +35,17 @@ android {
         versionName = "1.0"
 
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
-        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
-        buildConfigField("String", "OPENROUTER_API_KEY", "\"$openRouterApiKey\"")
-        buildConfigField("String", "ANTHROPIC_API_KEY", "\"$anthropicApiKey\"")
-        buildConfigField("String", "GROQ_API_KEY", "\"$groqApiKey\"")
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
+        debug {
+            buildConfigField("boolean", "HTTP_LOGGING_ENABLED", "true")
+        }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            buildConfigField("boolean", "HTTP_LOGGING_ENABLED", "false")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

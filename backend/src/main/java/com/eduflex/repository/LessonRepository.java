@@ -75,4 +75,25 @@ public class LessonRepository {
     lesson.record.store();
     return lesson.record.getLessonId();
   }
+  public UUID findCourseId(UUID lessonId) {
+    return dsl.select(Lesson.LESSON.COURSE_ID)
+        .from(Lesson.LESSON)
+        .where(Lesson.LESSON.LESSON_ID.eq(lessonId))
+        .fetchOne(Lesson.LESSON.COURSE_ID);
+  }
+
+  public String getEmbeddingText(UUID lessonId) {
+    var record = dsl.select(Lesson.LESSON.TITLE, Lesson.LESSON.CONTENT)
+        .from(Lesson.LESSON)
+        .where(Lesson.LESSON.LESSON_ID.eq(lessonId))
+        .fetchOne();
+    return record == null ? null : String.join(" ",
+        java.util.Objects.toString(record.value1(), ""),
+        java.util.Objects.toString(record.value2(), ""));
+  }
+
+  public void updateEmbedding(UUID lessonId, String pgVector) {
+    dsl.execute("UPDATE lesson SET embedding = {0}::vector WHERE lesson_id = {1}", pgVector, lessonId);
+  }
+
 }

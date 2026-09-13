@@ -3,6 +3,7 @@ package com.eduflex.android.api;
 import com.eduflex.android.model.CategoryListResponse;
 import com.eduflex.android.model.CourseListResponse;
 import com.eduflex.android.model.CourseSearchResult;
+import com.eduflex.android.model.AiCourseSummaryResponse;
 import com.eduflex.android.model.EnrollRequest;
 import com.eduflex.android.model.EnrollResponse;
 import com.eduflex.android.model.EnrolledCoursesResponse;
@@ -30,6 +31,9 @@ public interface CourseApi {
 
     @GET("api/course/search")
     Call<List<CourseSearchResult>> searchCourses(@Query("keyword") String keyword);
+
+    @GET("api/course/{courseId}/ai-summary")
+    Call<AiCourseSummaryResponse> getAiSummary(@Path("courseId") String courseId);
 
     @POST("api/enrollment/{courseId}/register")
     Call<EnrollResponse> enrollCourse(@Path("courseId") String courseId, @Body EnrollRequest request);

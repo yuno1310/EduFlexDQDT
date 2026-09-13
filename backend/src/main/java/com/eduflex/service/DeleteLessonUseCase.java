@@ -4,6 +4,7 @@ import com.eduflex.dto.AdminDTO.DeleteLessonResponse;
 import com.eduflex.repository.LessonRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.CacheEvict;
 
 import java.util.UUID;
 
@@ -13,6 +14,7 @@ public class DeleteLessonUseCase {
     @Autowired
     private LessonRepository lessonRepository;
 
+    @CacheEvict(value = {"lessons", "courseSummaries", "semanticSearch"}, allEntries = true)
     public DeleteLessonResponse execute(UUID lessonId) {
         if (!lessonRepository.existsById(lessonId)) {
             return new DeleteLessonResponse(false, "Lesson not found");

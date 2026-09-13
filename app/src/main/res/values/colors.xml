@@ -1,29 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Brand colors -->
-    <color name="cyan_primary">#00BCD4</color>
-    <color name="cyan_primary_dark">#0097A7</color>
-    <color name="cyan_surface">#E7FAFC</color>
-    <color name="cyan_text_light">#D8F8FC</color>
-    <color name="surface_bg">#F3FCFD</color>
+    <color name="cyan_primary">#14B8A6</color>
+    <color name="cyan_primary_dark">#0F766E</color>
+    <color name="cyan_surface">#CCFBF1</color>
+    <color name="cyan_text_light">#CCFBF1</color>
+    <color name="surface_bg">#F8FAFC</color>
 
     <!-- Semantic UI colors -->
     <color name="brand_primary">@color/cyan_primary</color>
     <color name="brand_primary_dark">@color/cyan_primary_dark</color>
     <color name="brand_surface">@color/cyan_surface</color>
 
-    <color name="text_primary">#1A1A1A</color>
+    <color name="text_primary">#0F172A</color>
     <color name="text_title">#0F172A</color>
     <color name="text_body">#334155</color>
-    <color name="text_secondary">#6B7280</color>
-    <color name="text_muted">#888888</color>
-    <color name="text_support">#607D8B</color>
+    <color name="text_secondary">#64748B</color>
+    <color name="text_muted">#94A3B8</color>
+    <color name="text_support">#64748B</color>
     <color name="text_on_brand">#FFFFFF</color>
 
     <color name="card_background">#FFFFFF</color>
-    <color name="app_bg_soft">#F5F5F5</color>
-    <color name="nav_item_unselected">#7A8A99</color>
-    <color name="cyan_accent">#0EA5B7</color>
+    <color name="app_bg_soft">#F1F5F9</color>
+    <color name="nav_item_unselected">#64748B</color>
+    <color name="cyan_accent">#0D9488</color>
 
     <!-- Streak cell colors -->
     <color name="fire_active">#FF8A00</color>
@@ -34,6 +34,10 @@
     <color name="danger_light">#FFEBEE</color>
     <color name="success">#43A047</color>
     <color name="success_light">#E8F5E9</color>
-    <color name="divider">#E0E0E0</color>
+    <color name="divider">#E2E8F0</color>
     <color name="icon_secondary">#90A4AE</color>
+    <color name="surface_elevated">#FFFFFF</color>
+    <color name="brand_ink">#134E4A</color>
+    <color name="brand_accent">#F59E0B</color>
+    <color name="outline_soft">#DDE7EE</color>
 </resources>

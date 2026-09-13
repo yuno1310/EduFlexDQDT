@@ -10,6 +10,10 @@
         <item name="android:colorBackground">@color/surface_bg</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <item name="android:navigationBarColor">@color/card_background</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+        <item name="android:fontFamily">sans</item>
+        <item name="colorControlNormal">@color/text_secondary</item>
     </style>
 
     <style name="QuizResultDialogTheme" parent="Theme.MaterialComponents.Light.Dialog">

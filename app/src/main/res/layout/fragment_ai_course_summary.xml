@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:padding="16dp">
+        android:padding="20dp">
 
         <Button
             android:id="@+id/btn_back"
@@ -29,7 +29,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="12dp"
-            android:text="✨ AI Summary"
+            android:text="AI learning brief"
             android:textColor="@color/text_title"
             android:textSize="20sp"
             android:textStyle="bold" />
@@ -39,7 +39,7 @@
         android:id="@+id/tv_course_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="16dp"
+        android:paddingHorizontal="20dp"
         android:paddingBottom="4dp"
         android:textColor="@color/text_primary"
         android:textSize="15sp"
@@ -48,7 +48,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_marginHorizontal="16dp"
+        android:layout_marginHorizontal="20dp"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="16dp"
         android:background="@color/divider" />
@@ -62,7 +62,7 @@
             android:id="@+id/scroll_summary"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingHorizontal="16dp"
+            android:paddingHorizontal="20dp"
             android:paddingBottom="24dp"
             android:visibility="gone">
 
@@ -91,7 +91,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Generating AI summary…"
+                android:text="Building your grounded course brief…"
                 android:textColor="@color/text_secondary"
                 android:textSize="14sp" />
         </LinearLayout>

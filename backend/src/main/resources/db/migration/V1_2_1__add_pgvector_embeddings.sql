@@ -27,17 +27,19 @@ RETURNS TABLE (
 )
 LANGUAGE sql STABLE
 AS $$
+  SELECT * FROM (
   (SELECT 'lesson'::text, l.lesson_id, l.title, c.title,
-          (1 - (l.embedding <=> query_embedding))::float
+          (1 - (l.embedding <=> query_embedding))::float AS similarity
    FROM lesson l JOIN courses c ON l.course_id = c.course_id
    WHERE l.embedding IS NOT NULL
      AND 1 - (l.embedding <=> query_embedding) > match_threshold)
   UNION ALL
   (SELECT 'course'::text, c.course_id, c.title, c.title,
-          (1 - (c.embedding <=> query_embedding))::float
+          (1 - (c.embedding <=> query_embedding))::float AS similarity
    FROM courses c
    WHERE c.embedding IS NOT NULL
      AND 1 - (c.embedding <=> query_embedding) > match_threshold)
+  ) sub
   ORDER BY similarity DESC
   LIMIT match_count;
 $$;
