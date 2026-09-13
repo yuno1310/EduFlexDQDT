@@ -13,7 +13,8 @@ import org.springframework.web.client.RestClient;
 
 import com.eduflex.dto.AiCourseDTO.CourseMaterial;
 import com.eduflex.dto.AiCourseDTO.LessonContext;
-import com.eduflex.repository.CourseRepository;
+import com.eduflex.repository.course.CourseRepository;
+import com.eduflex.service.media.EmbeddingService;
 
 class AiCourseServiceTest {
 

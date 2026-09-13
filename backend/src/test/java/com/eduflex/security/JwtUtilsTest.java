@@ -13,10 +13,9 @@ class JwtUtilsTest {
   void signedTokenCarriesUserIdAndRole() {
     JwtUtils jwt = new JwtUtils();
     ReflectionTestUtils.setField(jwt, "jwtSecret", "a-test-secret-that-is-long-enough-for-hmac");
-    ReflectionTestUtils.setField(jwt, "jwtExpirationMs", 60_000L);
     UUID userId = UUID.randomUUID();
 
-    String token = jwt.generateToken(userId, "learner@example.com", "admin");
+    String token = jwt.generateAccessToken(userId, "learner@example.com", "admin");
 
     assertEquals(userId, jwt.getUserIdFromJWT(token));
     assertEquals("admin", jwt.getRoleFromJWT(token));

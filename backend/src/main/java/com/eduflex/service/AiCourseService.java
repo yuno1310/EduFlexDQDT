@@ -17,7 +17,8 @@ import com.eduflex.dto.AiCourseDTO.CourseSummaryResponse;
 import com.eduflex.dto.AiCourseDTO.LessonContext;
 import com.eduflex.dto.AiCourseDTO.Source;
 import com.eduflex.exception.ResourceNotFoundException;
-import com.eduflex.repository.CourseRepository;
+import com.eduflex.repository.course.CourseRepository;
+import com.eduflex.service.media.EmbeddingService;
 import com.fasterxml.jackson.databind.JsonNode;
 
 @Service
