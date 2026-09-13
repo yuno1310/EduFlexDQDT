@@ -53,6 +53,9 @@ public class RedisConfig {
     cacheConfigs.put("badges", defaultConfig.entryTtl(Duration.ofMinutes(30)));
     cacheConfigs.put("userBadges", defaultConfig.entryTtl(Duration.ofMinutes(5)));
     cacheConfigs.put("courseReviews", defaultConfig.entryTtl(Duration.ofMinutes(3)));
+    cacheConfigs.put("courseCatalog", defaultConfig.entryTtl(Duration.ofMinutes(5)));
+    cacheConfigs.put("courseSummaries", defaultConfig.entryTtl(Duration.ofHours(6)));
+    cacheConfigs.put("semanticSearch", defaultConfig.entryTtl(Duration.ofMinutes(15)));
 
     return RedisCacheManager.builder(connectionFactory)
         .cacheDefaults(defaultConfig)

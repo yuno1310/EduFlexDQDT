@@ -13,6 +13,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.util.UUID;
 
 @Component
@@ -34,8 +35,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
       // Only accept access tokens — reject refresh tokens used as access tokens
       UUID userId = jwtUtils.getUserIdFromAccessToken(token);
       if (userId != null) {
+        String role = jwtUtils.getRoleFromJWT(token);
+        String authority = "ROLE_" + (role == null ? "USER" : role.toUpperCase());
         UsernamePasswordAuthenticationToken authentication =
-            new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
+            new UsernamePasswordAuthenticationToken(userId, null,
+                Collections.singletonList(new SimpleGrantedAuthority(authority)));
         SecurityContextHolder.getContext().setAuthentication(authentication);
       }
     }

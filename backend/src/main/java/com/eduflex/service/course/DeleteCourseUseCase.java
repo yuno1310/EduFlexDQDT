@@ -4,6 +4,7 @@ import com.eduflex.dto.user.AdminDTO.DeleteCourseResponse;
 import com.eduflex.repository.course.CourseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
@@ -15,6 +16,7 @@ public class DeleteCourseUseCase {
     private CourseRepository courseRepository;
 
     @Transactional
+    @CacheEvict(value = {"courseCatalog", "courseSummaries", "semanticSearch"}, allEntries = true)
     public DeleteCourseResponse execute(UUID courseId) {
         if (!courseRepository.existsById(courseId)) {
             return new DeleteCourseResponse(false, "Course not found");

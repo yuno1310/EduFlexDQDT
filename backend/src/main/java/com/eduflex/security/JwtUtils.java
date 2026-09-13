@@ -131,6 +131,11 @@ public class JwtUtils {
     return TYPE_REFRESH.equals(decoded.getClaim(CLAIM_TOKEN_TYPE).asString());
   }
 
+  public String getRoleFromJWT(String token) {
+    DecodedJWT decoded = decodeToken(token);
+    return decoded != null ? decoded.getClaim(CLAIM_ROLE).asString() : null;
+  }
+
   /**
    * Validate any token.
    */

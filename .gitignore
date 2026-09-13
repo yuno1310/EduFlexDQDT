@@ -7,7 +7,6 @@
 **/target/
 *.class
 *.log
-backend/src/main/java/com/eduflex/generated/
 
 # Gradle / Android
 .gradle/

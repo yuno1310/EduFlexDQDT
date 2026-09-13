@@ -5,6 +5,9 @@ import com.eduflex.dto.lesson.ProgressDTO.SaveLessonRequest;
 import com.eduflex.dto.lesson.ProgressDTO.SaveLessonResponse;
 import com.eduflex.repository.lesson.LessonProgressRepository;
 import com.eduflex.repository.enrollment.EnrollmentRepository;
+import com.eduflex.service.gamification.AddXpUseCase;
+import com.eduflex.service.gamification.CheckAndAwardBadgesUseCase;
+import com.eduflex.service.gamification.UpdateStreakUseCase;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

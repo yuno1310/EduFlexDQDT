@@ -8,6 +8,10 @@ import com.eduflex.dto.quiz.QuizDTO.SubmitQuizResponse;
 import com.eduflex.repository.enrollment.EnrollmentRepository;
 import com.eduflex.repository.lesson.LessonProgressRepository;
 import com.eduflex.repository.quiz.QuizRepository;
+import com.eduflex.service.gamification.AddXpUseCase;
+import com.eduflex.service.gamification.CheckAndAwardBadgesUseCase;
+import com.eduflex.service.gamification.UpdateDailyQuestProgressUseCase;
+import com.eduflex.service.gamification.UpdateStreakUseCase;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;

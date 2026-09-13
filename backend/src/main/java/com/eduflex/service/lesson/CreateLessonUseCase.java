@@ -2,6 +2,9 @@ package com.eduflex.service.lesson;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.CacheEvict;
+import com.eduflex.config.ContentChangedEvent;
+import com.eduflex.config.ContentEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
@@ -17,7 +20,11 @@ public class CreateLessonUseCase {
     @Autowired
     private LessonRepository lessonRepository;
 
+    @Autowired
+    private ContentEventPublisher contentEvents;
+
     @Transactional
+    @CacheEvict(value = {"courseSummaries", "semanticSearch"}, allEntries = true)
     public CreateLessonResponse execute(CreateLessonRequest request) {
 
         if (request.courseID() == null) {
@@ -49,6 +56,8 @@ public class CreateLessonUseCase {
                 lessonId // parent is the main lesson
             );
             lessonRepository.save(quizLesson);
+            contentEvents.publish(ContentChangedEvent.ContentType.LESSON, lessonId);
+            contentEvents.publish(ContentChangedEvent.ContentType.COURSE, request.courseID());
 
             return new CreateLessonResponse(true, "Lesson created successfully!", lessonId);
         } catch (Exception e) {

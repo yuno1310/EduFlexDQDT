@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.eduflex.dto.course.CourseReviewDTO.GetCourseReviewsResponse;
+import com.eduflex.dto.AiCourseDTO.AskCourseRequest;
+import com.eduflex.dto.AiCourseDTO.AskCourseResponse;
+import com.eduflex.dto.AiCourseDTO.CourseSummaryResponse;
 import com.eduflex.dto.course.CourseReviewDTO.SubmitCourseReviewRequest;
 import com.eduflex.dto.course.CourseReviewDTO.SubmitCourseReviewResponse;
 import com.eduflex.dto.course.CourseSearchDTO.CourseSuggestionResponse;
@@ -28,6 +31,7 @@ import com.eduflex.dto.payment.PaymentDTO.ProcessPaymentResponse;
 import com.eduflex.dto.course.ReviewDTO.SubmitReviewRequest;
 import com.eduflex.dto.course.ReviewDTO.SubmitReviewResponse;
 import com.eduflex.service.course.CreateCourseUseCase;
+import com.eduflex.service.AiCourseService;
 import com.eduflex.service.course.GetCourseReviewsUseCase;
 import com.eduflex.service.course.GetCourseUseCase;
 import com.eduflex.service.course.GetMyCoursesUseCase;
@@ -65,6 +69,9 @@ public class CourseController {
 
   @Autowired
   private GetCourseReviewsUseCase getCourseReviewsUseCase;
+
+  @Autowired
+  private AiCourseService aiCourseService;
 
   @PostMapping
   public ResponseEntity<CreateCourseResponse> createCourse(
@@ -107,17 +114,29 @@ public class CourseController {
 
   @GetMapping("/search")
   public ResponseEntity<List<CourseSuggestionResponse>> searchCourses(
-      @RequestHeader("X-User-Id") UUID userId,
+      Authentication authentication,
       @RequestParam(name = "keyword", defaultValue = "") String keyword) {
+    UUID userId = (UUID) authentication.getPrincipal();
     List<CourseSuggestionResponse> suggestions = searchCourseUseCase.execute(userId, keyword);
     return ResponseEntity.ok(suggestions);
   }
 
   @GetMapping("/my-courses")
-  public ResponseEntity<List<CourseSuggestionResponse>> getMyCourses(
-      @RequestHeader("X-User-Id") UUID userId) {
+  public ResponseEntity<List<CourseSuggestionResponse>> getMyCourses(Authentication authentication) {
+    UUID userId = (UUID) authentication.getPrincipal();
     List<CourseSuggestionResponse> myCourses = getMyCoursesUseCase.execute(userId);
     return ResponseEntity.ok(myCourses);
+  }
+
+  @GetMapping("/{courseId}/ai-summary")
+  public ResponseEntity<CourseSummaryResponse> summarizeCourse(@PathVariable UUID courseId) {
+    return ResponseEntity.ok(aiCourseService.summarize(courseId));
+  }
+
+  @PostMapping("/{courseId}/ask")
+  public ResponseEntity<AskCourseResponse> askCourse(
+      @PathVariable UUID courseId, @Valid @RequestBody AskCourseRequest request) {
+    return ResponseEntity.ok(aiCourseService.ask(courseId, request.question()));
   }
 
   @GetMapping("/{courseId}/reviews")

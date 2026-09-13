@@ -7,6 +7,9 @@ import com.eduflex.android.auth.SessionManager;
 import com.eduflex.android.auth.TokenManager;
 
 import okhttp3.OkHttpClient;
+import okhttp3.Cache;
+import java.io.File;
+import java.util.concurrent.TimeUnit;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -23,6 +26,7 @@ public class ApiClient {
     private static Retrofit authenticatedRetrofit;
     private static TokenManager tokenManager;
     private static Context appContext;
+    private static Cache httpCache;
 
     /**
      * Initialise with application context so the auth interceptor can read the
@@ -31,15 +35,24 @@ public class ApiClient {
     public static void init(Context context) {
         appContext = context.getApplicationContext();
         tokenManager = new TokenManager(appContext);
+        httpCache = new Cache(new File(appContext.getCacheDir(), "http_cache"), 10L * 1024L * 1024L);
     }
 
     /** Returns a Retrofit instance without auth headers (for login/register). */
     public static Retrofit getInstance() {
         if (retrofit == null) {
             HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-            logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+            logging.setLevel(BuildConfig.HTTP_LOGGING_ENABLED
+                    ? HttpLoggingInterceptor.Level.BASIC
+                    : HttpLoggingInterceptor.Level.NONE);
 
             OkHttpClient client = new OkHttpClient.Builder()
+                    .cache(httpCache)
+                    .connectTimeout(10, TimeUnit.SECONDS)
+                    .readTimeout(30, TimeUnit.SECONDS)
+                    .writeTimeout(30, TimeUnit.SECONDS)
+                    .callTimeout(45, TimeUnit.SECONDS)
+                    .retryOnConnectionFailure(true)
                     .addInterceptor(logging)
                     .build();
 
@@ -59,9 +72,17 @@ public class ApiClient {
     public static Retrofit getAuthenticatedInstance() {
         if (authenticatedRetrofit == null) {
             HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-            logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+            logging.setLevel(BuildConfig.HTTP_LOGGING_ENABLED
+                    ? HttpLoggingInterceptor.Level.BASIC
+                    : HttpLoggingInterceptor.Level.NONE);
 
             OkHttpClient client = new OkHttpClient.Builder()
+                    .cache(httpCache)
+                    .connectTimeout(10, TimeUnit.SECONDS)
+                    .readTimeout(30, TimeUnit.SECONDS)
+                    .writeTimeout(30, TimeUnit.SECONDS)
+                    .callTimeout(45, TimeUnit.SECONDS)
+                    .retryOnConnectionFailure(true)
                     .addInterceptor(chain -> {
                         Request.Builder builder = chain.request().newBuilder();
                         if (tokenManager != null) {

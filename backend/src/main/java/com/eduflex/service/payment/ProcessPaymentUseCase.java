@@ -9,6 +9,7 @@ import com.eduflex.dto.payment.PaymentDTO.ProcessPaymentResponse;
 import com.eduflex.dto.enrollment.EnrollmentDTO.EnrollRequest;
 import com.eduflex.repository.course.CourseRepository;
 import com.eduflex.repository.payment.TransactionRepository;
+import com.eduflex.service.enrollment.EnrollCourseUseCase;
 
 @Service
 public class ProcessPaymentUseCase {

@@ -2,8 +2,10 @@ package com.eduflex.service.course;
 
 import com.eduflex.dto.course.CourseSearchDTO.CourseSuggestionResponse;
 import com.eduflex.repository.course.CourseRepository;
+import com.eduflex.service.media.EmbeddingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.Cacheable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,6 +23,7 @@ public class SearchCourseUseCase {
 
     private static final int LIMIT = 10;
 
+    @Cacheable(value = "semanticSearch", key = "#userId.toString() + '::' + #keyword.toLowerCase()")
     public List<CourseSuggestionResponse> execute(UUID userId, String keyword) {
         if (keyword == null || keyword.trim().isEmpty() || userId == null) {
             return List.of();

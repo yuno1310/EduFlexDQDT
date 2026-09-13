@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Repository;
 
 import com.eduflex.dto.course.CourseSearchDTO.CourseSuggestionResponse;
@@ -29,6 +30,7 @@ public class CourseRepository {
     }
   }
 
+  @Cacheable(value = "courseCatalog", key = "'admin'")
   public List<CourseInfo> get_course() {
     var records = dsl.select(
         Courses.COURSES.COURSE_ID,
@@ -55,6 +57,7 @@ public class CourseRepository {
     }
   }
 
+  @Cacheable(value = "courseCatalog", key = "'active'")
   public List<CourseInfo> get_active_course() {
     var records = dsl.select(
         Courses.COURSES.COURSE_ID,
@@ -155,4 +158,56 @@ public class CourseRepository {
         pgVector, limit, userId)
         .into(CourseSuggestionResponse.class);
   }
+  public com.eduflex.dto.AiCourseDTO.CourseMaterial getCourseMaterial(UUID courseId) {
+    var record = dsl.select(Courses.COURSES.COURSE_ID, Courses.COURSES.TITLE,
+            Courses.COURSES.DESCRIPTION, Courses.COURSES.LEARNING_MODEL)
+        .from(Courses.COURSES)
+        .where(Courses.COURSES.COURSE_ID.eq(courseId))
+        .fetchOne();
+    return record == null ? null : new com.eduflex.dto.AiCourseDTO.CourseMaterial(
+        record.value1(), record.value2(), record.value3(), record.value4());
+  }
+
+  public List<com.eduflex.dto.AiCourseDTO.LessonContext> getCourseLessonContext(UUID courseId) {
+    return dsl.fetch(
+        "SELECT lesson_id, title, content, 1.0::float AS relevance FROM lesson " +
+        "WHERE course_id = ? AND content_type <> 'quiz' ORDER BY lesson_id", courseId)
+        .map(record -> new com.eduflex.dto.AiCourseDTO.LessonContext(
+            record.get("lesson_id", UUID.class),
+            record.get("title", String.class),
+            record.get("content", String.class),
+            1.0));
+  }
+
+  public List<com.eduflex.dto.AiCourseDTO.LessonContext> searchLessonContext(
+      UUID courseId, String pgVector, int limit) {
+    return dsl.fetch(
+        "SELECT lesson_id, title, content, " +
+        "(1 - (embedding <=> {0}::vector))::float AS relevance " +
+        "FROM lesson WHERE course_id = {1} AND embedding IS NOT NULL " +
+        "ORDER BY embedding <=> {0}::vector LIMIT {2}",
+        pgVector, courseId, limit)
+        .map(record -> new com.eduflex.dto.AiCourseDTO.LessonContext(
+            record.get("lesson_id", UUID.class),
+            record.get("title", String.class),
+            record.get("content", String.class),
+            record.get("relevance", Double.class)));
+  }
+
+  public String getEmbeddingText(UUID courseId) {
+    var record = dsl.select(Courses.COURSES.TITLE, Courses.COURSES.DESCRIPTION,
+            Courses.COURSES.LEARNING_MODEL)
+        .from(Courses.COURSES)
+        .where(Courses.COURSES.COURSE_ID.eq(courseId))
+        .fetchOne();
+    return record == null ? null : String.join(" ",
+        java.util.Objects.toString(record.value1(), ""),
+        java.util.Objects.toString(record.value2(), ""),
+        java.util.Objects.toString(record.value3(), ""));
+  }
+
+  public void updateEmbedding(UUID courseId, String pgVector) {
+    dsl.execute("UPDATE courses SET embedding = {0}::vector WHERE course_id = {1}", pgVector, courseId);
+  }
+
 }
