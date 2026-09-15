@@ -388,10 +388,17 @@ public class ProfileFragment extends Fragment {
             String mimeType = resolver.getType(imageUri);
             if (mimeType == null) mimeType = "image/jpeg";
 
-            java.io.InputStream inputStream = resolver.openInputStream(imageUri);
-            if (inputStream == null) return;
-            byte[] bytes = inputStream.readAllBytes();
-            inputStream.close();
+            byte[] bytes;
+            try (java.io.InputStream inputStream = resolver.openInputStream(imageUri);
+                 java.io.ByteArrayOutputStream output = new java.io.ByteArrayOutputStream()) {
+                if (inputStream == null) return;
+                byte[] buffer = new byte[8192];
+                int count;
+                while ((count = inputStream.read(buffer)) != -1) {
+                    output.write(buffer, 0, count);
+                }
+                bytes = output.toByteArray();
+            }
 
             String ext = mimeType.contains("png") ? ".png" : ".jpg";
             String filename = "avatar_" + userId + ext;

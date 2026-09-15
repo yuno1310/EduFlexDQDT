@@ -44,6 +44,8 @@ public class CourseCardAdapter extends RecyclerView.Adapter<CourseCardAdapter.Vi
         Course course = items.get(position);
         holder.tvTitle.setText(course.getTitle());
         holder.tvInstructor.setText(course.getLearningMode());
+        holder.tvInstructor.setVisibility(course.getLearningMode() == null
+                || course.getLearningMode().trim().isEmpty() ? View.GONE : View.VISIBLE);
         if (showStatus) {
             holder.tvPrice.setVisibility(View.VISIBLE);
             holder.tvPrice.setText(course.getStatus());
@@ -52,8 +54,8 @@ public class CourseCardAdapter extends RecyclerView.Adapter<CourseCardAdapter.Vi
         }
         Glide.with(holder.itemView.getContext())
                 .load(course.getImageUrl())
-                .placeholder(android.R.color.darker_gray)
-                .error(android.R.color.darker_gray)
+                .placeholder(R.drawable.bg_course_placeholder)
+                .error(R.drawable.bg_course_placeholder)
                 .centerCrop()
                 .into(holder.ivThumbnail);
         holder.itemView.setOnClickListener(v -> {

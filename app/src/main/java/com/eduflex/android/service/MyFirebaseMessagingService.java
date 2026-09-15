@@ -1,6 +1,9 @@
 package com.eduflex.android.service;
 
 import android.app.NotificationManager;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import androidx.core.content.ContextCompat;
 import android.util.Log;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -30,12 +33,17 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
     @Override
     public void onNewToken(String token) {
-        Log.d("FCM_TOKEN", "New token: " + token);
+        Log.d("FCM_TOKEN", "Push token refreshed");
         // Gửi token lên backend để server biết gửi notification cho ai
         // sendTokenToServer(token);
     }
 
     private void showNotification(String title, String body) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
         // Tạo Notification Channel
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
