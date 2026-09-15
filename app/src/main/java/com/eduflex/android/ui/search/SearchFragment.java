@@ -68,6 +68,11 @@ public class SearchFragment extends Fragment {
     private ImageView ivSparkle;
     private LinearLayout shimmerContainer;
     private AnimatorSet sparkleAnimator;
+    private AnimatorSet hintAnimator;
+    private final List<ValueAnimator> shimmerAnimators = new ArrayList<>();
+    private final Handler animationHandler = new Handler(Looper.getMainLooper());
+    private View retryButton;
+    private String currentQuery = "";
 
     public SearchFragment() {
         super(R.layout.fragment_search);
@@ -80,11 +85,26 @@ public class SearchFragment extends Fragment {
         courseApi = ApiClient.createAuthenticatedService(CourseApi.class);
 
         EditText etSearch = view.findViewById(R.id.et_search);
+        View clearSearch = view.findViewById(R.id.btn_clear_search);
+        clearSearch.setOnClickListener(v -> etSearch.setText(""));
+        etSearch.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId != android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) return false;
+            submitSearch(etSearch.getText().toString().trim());
+            InputMethodManager imm = (InputMethodManager) requireContext()
+                    .getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) imm.hideSoftInputFromWindow(etSearch.getWindowToken(), 0);
+            etSearch.clearFocus();
+            return true;
+        });
         tvEmpty = view.findViewById(R.id.tv_search_empty);
         rvResults = view.findViewById(R.id.rv_search_results);
         tvAnimatedHint = view.findViewById(R.id.tv_animated_hint);
         ivSparkle = view.findViewById(R.id.iv_sparkle);
         shimmerContainer = view.findViewById(R.id.shimmer_container);
+        retryButton = view.findViewById(R.id.btn_search_retry);
+        retryButton.setOnClickListener(v -> submitSearch(currentQuery));
+        currentQuery = "";
+        isUserTyping = false;
 
         rvResults.setLayoutManager(new LinearLayoutManager(requireContext()));
         adapter = new CourseCardAdapter(displayedCourses, course -> openCourseDetail(course));
@@ -104,7 +124,6 @@ public class SearchFragment extends Fragment {
 
         startHintRotation();
         startSparkleAnimation();
-        startShimmerAnimation();
         loadAllCourses();
 
         etSearch.addTextChangedListener(new TextWatcher() {
@@ -114,14 +133,16 @@ public class SearchFragment extends Fragment {
             @Override
             public void afterTextChanged(Editable s) {
                 String query = s.toString().trim();
+                currentQuery = query;
+                clearSearch.setVisibility(s.length() == 0 ? View.GONE : View.VISIBLE);
+                debounceHandler.removeCallbacksAndMessages(null);
+                cancelPending();
+                showShimmer();
 
                 if (query.isEmpty()) {
                     isUserTyping = false;
                     tvAnimatedHint.setVisibility(View.VISIBLE);
                     startHintRotation();
-                    debounceHandler.removeCallbacks(pendingSearch);
-                    cancelPending();
-                    hideShimmer();
                     loadAllCourses();
                     return;
                 }
@@ -130,11 +151,7 @@ public class SearchFragment extends Fragment {
                 tvAnimatedHint.setVisibility(View.GONE);
                 stopHintRotation();
 
-                debounceHandler.removeCallbacks(pendingSearch);
-                pendingSearch = () -> {
-                    showShimmer();
-                    searchCourses(query);
-                };
+                pendingSearch = () -> searchCourses(query);
                 debounceHandler.postDelayed(pendingSearch, DEBOUNCE_MS);
             }
         });
@@ -163,20 +180,34 @@ public class SearchFragment extends Fragment {
         if (hintRotator != null) {
             hintHandler.removeCallbacks(hintRotator);
         }
+        if (hintAnimator != null) {
+            hintAnimator.cancel();
+            hintAnimator = null;
+        }
     }
 
     private void showHintAtIndex(int index) {
         tvAnimatedHint.setText(HINT_SUGGESTIONS[index]);
         tvAnimatedHint.setAlpha(1f);
+        tvAnimatedHint.setTranslationY(0f);
     }
 
     private void animateHintTransition(String newHint) {
+        final TextView hintView = tvAnimatedHint;
         // Fade out, swap text, slide up + fade in
         ObjectAnimator fadeOut = ObjectAnimator.ofFloat(tvAnimatedHint, "alpha", 1f, 0f);
         fadeOut.setDuration(200);
         fadeOut.addListener(new android.animation.AnimatorListenerAdapter() {
+            private boolean canceled;
+
+            @Override
+            public void onAnimationCancel(android.animation.Animator animation) {
+                canceled = true;
+            }
+
             @Override
             public void onAnimationEnd(android.animation.Animator animation) {
+                if (canceled || tvAnimatedHint != hintView || isUserTyping) return;
                 tvAnimatedHint.setText(newHint);
                 tvAnimatedHint.setTranslationY(8f);
                 ObjectAnimator fadeIn = ObjectAnimator.ofFloat(tvAnimatedHint, "alpha", 0f, 1f);
@@ -186,10 +217,13 @@ public class SearchFragment extends Fragment {
                 AnimatorSet inSet = new AnimatorSet();
                 inSet.playTogether(fadeIn, slideUp);
                 inSet.setInterpolator(new AccelerateDecelerateInterpolator());
+                hintAnimator = inSet;
                 inSet.start();
             }
         });
-        fadeOut.start();
+        hintAnimator = new AnimatorSet();
+        hintAnimator.play(fadeOut);
+        hintAnimator.start();
     }
 
     // --- Sparkle icon pulse animation ---
@@ -207,7 +241,7 @@ public class SearchFragment extends Fragment {
             @Override
             public void onAnimationEnd(android.animation.Animator animation) {
                 if (isAdded()) {
-                    ivSparkle.postDelayed(() -> {
+                    animationHandler.postDelayed(() -> {
                         if (isAdded() && sparkleAnimator != null) sparkleAnimator.start();
                     }, 1500);
                 }
@@ -219,13 +253,17 @@ public class SearchFragment extends Fragment {
     // --- Shimmer loading animation ---
 
     private void showShimmer() {
+        retryButton.setVisibility(View.GONE);
         shimmerContainer.setVisibility(View.VISIBLE);
         rvResults.setVisibility(View.GONE);
         tvEmpty.setVisibility(View.GONE);
+        if (shimmerAnimators.isEmpty()) startShimmerAnimation();
     }
 
     private void hideShimmer() {
         shimmerContainer.setVisibility(View.GONE);
+        for (ValueAnimator animator : shimmerAnimators) animator.cancel();
+        shimmerAnimators.clear();
     }
 
     private void startShimmerAnimation() {
@@ -237,46 +275,76 @@ public class SearchFragment extends Fragment {
             anim.setRepeatCount(ValueAnimator.INFINITE);
             anim.setInterpolator(new AccelerateDecelerateInterpolator());
             anim.addUpdateListener(a -> child.setAlpha((float) a.getAnimatedValue()));
+            shimmerAnimators.add(anim);
             anim.start();
         }
     }
 
     // --- Search logic ---
 
+    private void submitSearch(String query) {
+        debounceHandler.removeCallbacksAndMessages(null);
+        if (query.isEmpty()) loadAllCourses();
+        else searchCourses(query);
+    }
+
+    private void showResults() {
+        hideShimmer();
+        retryButton.setVisibility(View.GONE);
+        adapter.notifyDataSetChanged();
+        tvEmpty.setText(R.string.search_no_results);
+        tvEmpty.setVisibility(displayedCourses.isEmpty() ? View.VISIBLE : View.GONE);
+        rvResults.setVisibility(displayedCourses.isEmpty() ? View.GONE : View.VISIBLE);
+    }
+
+    private void showError() {
+        hideShimmer();
+        rvResults.setVisibility(View.GONE);
+        tvEmpty.setText(R.string.search_load_error);
+        tvEmpty.setVisibility(View.VISIBLE);
+        retryButton.setVisibility(View.VISIBLE);
+    }
+
     private void loadAllCourses() {
-        if (allCoursesCall != null) allCoursesCall.cancel();
+        cancelPending();
+        showShimmer();
         allCoursesCall = courseApi.getCourses();
         allCoursesCall.enqueue(new Callback<CourseListResponse>() {
             @Override
             public void onResponse(Call<CourseListResponse> call, Response<CourseListResponse> response) {
-                if (!isAdded()) return;
-                hideShimmer();
+                if (rvResults == null || call != allCoursesCall || call.isCanceled()) return;
+                if (!response.isSuccessful() || response.body() == null) {
+                    showError();
+                    return;
+                }
                 displayedCourses.clear();
                 if (response.isSuccessful() && response.body() != null && response.body().getListCourse() != null) {
                     displayedCourses.addAll(response.body().getListCourse());
                 }
-                adapter.notifyDataSetChanged();
-                tvEmpty.setVisibility(View.GONE);
-                rvResults.setVisibility(View.VISIBLE);
+                showResults();
             }
 
             @Override
             public void onFailure(Call<CourseListResponse> call, Throwable t) {
-                if (!isAdded() || call.isCanceled()) return;
-                hideShimmer();
+                if (rvResults == null || call != allCoursesCall || call.isCanceled()) return;
+                showError();
             }
         });
     }
 
     private void searchCourses(String keyword) {
         cancelPending();
+        showShimmer();
 
         pendingCall = courseApi.searchCourses(keyword);
         pendingCall.enqueue(new Callback<List<CourseSearchResult>>() {
             @Override
             public void onResponse(Call<List<CourseSearchResult>> call, Response<List<CourseSearchResult>> response) {
-                if (!isAdded()) return;
-                hideShimmer();
+                if (rvResults == null || call != pendingCall || call.isCanceled()) return;
+                if (!response.isSuccessful() || response.body() == null) {
+                    showError();
+                    return;
+                }
                 displayedCourses.clear();
                 if (response.isSuccessful() && response.body() != null) {
                     for (CourseSearchResult result : response.body()) {
@@ -286,30 +354,22 @@ public class SearchFragment extends Fragment {
                         displayedCourses.add(c);
                     }
                 }
-                adapter.notifyDataSetChanged();
-                if (displayedCourses.isEmpty()) {
-                    rvResults.setVisibility(View.GONE);
-                    tvEmpty.setVisibility(View.VISIBLE);
-                } else {
-                    tvEmpty.setVisibility(View.GONE);
-                    rvResults.setVisibility(View.VISIBLE);
-                }
+                showResults();
             }
 
             @Override
             public void onFailure(Call<List<CourseSearchResult>> call, Throwable t) {
-                if (!isAdded() || call.isCanceled()) return;
-                hideShimmer();
-                displayedCourses.clear();
-                adapter.notifyDataSetChanged();
-                rvResults.setVisibility(View.GONE);
-                tvEmpty.setVisibility(View.VISIBLE);
-                tvEmpty.setText("Search failed. Check your connection.");
+                if (rvResults == null || call != pendingCall || call.isCanceled()) return;
+                showError();
             }
         });
     }
 
     private void cancelPending() {
+        if (allCoursesCall != null) {
+            allCoursesCall.cancel();
+            allCoursesCall = null;
+        }
         if (pendingCall != null) {
             pendingCall.cancel();
             pendingCall = null;
@@ -319,11 +379,26 @@ public class SearchFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        debounceHandler.removeCallbacks(pendingSearch);
+        debounceHandler.removeCallbacksAndMessages(null);
+        pendingSearch = null;
+        isUserTyping = true;
         stopHintRotation();
         cancelPending();
-        if (allCoursesCall != null) allCoursesCall.cancel();
-        if (sparkleAnimator != null) sparkleAnimator.cancel();
+        if (sparkleAnimator != null) {
+            sparkleAnimator.removeAllListeners();
+            sparkleAnimator.cancel();
+            sparkleAnimator = null;
+        }
+        animationHandler.removeCallbacksAndMessages(null);
+        hideShimmer();
+        rvResults.setAdapter(null);
+        adapter = null;
+        rvResults = null;
+        tvEmpty = null;
+        tvAnimatedHint = null;
+        ivSparkle = null;
+        shimmerContainer = null;
+        retryButton = null;
     }
 
     private void openCourseDetail(Course course) {

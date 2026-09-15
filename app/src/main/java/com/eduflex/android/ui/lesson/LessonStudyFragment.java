@@ -96,6 +96,7 @@ public class LessonStudyFragment extends Fragment {
         TextView tvTextContent = view.findViewById(R.id.tv_lesson_text_content);
         ImageView ivVideoPlaceholder = view.findViewById(R.id.iv_video_placeholder);
         android.webkit.WebView wvVideoPlayer = view.findViewById(R.id.wv_video_player);
+        View videoContainer = view.findViewById(R.id.video_container);
         Button btnOpenYoutube = view.findViewById(R.id.btn_open_youtube);
         Button btnPrev = view.findViewById(R.id.btn_prev_lesson);
         Button btnNext = view.findViewById(R.id.btn_next_lesson);
@@ -114,6 +115,7 @@ public class LessonStudyFragment extends Fragment {
             if (videoId != null && !videoId.isEmpty()) {
                 ivVideoPlaceholder.setVisibility(View.GONE);
                 wvVideoPlayer.setVisibility(View.VISIBLE);
+                videoContainer.setVisibility(View.VISIBLE);
                 btnOpenYoutube.setVisibility(View.VISIBLE);
                 
                 android.webkit.WebSettings webSettings = wvVideoPlayer.getSettings();

@@ -5,24 +5,29 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
-    app:cardCornerRadius="12dp"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardBackgroundColor="@color/card_background"
+    app:cardCornerRadius="20dp"
     app:cardElevation="0dp"
     app:strokeWidth="1dp"
-    app:strokeColor="#C8C8C8">
+    app:strokeColor="@color/outline_soft">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="12dp">
+        android:gravity="center_vertical"
+        android:padding="16dp">
 
         <ImageView
             android:id="@+id/iv_thumbnail"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
-            android:background="@color/cyan_surface"
+            android:layout_width="88dp"
+            android:layout_height="88dp"
+            android:background="@drawable/bg_card_rounded"
+            android:clipToOutline="true"
             android:scaleType="centerCrop"
-            android:contentDescription="Course thumbnail" />
+            android:importantForAccessibility="no" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -36,10 +41,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Course title"
-                android:textSize="14sp"
+                android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="@color/text_primary"
-                android:maxLines="2"/>
+                android:maxLines="3"
+                android:ellipsize="end"/>
 
             <TextView
                 android:id="@+id/tv_instructor"

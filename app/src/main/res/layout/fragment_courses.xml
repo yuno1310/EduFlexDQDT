@@ -7,13 +7,28 @@
     android:padding="20dp">
 
     <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/learning_eyebrow"
+        android:textAppearance="@style/TextAppearance.EduFlex.Eyebrow"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/my_courses_title"
-        android:textSize="24sp"
+        android:text="@string/learning_title"
+        android:textSize="32sp"
         android:textStyle="bold"
         android:textColor="@color/text_title"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/learning_description"
+        android:textColor="@color/text_secondary"
+        android:textSize="16sp"
+        android:layout_marginBottom="24dp" />
 
     <ProgressBar
         android:id="@+id/progress_bar_courses"
@@ -34,10 +49,22 @@
         android:visibility="gone"
         android:layout_marginTop="60dp" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_courses_action"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        android:text="@string/browse_courses"
+        android:visibility="gone" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_enrolled_courses"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="12dp"
         android:visibility="gone" />
 
 </LinearLayout>

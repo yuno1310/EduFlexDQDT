@@ -5,6 +5,9 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import androidx.core.content.ContextCompat;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
@@ -63,6 +66,11 @@ public class StudyReminderWorker extends Worker {
 
     private void showReminderNotification() {
         Context ctx = getApplicationContext();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
 
         // Tap opens the app
         Intent intent = new Intent(ctx, LoginActivity.class);

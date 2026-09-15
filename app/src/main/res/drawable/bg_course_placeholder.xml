@@ -1,0 +1,4 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item><shape><solid android:color="@color/brand_surface" /><corners android:radius="16dp" /></shape></item>
+    <item android:drawable="@drawable/ic_nav_learn" android:gravity="center" android:width="32dp" android:height="32dp" />
+</layer-list>

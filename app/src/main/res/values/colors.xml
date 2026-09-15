@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Brand colors -->
-    <color name="cyan_primary">#14B8A6</color>
+    <color name="cyan_primary">#087F73</color>
     <color name="cyan_primary_dark">#0F766E</color>
-    <color name="cyan_surface">#CCFBF1</color>
+    <color name="cyan_surface">#DDF5EC</color>
     <color name="cyan_text_light">#CCFBF1</color>
-    <color name="surface_bg">#F8FAFC</color>
+    <color name="surface_bg">#F6F8F5</color>
 
     <!-- Semantic UI colors -->
     <color name="brand_primary">@color/cyan_primary</color>
@@ -16,12 +16,12 @@
     <color name="text_title">#0F172A</color>
     <color name="text_body">#334155</color>
     <color name="text_secondary">#64748B</color>
-    <color name="text_muted">#94A3B8</color>
+    <color name="text_muted">#63736F</color>
     <color name="text_support">#64748B</color>
     <color name="text_on_brand">#FFFFFF</color>
 
     <color name="card_background">#FFFFFF</color>
-    <color name="app_bg_soft">#F1F5F9</color>
+    <color name="app_bg_soft">#EDF4EF</color>
     <color name="nav_item_unselected">#64748B</color>
     <color name="cyan_accent">#0D9488</color>
 
@@ -39,5 +39,5 @@
     <color name="surface_elevated">#FFFFFF</color>
     <color name="brand_ink">#134E4A</color>
     <color name="brand_accent">#F59E0B</color>
-    <color name="outline_soft">#DDE7EE</color>
+    <color name="outline_soft">#DFE8E2</color>
 </resources>

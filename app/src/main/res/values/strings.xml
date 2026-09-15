@@ -1,4 +1,25 @@
 <resources>
+    <string name="clear_search">Clear search</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_learn">Learn</string>
+    <string name="nav_discover">Discover</string>
+    <string name="nav_cart">Cart</string>
+    <string name="nav_profile">Profile</string>
+    <string name="home_hero_eyebrow">YOUR DAILY MOMENTUM</string>
+    <string name="home_hero_title">Small steps.\nBig possibilities.</string>
+    <string name="login_eyebrow">MAKE ROOM TO GROW</string>
+    <string name="login_headline">Your next chapter\nstarts here.</string>
+    <string name="login_description">Build new skills, one lesson at a time.</string>
+    <string name="discover_eyebrow">FIND YOUR NEXT CHAPTER</string>
+    <string name="discover_description">Explore something new. Make it yours.</string>
+    <string name="search_courses_hint">Search courses or ask a question</string>
+    <string name="learning_eyebrow">YOUR PERSONAL CLASSROOM</string>
+    <string name="learning_title">My learning</string>
+    <string name="learning_description">Pick up where you left off.</string>
+    <string name="browse_courses">Explore courses</string>
+    <string name="search_no_results">No courses found. Try a different search.</string>
+    <string name="search_load_error">Couldn’t load courses. Please try again.</string>
+    <string name="search_retry">Retry</string>
     <string name="app_name">EduFlex</string>
     <string name="welcome_title">Welcome back</string>
     <string name="welcome_subtitle">Login or create an account to continue learning.</string>
@@ -41,7 +62,6 @@
     <string name="cart_simple_subtitle">Review your order and continue to payment.</string>
     <string name="cart_empty">Your cart is empty</string>
     <string name="cart_empty_subtitle">Search for courses and add them to your cart</string>
-    <string name="browse_courses">Go to Search</string>
 
     <!-- Courses -->
     <string name="my_courses_title">My Courses</string>

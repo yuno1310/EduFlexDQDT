@@ -1,5 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Theme.EduFlex" parent="Theme.MaterialComponents.Light.NoActionBar">
+    <style name="Theme.EduFlex" parent="Theme.Material3.Light.NoActionBar">
         <item name="colorPrimary">@color/brand_primary</item>
         <item name="colorPrimaryVariant">@color/brand_primary_dark</item>
         <item name="colorOnPrimary">@color/text_on_brand</item>
@@ -7,6 +7,13 @@
         <item name="colorSecondaryVariant">@color/brand_primary</item>
         <item name="colorOnSecondary">@color/text_on_brand</item>
         <item name="colorSurface">@color/card_background</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary</item>
+        <item name="colorSecondaryContainer">@color/brand_surface</item>
+        <item name="colorOnSecondaryContainer">@color/brand_ink</item>
+        <item name="colorOutline">@color/outline_soft</item>
+        <item name="materialButtonStyle">@style/Widget.EduFlex.Button</item>
+        <item name="textInputStyle">@style/Widget.EduFlex.TextInput</item>
         <item name="android:colorBackground">@color/surface_bg</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
@@ -14,6 +21,30 @@
         <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
         <item name="android:fontFamily">sans</item>
         <item name="colorControlNormal">@color/text_secondary</item>
+    </style>
+
+    <style name="Widget.EduFlex.Button" parent="Widget.Material3.Button">
+        <item name="cornerRadius">16dp</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <style name="Widget.EduFlex.TextInput" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxCornerRadiusTopStart">16dp</item>
+        <item name="boxCornerRadiusTopEnd">16dp</item>
+        <item name="boxCornerRadiusBottomStart">16dp</item>
+        <item name="boxCornerRadiusBottomEnd">16dp</item>
+        <item name="boxBackgroundColor">@color/card_background</item>
+    </style>
+
+    <style name="TextAppearance.EduFlex.Title" parent="TextAppearance.Material3.HeadlineLarge">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textColor">@color/text_title</item>
+    </style>
+
+    <style name="TextAppearance.EduFlex.Eyebrow" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:letterSpacing">0.12</item>
+        <item name="android:textColor">@color/brand_primary_dark</item>
     </style>
 
     <style name="QuizResultDialogTheme" parent="Theme.MaterialComponents.Light.Dialog">

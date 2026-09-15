@@ -20,6 +20,7 @@ import com.eduflex.android.api.CourseApi;
 import com.eduflex.android.auth.TokenManager;
 import com.eduflex.android.model.EnrolledCourse;
 import com.eduflex.android.model.EnrolledCoursesResponse;
+import com.google.android.material.button.MaterialButton;
 
 import java.util.List;
 
@@ -34,6 +35,8 @@ public class CoursesFragment extends Fragment {
     private RecyclerView rvEnrolledCourses;
     private TextView tvCoursesEmpty;
     private ProgressBar progressBar;
+    private MaterialButton actionButton;
+    private Call<EnrolledCoursesResponse> pendingCall;
 
     private CourseApi courseApi;
     private TokenManager tokenManager;
@@ -52,6 +55,7 @@ public class CoursesFragment extends Fragment {
         rvEnrolledCourses = view.findViewById(R.id.rv_enrolled_courses);
         tvCoursesEmpty = view.findViewById(R.id.tv_courses_empty);
         progressBar = view.findViewById(R.id.progress_bar_courses);
+        actionButton = view.findViewById(R.id.btn_courses_action);
 
         rvEnrolledCourses.setLayoutManager(new LinearLayoutManager(requireContext()));
 
@@ -66,33 +70,39 @@ public class CoursesFragment extends Fragment {
         }
 
         setLoading(true);
-        courseApi.getEnrolledCourses(userId).enqueue(new Callback<EnrolledCoursesResponse>() {
+        if (pendingCall != null) pendingCall.cancel();
+        pendingCall = courseApi.getEnrolledCourses(userId);
+        pendingCall.enqueue(new Callback<EnrolledCoursesResponse>() {
             @Override
             public void onResponse(@NonNull Call<EnrolledCoursesResponse> call,
                                    @NonNull Response<EnrolledCoursesResponse> response) {
-                if (!isAdded()) return;
+                if (rvEnrolledCourses == null || call != pendingCall || call.isCanceled()) return;
                 setLoading(false);
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                     List<EnrolledCourse> courses = response.body().getEnrolledCourses();
                     if (courses == null || courses.isEmpty()) {
                         showEmpty("You haven't enrolled in any courses yet.");
+                        actionButton.setText(R.string.browse_courses);
+                        actionButton.setVisibility(View.VISIBLE);
+                        actionButton.setOnClickListener(v -> NavHostFragment.findNavController(CoursesFragment.this)
+                                .navigate(R.id.searchFragment));
                     } else {
                         rvEnrolledCourses.setAdapter(new EnrolledCourseAdapter(courses, CoursesFragment.this::openCourseDetail));
                         rvEnrolledCourses.setVisibility(View.VISIBLE);
                         tvCoursesEmpty.setVisibility(View.GONE);
                     }
                 } else {
-                    showEmpty("Failed to load courses. Please try again.");
+                    showError();
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<EnrolledCoursesResponse> call,
                                   @NonNull Throwable t) {
-                if (!isAdded()) return;
+                if (rvEnrolledCourses == null || call != pendingCall || call.isCanceled()) return;
                 setLoading(false);
                 Log.e(TAG, "Network error: " + t.getMessage());
-                showEmpty("Network error. Please check your connection.");
+                showError();
             }
         });
     }
@@ -110,6 +120,7 @@ public class CoursesFragment extends Fragment {
     private void setLoading(boolean loading) {
         progressBar.setVisibility(loading ? View.VISIBLE : View.GONE);
         if (loading) {
+            actionButton.setVisibility(View.GONE);
             rvEnrolledCourses.setVisibility(View.GONE);
             tvCoursesEmpty.setVisibility(View.GONE);
         }
@@ -119,5 +130,24 @@ public class CoursesFragment extends Fragment {
         rvEnrolledCourses.setVisibility(View.GONE);
         tvCoursesEmpty.setText(message);
         tvCoursesEmpty.setVisibility(View.VISIBLE);
+    }
+
+    private void showError() {
+        showEmpty(getString(R.string.search_load_error));
+        actionButton.setText(R.string.search_retry);
+        actionButton.setVisibility(View.VISIBLE);
+        actionButton.setOnClickListener(v -> loadEnrolledCourses());
+    }
+
+    @Override
+    public void onDestroyView() {
+        if (pendingCall != null) pendingCall.cancel();
+        pendingCall = null;
+        rvEnrolledCourses.setAdapter(null);
+        rvEnrolledCourses = null;
+        tvCoursesEmpty = null;
+        progressBar = null;
+        actionButton = null;
+        super.onDestroyView();
     }
 }

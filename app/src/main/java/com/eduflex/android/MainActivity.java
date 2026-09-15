@@ -25,6 +25,7 @@ import com.eduflex.android.auth.TokenManager;
 import com.eduflex.android.model.GamificationStatsResponse;
 import com.eduflex.android.service.StudyReminderWorker;
 import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.FirebaseApp;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -59,13 +60,14 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupWithNavController(bottomNav, navController);
         syncBottomNavSelection(bottomNav, navController);
 
-        FirebaseMessaging.getInstance().getToken()
+        if (!FirebaseApp.getApps(this).isEmpty()) {
+            FirebaseMessaging.getInstance().getToken()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        String token = task.getResult();
-                        Log.d("FCM_TOKEN", "Token: " + token);
+                        Log.d(TAG, "Push notifications initialized");
                     }
                 });
+        }
 
         // Create notification channels & request permission (Android 13+)
         createNotificationChannel();
@@ -141,8 +143,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void syncBottomNavSelection(BottomNavigationView bottomNav, NavController navController) {
-        NavigationUI.setupWithNavController(bottomNav, navController);
-
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
             int selectedItemId = resolveBottomNavItem(destination, arguments);
             if (selectedItemId != 0) {
