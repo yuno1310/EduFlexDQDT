@@ -83,6 +83,9 @@ cd backend
 ```
 
 GitHub Actions runs these checks on pushes, pull requests, and manual dispatches.
+SDK setup uses the Node 24 version of `setup-android` and explicitly installs
+`platform-tools`, `platforms;android-35`, and `build-tools;34.0.0`, avoiding the
+action's default legacy `tools` package. Java and checkout actions also use Node 24.
 Successful Android jobs provide an installable development APK, lint reports, and
 unsigned release APK/AAB files under the run's **Artifacts** section. Artifacts expire
 after 14 days. Set the repository variable `API_BASE_URL` to a reachable backend URL
