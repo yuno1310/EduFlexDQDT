@@ -47,8 +47,8 @@ cd backend
 JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 ./mvnw --batch-mode test
 ```
 
-Result: **BUILD SUCCESS**, 19 tests, 0 failures, 0 errors, 0 skipped. Of these,
-17 are PostgreSQL integration scenarios in `ProgressConcurrencyIntegrationTest`.
+Result: **BUILD SUCCESS**, 20 tests, 0 failures, 0 errors, 0 skipped. Of these,
+18 are PostgreSQL integration scenarios in `ProgressConcurrencyIntegrationTest`.
 
 ```bash
 ANDROID_HOME=/tmp/eduflex-android-sdk \
@@ -77,6 +77,22 @@ Redis returned `PONG`, RabbitMQ reported fully running, and OpenAPI returned HTT
 same-day check-in idempotency, unauthenticated rejection (401), wrong-owner
 rejection (403), and learner direct-XP rejection (403). Temporary smoke users
 were removed after verification.
+
+## Full end-to-end verification
+
+A live HTTP journey against the Compose stack completed **26 checks with 0 failures**.
+It covered admin and learner registration, role-protected course/lesson/quiz creation,
+catalog and lesson hierarchy reads, cross-user enrollment rejection, enrollment,
+progress, quiz pass and retry behavior, XP totals, RabbitMQ embedding completion,
+token refresh, logout, and revoked-refresh-token rejection. Temporary users and course
+data were removed after the run.
+
+The debug APK was also exercised on an Android 15 API 35 emulator. The flow registered
+and logged in a learner, opened `MainActivity`, accepted the Android notification
+permission prompt, displayed the home dashboard, opened the Learn tab, and received
+HTTP 200 responses for the authenticated stats, daily-quest, and enrollment calls.
+The Android contract test protects the `accessToken` response mapping used by this
+flow.
 
 ## Limits
 

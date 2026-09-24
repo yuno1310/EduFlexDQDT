@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -422,6 +423,35 @@ class ProgressConcurrencyIntegrationTest {
             .param("lessonId", fixture.lessonIds().get(0).toString())
             .param("userId", fixture.userId().toString()))
         .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void enrollmentEndpointsRejectCrossUserAccess() throws Exception {
+    UUID owner = createUser();
+    UUID attacker = createUser();
+    UUID courseId = UUID.randomUUID();
+    dsl.execute("INSERT INTO courses (course_id, title, status) VALUES (?, 'Protected course', 'active')",
+        courseId);
+    var attackerAuthentication = auth(attacker, "ROLE_USER");
+
+    mockMvc.perform(post("/api/enrollment/{courseId}/register", courseId)
+            .with(authentication(attackerAuthentication))
+            .contentType("application/json")
+            .content("{\"userId\":\"" + owner + "\"}"))
+        .andExpect(status().isForbidden());
+    mockMvc.perform(get("/api/enrollment/{userId}", owner)
+            .with(authentication(attackerAuthentication)))
+        .andExpect(status().isForbidden());
+
+    mockMvc.perform(post("/api/enrollment/{courseId}/register", courseId)
+            .with(authentication(auth(owner, "ROLE_USER")))
+            .contentType("application/json")
+            .content("{\"userId\":\"" + owner + "\"}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true));
+    assertThat(dsl.fetchValue(
+        "SELECT count(*) FROM enrollments WHERE user_id = ? AND course_id = ?", owner, courseId))
+        .isEqualTo(1L);
   }
 
   @Test

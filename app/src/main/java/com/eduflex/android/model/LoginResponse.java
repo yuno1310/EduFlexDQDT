@@ -1,9 +1,12 @@
 package com.eduflex.android.model;
 
+import com.google.gson.annotations.SerializedName;
+
 public class LoginResponse {
 
     private boolean success;
     private String message;
+    @SerializedName(value = "accessToken", alternate = {"token"})
     private String token;
     private String role;
     private String fullName;
