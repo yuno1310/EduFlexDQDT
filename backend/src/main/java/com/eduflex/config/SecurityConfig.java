@@ -33,7 +33,9 @@ public class SecurityConfig {
             .authenticationEntryPoint((request, response, authException) -> {
               response.sendError(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED,
                   "Token is not true or expired");
-            }))
+            })
+            .accessDeniedHandler((request, response, accessDeniedException) ->
+                response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN)))
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(
                 "/api/user/login",

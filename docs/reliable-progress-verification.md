@@ -62,6 +62,22 @@ AAB with release shrinking enabled. The release APK and AAB are unsigned inspect
 artifacts and are not store-ready. Android Gradle Plugin 8.5.2 emitted its existing
 compileSdk 35 support warning; it did not fail lint or either build variant.
 
+## Docker Compose smoke verification
+
+The complete local stack was built and started with Docker Desktop:
+
+```bash
+docker compose -f backend/docker-compose.yml up --build -d
+```
+
+PostgreSQL 16 + pgvector, Redis, RabbitMQ, and the Spring Boot API all started
+successfully. The persisted database upgraded from Flyway 1.2.4 to 1.2.6,
+Redis returned `PONG`, RabbitMQ reported fully running, and OpenAPI returned HTTP
+200. A live HTTP flow verified registration, login, initial 10 XP, repeated
+same-day check-in idempotency, unauthenticated rejection (401), wrong-owner
+rejection (403), and learner direct-XP rejection (403). Temporary smoke users
+were removed after verification.
+
 ## Limits
 
 The per-user lock deliberately serializes writes for one learner; different learners
