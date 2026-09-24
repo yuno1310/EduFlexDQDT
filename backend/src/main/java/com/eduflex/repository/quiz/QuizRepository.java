@@ -33,6 +33,18 @@ public class QuizRepository {
     return isCorrect != null && isCorrect;
   }
 
+  public boolean isAnswerCorrectForLesson(UUID lessonId, Long questionId, Long optionId) {
+    return dsl.fetchExists(
+        dsl.selectOne()
+            .from(QuestionOptions.QUESTION_OPTIONS)
+            .join(Questions.QUESTIONS)
+            .on(QuestionOptions.QUESTION_OPTIONS.QUESTION_ID.eq(Questions.QUESTIONS.QUESTION_ID))
+            .where(Questions.QUESTIONS.LESSON_ID.eq(lessonId))
+            .and(Questions.QUESTIONS.QUESTION_ID.eq(questionId))
+            .and(QuestionOptions.QUESTION_OPTIONS.OPTION_ID.eq(optionId))
+            .and(QuestionOptions.QUESTION_OPTIONS.IS_CORRECT.isTrue()));
+  }
+
   public void saveQuizAttempt(UUID userId, UUID lessonId, Double score, boolean isPassed) {
     dsl.insertInto(QuizAttempts.QUIZ_ATTEMPTS,
         QuizAttempts.QUIZ_ATTEMPTS.USER_ID,
@@ -86,6 +98,17 @@ public class QuizRepository {
         dsl.selectFrom(QuizAttempts.QUIZ_ATTEMPTS)
             .where(QuizAttempts.QUIZ_ATTEMPTS.USER_ID.eq(userId))
             .and(QuizAttempts.QUIZ_ATTEMPTS.LESSON_ID.eq(lessonId))
+            .and(QuizAttempts.QUIZ_ATTEMPTS.IS_PASSED.isTrue()));
+  }
+
+  public boolean hasPassedQuizInCourse(UUID userId, UUID courseId) {
+    return dsl.fetchExists(
+        dsl.selectOne()
+            .from(QuizAttempts.QUIZ_ATTEMPTS)
+            .join(Lesson.LESSON)
+            .on(QuizAttempts.QUIZ_ATTEMPTS.LESSON_ID.eq(Lesson.LESSON.LESSON_ID))
+            .where(QuizAttempts.QUIZ_ATTEMPTS.USER_ID.eq(userId))
+            .and(Lesson.LESSON.COURSE_ID.eq(courseId))
             .and(QuizAttempts.QUIZ_ATTEMPTS.IS_PASSED.isTrue()));
   }
 

@@ -31,7 +31,12 @@ public class UserBadgeRepository {
     }
 
     public boolean save(UserBadgesDbO userBadge) {
-        userBadge.record.attach(dsl.configuration());
-        return userBadge.record.store() > 0;
+        return dsl.insertInto(UserBadges.USER_BADGES,
+                        UserBadges.USER_BADGES.USER_ID,
+                        UserBadges.USER_BADGES.BADGE_ID)
+                .values(userBadge.record.getUserId(), userBadge.record.getBadgeId())
+                .onConflict(UserBadges.USER_BADGES.USER_ID, UserBadges.USER_BADGES.BADGE_ID)
+                .doNothing()
+                .execute() == 1;
     }
 }

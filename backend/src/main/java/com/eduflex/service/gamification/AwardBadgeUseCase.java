@@ -34,11 +34,9 @@ public class AwardBadgeUseCase {
             throw new ResourceNotFoundException("Badge not found with id: " + badgeId);
         }
 
-        if (userBadgeRepository.existsByUserIdAndBadgeId(userId, badgeId)) {
-            return new AwardBadgeDTO.AwardBadgeResponse(false, "Badge already awarded to this user");
-        }
-
-        userBadgeRepository.save(new UserBadgesDbO(userId, badgeId));
-        return new AwardBadgeDTO.AwardBadgeResponse(true, "Badge awarded successfully");
+        boolean awarded = userBadgeRepository.save(new UserBadgesDbO(userId, badgeId));
+        return awarded
+                ? new AwardBadgeDTO.AwardBadgeResponse(true, "Badge awarded successfully")
+                : new AwardBadgeDTO.AwardBadgeResponse(false, "Badge already awarded to this user");
     }
 }

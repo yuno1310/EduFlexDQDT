@@ -6,6 +6,8 @@ import com.eduflex.dto.quiz.QuizDTO.CompletedQuestInfo;
 import com.eduflex.dto.quiz.QuizDTO.SubmitQuizRequest;
 import com.eduflex.dto.quiz.QuizDTO.SubmitQuizResponse;
 import com.eduflex.repository.enrollment.EnrollmentRepository;
+import com.eduflex.exception.ResourceNotFoundException;
+import com.eduflex.repository.gamification.GamificationStatsRepository;
 import com.eduflex.repository.lesson.LessonProgressRepository;
 import com.eduflex.repository.quiz.QuizRepository;
 import com.eduflex.service.gamification.AddXpUseCase;
@@ -13,8 +15,8 @@ import com.eduflex.service.gamification.CheckAndAwardBadgesUseCase;
 import com.eduflex.service.gamification.UpdateDailyQuestProgressUseCase;
 import com.eduflex.service.gamification.UpdateStreakUseCase;
 
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,8 +30,6 @@ public class SubmitQuizUseCase {
   private static final double PASS_PERCENTAGE_THRESHOLD = 50.0;
   private static final int QUIZ_PASS_XP = 30;
   private static final int COURSE_COMPLETE_XP = 50;
-  private final RabbitTemplate rabbitTemplate;
-
   @Autowired
   private QuizRepository quizRepository;
   @Autowired
@@ -44,21 +44,31 @@ public class SubmitQuizUseCase {
   private CheckAndAwardBadgesUseCase checkAndAwardBadgesUseCase;
   @Autowired
   private UpdateDailyQuestProgressUseCase updateDailyQuestProgressUseCase;
-
-  public SubmitQuizUseCase(RabbitTemplate rabbitTemplate) {
-    this.rabbitTemplate = rabbitTemplate;
-  }
-
+  @Autowired
+  private GamificationStatsRepository gamificationStatsRepository;
 
   @Transactional
   public SubmitQuizResponse execute(SubmitQuizRequest request) {
     UUID userId = request.userId();
     UUID lessonId = request.lessonId();
+    gamificationStatsRepository.ensureAndLock(userId);
+
+    UUID courseId = progressRepository.getCourseIdByLessonId(lessonId);
+    if (courseId == null) {
+      throw new ResourceNotFoundException("Quiz lesson not found: " + lessonId);
+    }
+    if (!enrollmentRepository.isUserEnrolled(userId, courseId)) {
+      throw new AccessDeniedException("You must be enrolled before submitting this quiz");
+    }
+    if (!progressRepository.isQuizLesson(lessonId)) {
+      throw new IllegalArgumentException("The selected lesson is not a quiz");
+    }
 
     // 1. Grade the quiz (Calculate correct count and percent)
     int correctCount = 0;
     for (AnswerItem answer : request.answers()) {
-      if (quizRepository.isAnswerCorrect(answer.selectedOptionId())) {
+      if (quizRepository.isAnswerCorrectForLesson(
+          lessonId, answer.questionId(), answer.selectedOptionId())) {
         correctCount++;
       }
     }
@@ -109,23 +119,15 @@ public class SubmitQuizUseCase {
     updateStreakUseCase.execute(userId);
 
     // 6. Mark quiz lesson as completed
-    progressRepository.upsertLessonProgress(userId, lessonId);
+    progressRepository.completeLessonIfNeeded(userId, lessonId);
 
     // 6b. Also mark the PARENT (content) lesson as completed
     UUID parentLessonId = quizRepository.getParentLessonId(lessonId);
     if (parentLessonId != null) {
-      progressRepository.upsertLessonProgress(userId, parentLessonId);
+      progressRepository.completeLessonIfNeeded(userId, parentLessonId);
     }
 
     // 7. Calculate Course Progress
-    UUID courseId = progressRepository.getCourseIdByLessonId(lessonId);
-    if (courseId == null) {
-      return new SubmitQuizResponse(
-          true, "Lesson passed! (+" + totalXpRewarded + " XP)",
-          correctCount, totalQuestions, scorePercent,
-          null, false, totalXpRewarded, completedQuests);
-    }
-
     int totalLessons = progressRepository.countTotalLessonsInCourse(courseId);
     int completedLessons = progressRepository.countCompletedLessons(userId, courseId);
 
@@ -138,11 +140,13 @@ public class SubmitQuizUseCase {
     String msg = "Congratulations, you passed the lesson! (+" + QUIZ_PASS_XP + " XP)";
 
     if (isCourseCompleted) {
-      totalXpRewarded += COURSE_COMPLETE_XP;
-      addXpUseCase.execute(userId, new AddXpDTO.AddXpRequest(COURSE_COMPLETE_XP));
-      enrollmentRepository.markCourseAsCompleted(userId, courseId);
-      checkAndAwardBadgesUseCase.checkCourseCompletionBadge(userId, courseId);
-      msg = "Awesome! You have completed 100% of the course! (+" + totalXpRewarded + " XP)";
+      boolean newlyCompletedCourse = enrollmentRepository.markCourseAsCompletedIfNeeded(userId, courseId);
+      if (newlyCompletedCourse) {
+        totalXpRewarded += COURSE_COMPLETE_XP;
+        addXpUseCase.execute(userId, new AddXpDTO.AddXpRequest(COURSE_COMPLETE_XP));
+        checkAndAwardBadgesUseCase.checkCourseCompletionBadge(userId, courseId);
+        msg = "Awesome! You have completed 100% of the course! (+" + totalXpRewarded + " XP)";
+      }
     }
 
     return new SubmitQuizResponse(

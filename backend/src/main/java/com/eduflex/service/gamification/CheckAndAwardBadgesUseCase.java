@@ -46,8 +46,7 @@ public class CheckAndAwardBadgesUseCase {
             return;
         }
         Long badgeId = badge.record.getId();
-        if (!userBadgeRepository.existsByUserIdAndBadgeId(userId, badgeId)) {
-            userBadgeRepository.save(new UserBadgesDbO(userId, badgeId));
+        if (userBadgeRepository.save(new UserBadgesDbO(userId, badgeId))) {
             log.info("Awarded badge '{}' to user {}", badge.record.getName(), userId);
         }
     }
@@ -111,10 +110,12 @@ public class CheckAndAwardBadgesUseCase {
             record.setDescription("Successfully completed the course: " + course.getTitle());
             record.setConditionType(conditionType);
 
-            badgeRepository.save(new BadgesDbO(record));
+            badge = badgeRepository.save(new BadgesDbO(record));
             log.info("Dynamically created new badge for course: {}", course.getTitle());
         }
 
-        tryAward(userId, conditionType);
+        if (badge != null) {
+            tryAward(userId, conditionType);
+        }
     }
 }
