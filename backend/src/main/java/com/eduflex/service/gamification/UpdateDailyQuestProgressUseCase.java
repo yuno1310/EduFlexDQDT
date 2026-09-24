@@ -5,10 +5,12 @@ import com.eduflex.dto.quiz.QuizDTO.CompletedQuestInfo;
 import com.eduflex.repository.gamification.DailyQuestRepository;
 import com.eduflex.repository.gamification.DailyQuestRepository.ProgressRow;
 import com.eduflex.repository.gamification.DailyQuestRepository.QuestRow;
+import com.eduflex.repository.gamification.GamificationStatsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -22,12 +24,19 @@ public class UpdateDailyQuestProgressUseCase {
     @Autowired
     private AddXpUseCase addXpUseCase;
 
+    @Autowired
+    private GamificationStatsRepository gamificationStatsRepository;
+
+    @Autowired
+    private Clock clock;
+
     @Transactional
     public CompletedQuestInfo execute(UUID userId, String questType, int increment) {
+        gamificationStatsRepository.ensureAndLock(userId);
         Long questId = dailyQuestRepository.findQuestIdByType(questType);
         if (questId == null) return null;
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         ProgressRow current = dailyQuestRepository.findProgress(userId, questId, today);
 
         // Already completed today — no-op
@@ -47,9 +56,10 @@ public class UpdateDailyQuestProgressUseCase {
         if (quest == null) return null;
 
         if (updated.currentCount() >= quest.targetCount()) {
-            dailyQuestRepository.markCompleted(userId, questId, today);
-            addXpUseCase.execute(userId, new AddXpDTO.AddXpRequest(quest.xpReward()));
-            return new CompletedQuestInfo(quest.title(), quest.xpReward());
+            if (dailyQuestRepository.markCompletedIfNeeded(userId, questId, today)) {
+                addXpUseCase.execute(userId, new AddXpDTO.AddXpRequest(quest.xpReward()));
+                return new CompletedQuestInfo(quest.title(), quest.xpReward());
+            }
         }
         return null;
     }

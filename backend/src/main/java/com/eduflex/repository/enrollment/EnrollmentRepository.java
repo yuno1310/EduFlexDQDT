@@ -52,13 +52,14 @@ public class EnrollmentRepository {
     return list;
   }
 
-  public void markCourseAsCompleted(UUID userId, UUID courseId) {
-    dsl.update(Enrollments.ENROLLMENTS)
+  public boolean markCourseAsCompletedIfNeeded(UUID userId, UUID courseId) {
+    return dsl.update(Enrollments.ENROLLMENTS)
         .set(Enrollments.ENROLLMENTS.IS_COMPLETED, true)
         .set(Enrollments.ENROLLMENTS.COMPLETED_AT, java.time.LocalDateTime.now())
         .where(Enrollments.ENROLLMENTS.USER_ID.eq(userId))
         .and(Enrollments.ENROLLMENTS.COURSE_ID.eq(courseId))
-        .execute();
+        .and(Enrollments.ENROLLMENTS.IS_COMPLETED.isDistinctFrom(true))
+        .execute() == 1;
   }
 
   public boolean isUserEnrolled(UUID userId, UUID courseId) {

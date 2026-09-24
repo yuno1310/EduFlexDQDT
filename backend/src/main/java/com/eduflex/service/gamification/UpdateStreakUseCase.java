@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -21,11 +22,15 @@ public class UpdateStreakUseCase {
     @Autowired
     private CheckAndAwardBadgesUseCase checkAndAwardBadgesUseCase;
 
+    @Autowired
+    private Clock clock;
+
     @Transactional
     public UpdateStreakDTO.UpdateStreakResponse execute(UUID userId) {
-        var stats = getGamificationStatsUseCase.execute(userId);
-        LocalDate today = LocalDate.now();
-        LocalDate lastStudy = stats.lastStudyDate();
+        var locked = gamificationStatsRepository.ensureAndLock(userId);
+        var stats = getGamificationStatsUseCase.mapToResponse(locked);
+        LocalDate today = LocalDate.now(clock);
+        LocalDate lastStudy = locked.record.getLastStudyDate();
 
         int newStreak;
         if (lastStudy == null) {

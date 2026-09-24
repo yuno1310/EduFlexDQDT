@@ -5,12 +5,16 @@ import com.eduflex.dto.lesson.ProgressDTO.SaveLessonRequest;
 import com.eduflex.dto.lesson.ProgressDTO.SaveLessonResponse;
 import com.eduflex.repository.lesson.LessonProgressRepository;
 import com.eduflex.repository.enrollment.EnrollmentRepository;
+import com.eduflex.exception.ResourceNotFoundException;
+import com.eduflex.repository.gamification.GamificationStatsRepository;
+import com.eduflex.repository.quiz.QuizRepository;
 import com.eduflex.service.gamification.AddXpUseCase;
 import com.eduflex.service.gamification.CheckAndAwardBadgesUseCase;
 import com.eduflex.service.gamification.UpdateStreakUseCase;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
@@ -19,6 +23,7 @@ import java.util.UUID;
 public class SaveLessonProgressUseCase {
 
   private static final int LESSON_COMPLETE_XP = 20;
+  private static final int COURSE_COMPLETE_XP = 50;
 
   @Autowired
   private LessonProgressRepository progressRepository;
@@ -35,52 +40,63 @@ public class SaveLessonProgressUseCase {
   @Autowired
   private CheckAndAwardBadgesUseCase checkAndAwardBadgesUseCase;
 
+  @Autowired
+  private GamificationStatsRepository gamificationStatsRepository;
+
+  @Autowired
+  private QuizRepository quizRepository;
+
   @Transactional
   public SaveLessonResponse execute(SaveLessonRequest request) {
-    try {
-      UUID userId = request.userId();
-      UUID lessonId = request.lessonId();
+    UUID userId = request.userId();
+    UUID lessonId = request.lessonId();
+    gamificationStatsRepository.ensureAndLock(userId);
 
-      // Check if already completed (to avoid duplicate XP)
-      boolean alreadyCompleted = progressRepository.isLessonCompleted(userId, lessonId);
-
-      progressRepository.upsertLessonProgress(userId, lessonId);
-
-      // Award XP only on first completion
-      if (!alreadyCompleted) {
-        addXpUseCase.execute(userId, new AddXpDTO.AddXpRequest(LESSON_COMPLETE_XP));
-      }
-
-      // Update streak (studying today counts as activity)
-      updateStreakUseCase.execute(userId);
-
-      UUID courseId = progressRepository.getCourseIdByLessonId(lessonId);
-      if (courseId == null) {
-        return new SaveLessonResponse(false, "Không tìm thấy khóa học chứa bài này", 0.0);
-      }
-      int totalLessons = progressRepository.countTotalLessonsInCourse(courseId);
-      int completedLessons = progressRepository.countCompletedLessons(userId, courseId);
-      double percent = totalLessons == 0 ? 0.0 : ((double) completedLessons / totalLessons) * 100;
-      percent = Math.round(percent * 10.0) / 10.0;
-      progressRepository.updateCourseProgress(userId, courseId, percent);
-
-      // Check course completion
-      boolean isCourseCompleted = (completedLessons == totalLessons && totalLessons > 0);
-      if (isCourseCompleted) {
-        enrollmentRepository.markCourseAsCompleted(userId, courseId);
-        checkAndAwardBadgesUseCase.checkCourseCompletionBadge(userId, courseId);
-      }
-
-      String xpMsg = alreadyCompleted ? "" : " (+" + LESSON_COMPLETE_XP + " XP)";
-      if (isCourseCompleted) {
-        xpMsg += " - Course Completed!";
-      }
-
-      return new SaveLessonResponse(true, "Lưu tiến độ thành công!" + xpMsg, percent);
-
-    } catch (Exception e) {
-      e.printStackTrace();
-      return new SaveLessonResponse(false, "Lỗi server: " + e.getMessage(), 0.0);
+    UUID courseId = progressRepository.getCourseIdByLessonId(lessonId);
+    if (courseId == null) {
+      throw new ResourceNotFoundException("Lesson not found: " + lessonId);
     }
+    if (!enrollmentRepository.isUserEnrolled(userId, courseId)) {
+      throw new AccessDeniedException("You must be enrolled before completing this lesson");
+    }
+    if (progressRepository.isQuizLesson(lessonId)) {
+      throw new IllegalArgumentException("Quiz lessons must be completed by passing the quiz");
+    }
+
+    boolean newlyCompleted = progressRepository.completeLessonIfNeeded(userId, lessonId);
+    if (newlyCompleted) {
+      addXpUseCase.execute(userId, new AddXpDTO.AddXpRequest(LESSON_COMPLETE_XP));
+    }
+
+    updateStreakUseCase.execute(userId);
+
+    int totalLessons = progressRepository.countTotalLessonsInCourse(courseId);
+    int completedLessons = progressRepository.countCompletedLessons(userId, courseId);
+    double percent = totalLessons == 0 ? 0.0 : ((double) completedLessons / totalLessons) * 100;
+    percent = Math.round(percent * 10.0) / 10.0;
+    progressRepository.updateCourseProgress(userId, courseId, percent);
+
+    boolean complete = completedLessons == totalLessons && totalLessons > 0;
+    boolean newlyCompletedCourse = complete
+        && enrollmentRepository.markCourseAsCompletedIfNeeded(userId, courseId);
+    int totalXpRewarded = newlyCompleted ? LESSON_COMPLETE_XP : 0;
+    if (newlyCompletedCourse) {
+      // A quiz pass may commit just before this content completion. Award the
+      // course bonus to the transaction that wins the one-time course transition
+      // so the result does not depend on thread scheduling.
+      if (quizRepository.hasPassedQuizInCourse(userId, courseId)) {
+        addXpUseCase.execute(userId, new AddXpDTO.AddXpRequest(COURSE_COMPLETE_XP));
+        totalXpRewarded += COURSE_COMPLETE_XP;
+      }
+      checkAndAwardBadgesUseCase.checkCourseCompletionBadge(userId, courseId);
+    }
+
+    String message = newlyCompleted
+        ? "Lưu tiến độ thành công! (+" + totalXpRewarded + " XP)"
+        : "Bài học đã được hoàn thành trước đó.";
+    if (newlyCompletedCourse) {
+      message += " - Course Completed!";
+    }
+    return new SaveLessonResponse(true, message, percent);
   }
 }

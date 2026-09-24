@@ -2,6 +2,7 @@ package com.eduflex.repository.gamification;
 
 import com.eduflex.dto.gamification.LeaderBoardDTO.LeaderBoardUserInfo;
 import com.eduflex.entity.gamification.GamificationStatsDbO;
+import com.eduflex.exception.ResourceNotFoundException;
 import com.eduflex.generated.tables.GamificationStats;
 import com.eduflex.generated.tables.Users;
 
@@ -32,6 +33,27 @@ public class GamificationStatsRepository {
     return stats.record.store() > 0;
   }
 
+  /**
+   * Creates the user's stats row if needed, then serializes all reward/progress
+   * writes for that user on the same database row. Must run in a transaction.
+   */
+  public GamificationStatsDbO ensureAndLock(UUID userId) {
+    dsl.execute(
+        "INSERT INTO gamification_stats (user_id, xp, level, streak_days) "
+            + "SELECT user_id, 0, 1, 0 FROM users WHERE user_id = ? "
+            + "ON CONFLICT (user_id) DO NOTHING",
+        userId);
+
+    var record = dsl.selectFrom(GamificationStats.GAMIFICATION_STATS)
+        .where(GamificationStats.GAMIFICATION_STATS.USER_ID.eq(userId))
+        .forUpdate()
+        .fetchOne();
+    if (record == null) {
+      throw new ResourceNotFoundException("User not found: " + userId);
+    }
+    return new GamificationStatsDbO(record);
+  }
+
   public void updateXpAndLevel(UUID userId, int amount) {
     dsl.update(GamificationStats.GAMIFICATION_STATS)
         .set(GamificationStats.GAMIFICATION_STATS.XP,
@@ -42,24 +64,23 @@ public class GamificationStatsRepository {
         .execute();
   }
 
+  public boolean awardDailyLoginXp(UUID userId, LocalDate today, int amount) {
+    return dsl.update(GamificationStats.GAMIFICATION_STATS)
+        .set(GamificationStats.GAMIFICATION_STATS.XP,
+            GamificationStats.GAMIFICATION_STATS.XP.plus(amount))
+        .set(GamificationStats.GAMIFICATION_STATS.LEVEL,
+            GamificationStats.GAMIFICATION_STATS.XP.plus(amount).div(100).plus(1))
+        .set(GamificationStats.GAMIFICATION_STATS.LAST_LOGIN_XP_DATE, today)
+        .where(GamificationStats.GAMIFICATION_STATS.USER_ID.eq(userId))
+        .and(GamificationStats.GAMIFICATION_STATS.LAST_LOGIN_XP_DATE.isNull()
+            .or(GamificationStats.GAMIFICATION_STATS.LAST_LOGIN_XP_DATE.lt(today)))
+        .execute() == 1;
+  }
+
   public void updateStreak(UUID userId, int newStreak, LocalDate today) {
     dsl.update(GamificationStats.GAMIFICATION_STATS)
         .set(GamificationStats.GAMIFICATION_STATS.STREAK_DAYS, newStreak)
         .set(GamificationStats.GAMIFICATION_STATS.LAST_STUDY_DATE, today)
-        .where(GamificationStats.GAMIFICATION_STATS.USER_ID.eq(userId))
-        .execute();
-  }
-
-  public LocalDate getLastLoginXpDate(UUID userId) {
-    return dsl.select(GamificationStats.GAMIFICATION_STATS.LAST_LOGIN_XP_DATE)
-        .from(GamificationStats.GAMIFICATION_STATS)
-        .where(GamificationStats.GAMIFICATION_STATS.USER_ID.eq(userId))
-        .fetchOneInto(LocalDate.class);
-  }
-
-  public void setLastLoginXpDate(UUID userId, LocalDate date) {
-    dsl.update(GamificationStats.GAMIFICATION_STATS)
-        .set(GamificationStats.GAMIFICATION_STATS.LAST_LOGIN_XP_DATE, date)
         .where(GamificationStats.GAMIFICATION_STATS.USER_ID.eq(userId))
         .execute();
   }

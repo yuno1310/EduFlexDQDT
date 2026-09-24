@@ -7,7 +7,9 @@ import com.eduflex.repository.gamification.GamificationStatsRepository;
 import com.eduflex.repository.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -20,6 +22,10 @@ public class GetGamificationStatsUseCase {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private Clock clock;
+
+    @Transactional
     public GetGamificationStatsDTO.GetGamificationStatsResponse execute(UUID userId) {
         var stats = gamificationStatsRepository.findByUserId(userId);
 
@@ -31,17 +37,14 @@ public class GetGamificationStatsUseCase {
             throw new ResourceNotFoundException("User not found with id: " + userId);
         }
 
-        var defaultStats = new GamificationStatsDbO(userId, 0, 1, 0);
-        gamificationStatsRepository.save(defaultStats);
-
-       var created = gamificationStatsRepository.findByUserId(userId);
-       return mapToResponse(created);
+        gamificationStatsRepository.ensureAndLock(userId);
+        return mapToResponse(gamificationStatsRepository.findByUserId(userId));
     }
 
     public GetGamificationStatsDTO.GetGamificationStatsResponse mapToResponse(GamificationStatsDbO stats) {
         int displayStreak = stats.record.getStreakDays() != null ? stats.record.getStreakDays() : 0;
         LocalDate lastStudyDate = stats.record.getLastStudyDate();
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
 
         if (lastStudyDate != null && lastStudyDate.isBefore(today.minusDays(1))) {
             displayStreak = 0;

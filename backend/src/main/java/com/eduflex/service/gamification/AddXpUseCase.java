@@ -15,9 +15,6 @@ public class AddXpUseCase {
     private GamificationStatsRepository gamificationStatsRepository;
 
     @Autowired
-    private GetGamificationStatsUseCase getGamificationStatsUseCase;
-
-    @Autowired
     private CheckAndAwardBadgesUseCase checkAndAwardBadgesUseCase;
 
     @Transactional
@@ -26,7 +23,7 @@ public class AddXpUseCase {
             throw new IllegalArgumentException("XP amount must be positive");
         }
 
-        getGamificationStatsUseCase.execute(userId); // ensure stats exist
+        gamificationStatsRepository.ensureAndLock(userId);
 
         gamificationStatsRepository.updateXpAndLevel(userId, request.amount());
 

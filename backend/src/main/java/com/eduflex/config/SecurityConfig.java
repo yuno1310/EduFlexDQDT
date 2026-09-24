@@ -33,7 +33,9 @@ public class SecurityConfig {
             .authenticationEntryPoint((request, response, authException) -> {
               response.sendError(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED,
                   "Token is not true or expired");
-            }))
+            })
+            .accessDeniedHandler((request, response, accessDeniedException) ->
+                response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN)))
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(
                 "/api/user/login",
@@ -45,6 +47,7 @@ public class SecurityConfig {
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
             .requestMatchers(HttpMethod.POST, "/api/course").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.POST, "/api/users/*/xp").hasRole("ADMIN")
             .anyRequest().authenticated())
         .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
     return http.build();

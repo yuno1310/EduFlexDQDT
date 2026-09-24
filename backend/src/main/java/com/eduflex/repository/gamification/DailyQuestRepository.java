@@ -59,11 +59,12 @@ public class DailyQuestRepository {
         }
     }
 
-    public void markCompleted(UUID userId, Long questId, LocalDate date) {
-        dsl.execute(
-            "UPDATE user_daily_quest_progress SET completed = true WHERE user_id = ? AND quest_id = ? AND quest_date = ?",
+    public boolean markCompletedIfNeeded(UUID userId, Long questId, LocalDate date) {
+        return dsl.execute(
+            "UPDATE user_daily_quest_progress SET completed = true " +
+            "WHERE user_id = ? AND quest_id = ? AND quest_date = ? AND completed = false",
             userId, questId, date
-        );
+        ) == 1;
     }
 
     public Long findQuestIdByType(String questType) {

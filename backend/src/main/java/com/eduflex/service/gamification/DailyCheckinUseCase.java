@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -24,19 +25,14 @@ public class DailyCheckinUseCase {
     @Autowired
     private GamificationStatsRepository gamificationStatsRepository;
 
+    @Autowired
+    private Clock clock;
+
     @Transactional
     public GetGamificationStatsDTO.GetGamificationStatsResponse execute(UUID userId) {
-        // Ensure stats row exists
-        getGamificationStatsUseCase.execute(userId);
-
-        // Award XP only if not yet awarded today
-        LocalDate today = LocalDate.now();
-        LocalDate lastDate = gamificationStatsRepository.getLastLoginXpDate(userId);
-
-        if (lastDate == null || !lastDate.equals(today)) {
-            gamificationStatsRepository.updateXpAndLevel(userId, DAILY_LOGIN_XP);
-            gamificationStatsRepository.setLastLoginXpDate(userId, today);
-        }
+        gamificationStatsRepository.ensureAndLock(userId);
+        LocalDate today = LocalDate.now(clock);
+        gamificationStatsRepository.awardDailyLoginXp(userId, today, DAILY_LOGIN_XP);
 
         return getGamificationStatsUseCase.execute(userId);
     }

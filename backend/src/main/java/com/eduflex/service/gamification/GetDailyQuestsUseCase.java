@@ -7,6 +7,7 @@ import com.eduflex.repository.gamification.DailyQuestRepository.QuestRow;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,8 +19,11 @@ public class GetDailyQuestsUseCase {
     @Autowired
     private DailyQuestRepository dailyQuestRepository;
 
+    @Autowired
+    private Clock clock;
+
     public List<DailyQuestResponse> execute(UUID userId) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         List<QuestRow> quests = dailyQuestRepository.findAllQuests();
         List<DailyQuestResponse> result = new ArrayList<>();
 

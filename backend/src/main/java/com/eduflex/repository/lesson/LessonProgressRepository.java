@@ -17,29 +17,15 @@ public class LessonProgressRepository {
   @Autowired
   private DSLContext dsl;
 
-  /**
-   * Check if lesson is already completed (for duplicate XP prevention).
-   */
-  public boolean isLessonCompleted(UUID userId, UUID lessonId) {
-    return dsl.fetchExists(
-        dsl.selectFrom(LessonProgress.LESSON_PROGRESS)
-            .where(LessonProgress.LESSON_PROGRESS.USER_ID.eq(userId))
-            .and(LessonProgress.LESSON_PROGRESS.LESSON_ID.eq(lessonId))
-            .and(LessonProgress.LESSON_PROGRESS.IS_COMPLETED.isTrue()));
-  }
-
-  public void upsertLessonProgress(UUID userId, UUID lessonId) {
-    dsl.insertInto(LessonProgress.LESSON_PROGRESS,
-        LessonProgress.LESSON_PROGRESS.USER_ID,
-        LessonProgress.LESSON_PROGRESS.LESSON_ID,
-        LessonProgress.LESSON_PROGRESS.IS_COMPLETED,
-        LessonProgress.LESSON_PROGRESS.COMPLETED_AT)
-        .values(userId, lessonId, true, LocalDateTime.now())
-        .onConflict(LessonProgress.LESSON_PROGRESS.USER_ID, LessonProgress.LESSON_PROGRESS.LESSON_ID)
-        .doUpdate()
-        .set(LessonProgress.LESSON_PROGRESS.IS_COMPLETED, true)
-        .set(LessonProgress.LESSON_PROGRESS.COMPLETED_AT, LocalDateTime.now())
-        .execute();
+  public boolean completeLessonIfNeeded(UUID userId, UUID lessonId) {
+    return dsl.fetchOne(
+        "INSERT INTO lesson_progress (user_id, lesson_id, is_completed, completed_at) "
+            + "VALUES (?, ?, true, ?) "
+            + "ON CONFLICT (user_id, lesson_id) DO UPDATE "
+            + "SET is_completed = true, completed_at = EXCLUDED.completed_at "
+            + "WHERE lesson_progress.is_completed IS DISTINCT FROM true "
+            + "RETURNING progress_id",
+        userId, lessonId, LocalDateTime.now()) != null;
   }
 
   public UUID getCourseIdByLessonId(UUID lessonId) {
@@ -47,6 +33,18 @@ public class LessonProgressRepository {
         .from(Lesson.LESSON)
         .where(Lesson.LESSON.LESSON_ID.eq(lessonId))
         .fetchOneInto(UUID.class);
+  }
+
+  public boolean isQuizLesson(UUID lessonId) {
+    return dsl.fetchExists(
+        dsl.selectOne()
+            .from(Lesson.LESSON)
+            .where(Lesson.LESSON.LESSON_ID.eq(lessonId))
+            .and(Lesson.LESSON.CONTENT_TYPE.equalIgnoreCase("quiz")))
+        || dsl.fetchExists(
+            dsl.selectOne()
+                .from(com.eduflex.generated.tables.Questions.QUESTIONS)
+                .where(com.eduflex.generated.tables.Questions.QUESTIONS.LESSON_ID.eq(lessonId)));
   }
 
   public int countTotalLessonsInCourse(UUID courseId) {

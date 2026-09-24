@@ -28,7 +28,8 @@ public class BadgeRepository {
     var result = dsl.insertInto(Badges.BADGES,
             Badges.BADGES.NAME, Badges.BADGES.DESCRIPTION, Badges.BADGES.CONDITION_TYPE)
         .values(badge.record.getName(), badge.record.getDescription(), badge.record.getConditionType())
-        .onConflictDoNothing()
+        .onConflict(Badges.BADGES.CONDITION_TYPE)
+        .doNothing()
         .returning()
         .fetchOne();
     if (result != null) {
