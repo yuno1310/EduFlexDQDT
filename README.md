@@ -59,6 +59,14 @@ cd backend
 ./mvnw test
 ```
 
+Backend tests require a running Docker daemon. Testcontainers starts an isolated,
+pinned PostgreSQL 16 + pgvector database, applies every Flyway migration, and runs
+the progress/reward concurrency tests automatically. Docker Engine 29 compatibility
+is configured in `backend/src/test/resources/docker-java.properties`.
+
+Daily rewards and streaks use the `Asia/Ho_Chi_Minh` calendar by default. Set
+`EDUFLEX_TIME_ZONE` to another IANA zone when deploying the backend if needed.
+
 After a schema change, regenerate jOOQ sources explicitly with database environment variables configured:
 
 ```bash
@@ -83,6 +91,7 @@ cd backend
 ```
 
 GitHub Actions runs these checks on pushes, pull requests, and manual dispatches.
+The backend job verifies Docker before running the Testcontainers integration suite.
 SDK setup uses the Node 24 version of `setup-android` and explicitly installs
 `platform-tools`, `platforms;android-35`, and `build-tools;34.0.0`, avoiding the
 action's default legacy `tools` package. Java and checkout actions also use Node 24.

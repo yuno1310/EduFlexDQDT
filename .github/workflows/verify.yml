@@ -24,6 +24,8 @@ jobs:
           java-version: '21'
           cache: maven
           cache-dependency-path: backend/pom.xml
+      - name: Verify Docker for PostgreSQL integration tests
+        run: docker info
       - name: Backend tests
         working-directory: backend
         run: bash mvnw --batch-mode --no-transfer-progress test
