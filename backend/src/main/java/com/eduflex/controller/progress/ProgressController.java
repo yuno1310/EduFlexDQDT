@@ -5,6 +5,7 @@ import com.eduflex.dto.lesson.ProgressDTO.SaveLessonRequest;
 import com.eduflex.dto.lesson.ProgressDTO.SaveLessonResponse;
 import com.eduflex.service.lesson.GetCourseProgressUseCase;
 import com.eduflex.service.lesson.SaveLessonProgressUseCase;
+import com.eduflex.security.AuthenticatedUser;
 
 import jakarta.validation.Valid;
 
@@ -12,6 +13,7 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,7 +31,9 @@ public class ProgressController {
   private GetCourseProgressUseCase getCourseProgressUseCase;
 
   @PostMapping("/lesson")
-  public ResponseEntity<SaveLessonResponse> saveLessonProgress(@Valid SaveLessonRequest request) {
+  public ResponseEntity<SaveLessonResponse> saveLessonProgress(
+      @Valid SaveLessonRequest request, Authentication authentication) {
+    AuthenticatedUser.requireOwner(authentication, request.userId());
     var response = saveLessonProgressUseCase.execute(request);
 
     if (response.success()) {
@@ -42,7 +46,9 @@ public class ProgressController {
   @GetMapping("/course/{courseId}/user/{userId}")
   public ResponseEntity<GetCourseProgressResponse> getCourseProgress(
       @PathVariable UUID courseId,
-      @PathVariable UUID userId) {
+      @PathVariable UUID userId,
+      Authentication authentication) {
+    AuthenticatedUser.requireOwner(authentication, userId);
     var response = getCourseProgressUseCase.execute(userId, courseId);
     return ResponseEntity.ok(response);
   }

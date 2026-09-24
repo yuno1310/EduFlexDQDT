@@ -9,8 +9,10 @@ import com.eduflex.service.gamification.DailyCheckinUseCase;
 import com.eduflex.service.gamification.GetGamificationStatsUseCase;
 import com.eduflex.service.gamification.GetLeaderBoardUseCase;
 import com.eduflex.service.gamification.UpdateStreakUseCase;
+import com.eduflex.security.AuthenticatedUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -36,7 +38,8 @@ public class GamificationController {
 
   @GetMapping("/stats")
   public ResponseEntity<GetGamificationStatsDTO.GetGamificationStatsResponse> getStats(
-      @PathVariable UUID userId) {
+      @PathVariable UUID userId, Authentication authentication) {
+    AuthenticatedUser.requireOwner(authentication, userId);
     return ResponseEntity.ok(getGamificationStatsUseCase.execute(userId));
   }
 
@@ -49,13 +52,15 @@ public class GamificationController {
 
   @PostMapping("/streak")
   public ResponseEntity<UpdateStreakDTO.UpdateStreakResponse> updateStreak(
-      @PathVariable UUID userId) {
+      @PathVariable UUID userId, Authentication authentication) {
+    AuthenticatedUser.requireOwner(authentication, userId);
     return ResponseEntity.ok(updateStreakUseCase.execute(userId));
   }
 
   @PostMapping("/daily-checkin")
   public ResponseEntity<GetGamificationStatsDTO.GetGamificationStatsResponse> dailyCheckin(
-      @PathVariable UUID userId) {
+      @PathVariable UUID userId, Authentication authentication) {
+    AuthenticatedUser.requireOwner(authentication, userId);
     return ResponseEntity.ok(dailyCheckinUseCase.execute(userId));
   }
 

@@ -15,6 +15,10 @@ import com.eduflex.service.quiz.CreateQuizUseCase;
 import com.eduflex.service.quiz.GetQuizUseCase;
 import com.eduflex.service.quiz.SubmitFillBlankUseCase;
 import com.eduflex.service.quiz.SubmitQuizUseCase;
+import com.eduflex.security.AuthenticatedUser;
+
+import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
 
 import java.util.UUID;
 
@@ -44,7 +48,9 @@ public class QuizController {
   }
 
   @PostMapping("/submit-multiple-choice")
-  public ResponseEntity<SubmitQuizResponse> submitQuiz(@RequestBody SubmitQuizRequest request) {
+  public ResponseEntity<SubmitQuizResponse> submitQuiz(
+      @Valid @RequestBody SubmitQuizRequest request, Authentication authentication) {
+    AuthenticatedUser.requireOwner(authentication, request.userId());
     var response = submitQuizUseCase.execute(request);
     return ResponseEntity.ok(response);
   }
