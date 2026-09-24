@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,6 +17,7 @@ import com.eduflex.dto.course.RegisterCourseDTO.RegisterRequest;
 import com.eduflex.dto.course.RegisterCourseDTO.RegisterResponse;
 import com.eduflex.service.enrollment.GetEnrolledCoursesUseCase;
 import com.eduflex.service.course.RegisterCourseUseCase;
+import com.eduflex.security.AuthenticatedUser;
 
 @RestController
 @RequestMapping("api/enrollment")
@@ -29,7 +31,9 @@ public class EnrollmentController {
 
   @GetMapping("/{userId}")
   public ResponseEntity<GetEnrolledCoursesResponse> getEnrolledCourses(
-      @PathVariable UUID userId) {
+      @PathVariable UUID userId,
+      Authentication authentication) {
+    AuthenticatedUser.requireOwner(authentication, userId);
     var response = getEnrolledCoursesUseCase.execute(userId);
     if (response.success()) {
       return ResponseEntity.ok(response);
@@ -41,7 +45,9 @@ public class EnrollmentController {
   @PostMapping("/{courseId}/register")
   public ResponseEntity<RegisterResponse> registerCourse(
       @PathVariable UUID courseId,
-      @RequestBody RegisterRequest request) {
+      @RequestBody RegisterRequest request,
+      Authentication authentication) {
+    AuthenticatedUser.requireOwner(authentication, request.userId());
     var response = registerCourseUseCase.execute(courseId, request);
     if (response.success()) {
       return ResponseEntity.ok(response);
