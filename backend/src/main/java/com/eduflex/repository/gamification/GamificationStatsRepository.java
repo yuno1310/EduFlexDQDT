@@ -9,6 +9,7 @@ import com.eduflex.generated.tables.Users;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import com.eduflex.monitoring.EduFlexMetrics;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -20,6 +21,9 @@ public class GamificationStatsRepository {
 
   @Autowired
   private DSLContext dsl;
+
+  @Autowired
+  private EduFlexMetrics metrics;
 
   public GamificationStatsDbO findByUserId(UUID userId) {
     var record = dsl.selectFrom(GamificationStats.GAMIFICATION_STATS)
@@ -38,6 +42,10 @@ public class GamificationStatsRepository {
    * writes for that user on the same database row. Must run in a transaction.
    */
   public GamificationStatsDbO ensureAndLock(UUID userId) {
+    return metrics.timeStatsLock(() -> ensureAndLockRecord(userId));
+  }
+
+  private GamificationStatsDbO ensureAndLockRecord(UUID userId) {
     dsl.execute(
         "INSERT INTO gamification_stats (user_id, xp, level, streak_days) "
             + "SELECT user_id, 0, 1, 0 FROM users WHERE user_id = ? "

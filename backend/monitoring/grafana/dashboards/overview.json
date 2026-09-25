@@ -1,0 +1,70 @@
+{
+  "annotations": {"list": []},
+  "editable": false,
+  "graphTooltip": 1,
+  "panels": [
+    {
+      "datasource": {"type": "prometheus", "uid": "eduflex-prometheus"},
+      "fieldConfig": {"defaults": {"mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "red"}, {"color": "green", "value": 1}]}}, "overrides": []},
+      "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0},
+      "id": 1,
+      "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"expr": "probe_success{job=\"eduflex-api-probe\"}", "legendFormat": "API", "refId": "A"}],
+      "title": "Application listener available",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "eduflex-prometheus"},
+      "fieldConfig": {"defaults": {"unit": "reqps"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 9, "x": 6, "y": 0},
+      "id": 2,
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+      "targets": [{"expr": "sum by (status) (rate(http_server_requests_seconds_count{job=\"eduflex-api\",uri!~\"/actuator.*|/livez|/readyz\"}[5m]))", "legendFormat": "{{status}}", "refId": "A"}],
+      "title": "API request rate by status",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "eduflex-prometheus"},
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 9, "x": 15, "y": 0},
+      "id": 3,
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+      "targets": [
+        {"expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"eduflex-api\",uri!~\"/actuator.*|/livez|/readyz\"}[5m])))", "legendFormat": "p50", "refId": "A"},
+        {"expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"eduflex-api\",uri!~\"/actuator.*|/livez|/readyz\"}[5m])))", "legendFormat": "p95", "refId": "B"},
+        {"expr": "histogram_quantile(0.99, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"eduflex-api\",uri!~\"/actuator.*|/livez|/readyz\"}[5m])))", "legendFormat": "p99", "refId": "C"}
+      ],
+      "title": "API latency",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "eduflex-prometheus"},
+      "fieldConfig": {"defaults": {"unit": "bytes"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "id": 4,
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+      "targets": [{"expr": "sum(jvm_memory_used_bytes{job=\"eduflex-api\",area=\"heap\"})", "legendFormat": "used heap", "refId": "A"}, {"expr": "sum(jvm_memory_max_bytes{job=\"eduflex-api\",area=\"heap\"})", "legendFormat": "max heap", "refId": "B"}],
+      "title": "JVM heap",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "eduflex-prometheus"},
+      "fieldConfig": {"defaults": {}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "id": 5,
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+      "targets": [{"expr": "hikaricp_connections_active{job=\"eduflex-api\"}", "legendFormat": "active", "refId": "A"}, {"expr": "hikaricp_connections_pending{job=\"eduflex-api\"}", "legendFormat": "pending", "refId": "B"}, {"expr": "hikaricp_connections_max{job=\"eduflex-api\"}", "legendFormat": "max", "refId": "C"}],
+      "title": "Database connection pool",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 41,
+  "tags": ["eduflex"],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "timezone": "browser",
+  "title": "EduFlex Service Overview",
+  "uid": "eduflex-overview",
+  "version": 1
+}

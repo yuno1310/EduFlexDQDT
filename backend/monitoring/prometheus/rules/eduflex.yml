@@ -1,0 +1,133 @@
+groups:
+  - name: eduflex-availability
+    rules:
+      - alert: EduFlexApiUnavailable
+        expr: probe_success{job="eduflex-api-probe"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: EduFlex application listener is unavailable
+          runbook: docs/monitoring-runbook.md#api-unavailable
+
+      - alert: EduFlexScrapeTargetDown
+        expr: up{job=~"eduflex-api|postgres|redis|rabbitmq|rabbitmq-queues"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "EduFlex monitoring target {{ $labels.job }} is down"
+          runbook: docs/monitoring-runbook.md#scrape-target-down
+
+      - alert: EduFlexExpectedTargetMissing
+        expr: absent(up{job="eduflex-api"}) or absent(up{job="postgres"}) or absent(up{job="redis"}) or absent(up{job="rabbitmq"}) or absent(up{job="rabbitmq-queues"}) or absent(up{job="eduflex-api-probe"})
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: An expected EduFlex scrape job is missing
+          runbook: docs/monitoring-runbook.md#scrape-target-down
+
+  - name: eduflex-api
+    rules:
+      - alert: EduFlexHighServerErrorRate
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{job="eduflex-api",status=~"5.."}[5m]))
+            /
+            clamp_min(sum(rate(http_server_requests_seconds_count{job="eduflex-api"}[5m])), 0.000001)
+          ) > 0.05
+          and
+          sum(increase(http_server_requests_seconds_count{job="eduflex-api"}[5m])) >= 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: EduFlex API 5xx rate is above 5 percent
+          runbook: docs/monitoring-runbook.md#api-errors-or-latency
+
+      - alert: EduFlexSlowApi
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le) (rate(http_server_requests_seconds_bucket{job="eduflex-api",uri!~"/actuator.*|/livez|/readyz"}[5m]))
+          ) > 1
+          and
+          sum(increase(http_server_requests_seconds_count{job="eduflex-api",uri!~"/actuator.*|/livez|/readyz"}[5m])) >= 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: EduFlex API p95 latency is above one second
+          runbook: docs/monitoring-runbook.md#api-errors-or-latency
+
+      - alert: EduFlexDatabasePoolContention
+        expr: hikaricp_connections_pending{job="eduflex-api"} > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Requests are waiting for a database connection
+          runbook: docs/monitoring-runbook.md#database-contention
+
+      - alert: EduFlexDatabaseConnectionTimeouts
+        expr: increase(hikaricp_connections_timeout_total{job="eduflex-api"}[5m]) > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: EduFlex timed out waiting for database connections
+          runbook: docs/monitoring-runbook.md#database-contention
+
+  - name: eduflex-queue-and-cache
+    rules:
+      - alert: EduFlexEmbeddingBacklog
+        expr: rabbitmq_queue_messages_ready{queue="content_embeddings_queue"} > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: The content embedding queue has more than 100 ready messages
+          runbook: docs/monitoring-runbook.md#embedding-queue
+
+      - alert: EduFlexEmbeddingWorkerAbsent
+        expr: rabbitmq_queue_messages_ready{queue="content_embeddings_queue"} > 0 and rabbitmq_queue_consumers{queue="content_embeddings_queue"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Embedding work is queued but no consumer is connected
+          runbook: docs/monitoring-runbook.md#embedding-queue
+
+      - alert: EduFlexEmbeddingPublishFailure
+        expr: increase(eduflex_embedding_publish_total{outcome="failed"}[5m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: The API failed to publish an embedding refresh event
+          runbook: docs/monitoring-runbook.md#embedding-queue
+
+      - alert: EduFlexRabbitMqAlarm
+        expr: rabbitmq_alarms_file_descriptor_limit > 0 or rabbitmq_alarms_free_disk_space_watermark > 0 or rabbitmq_alarms_memory_used_watermark > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: RabbitMQ has raised a resource alarm
+          runbook: docs/monitoring-runbook.md#resource-pressure
+
+      - alert: EduFlexRedisEvictions
+        expr: increase(redis_evicted_keys_total[5m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: Redis is evicting EduFlex cache entries
+          runbook: docs/monitoring-runbook.md#resource-pressure
+
+  - name: eduflex-database
+    rules:
+      - alert: EduFlexPostgresDeadlock
+        expr: increase(pg_stat_database_deadlocks{datname!="template0",datname!="template1"}[5m]) > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: PostgreSQL detected a deadlock
+          runbook: docs/monitoring-runbook.md#database-contention

@@ -30,8 +30,47 @@ jobs:
         working-directory: backend
         run: bash mvnw --batch-mode --no-transfer-progress test
 
-  android:
+  monitoring:
     needs: backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Prepare isolated monitoring environment
+        run: cp backend/.env.example backend/.env
+      - name: Validate and smoke test monitoring
+        env:
+          CLEANUP_MONITORING: 'true'
+          MONITORING_PROJECT_NAME: eduflex-monitoring-${{ github.run_id }}
+          GRAFANA_ADMIN_PASSWORD: ci-monitoring-password
+        run: bash backend/scripts/verify-monitoring.sh
+      - name: Capture monitoring logs
+        if: failure()
+        env:
+          COMPOSE_PROJECT_NAME: eduflex-monitoring-${{ github.run_id }}
+        run: |
+          docker compose --env-file backend/.env \
+            -f backend/docker-compose.yml \
+            -f backend/docker-compose.monitoring.yml logs --no-color > monitoring-compose.log
+      - name: Upload monitoring failure logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: monitoring-logs
+          path: monitoring-compose.log
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Clean up isolated monitoring stack
+        if: always()
+        env:
+          COMPOSE_PROJECT_NAME: eduflex-monitoring-${{ github.run_id }}
+        run: |
+          docker compose --env-file backend/.env \
+            -f backend/docker-compose.yml \
+            -f backend/docker-compose.monitoring.yml down --volumes --remove-orphans
+
+  android:
+    needs: [backend, monitoring]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

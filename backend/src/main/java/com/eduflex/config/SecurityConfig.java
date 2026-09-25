@@ -11,6 +11,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
+import org.springframework.core.annotation.Order;
 
 @Configuration
 public class SecurityConfig {
@@ -24,6 +26,19 @@ public class SecurityConfig {
   }
 
   @Bean
+  @Order(1)
+  public SecurityFilterChain actuatorFilterChain(HttpSecurity http) throws Exception {
+    http
+        .securityMatcher(EndpointRequest.toAnyEndpoint())
+        .csrf(csrf -> csrf.disable())
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers(EndpointRequest.to("health", "prometheus")).permitAll()
+            .anyRequest().denyAll());
+    return http.build();
+  }
+
+  @Bean
+  @Order(2)
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http
         .csrf(csrf -> csrf.disable())
@@ -42,7 +57,9 @@ public class SecurityConfig {
                 "/api/user/register",
                 "/api/user/forgot-password",
                 "/api/auth/refresh",
-                "/api/auth/logout"
+                "/api/auth/logout",
+                "/livez",
+                "/readyz"
             ).permitAll()
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
             .requestMatchers("/api/admin/**").hasRole("ADMIN")

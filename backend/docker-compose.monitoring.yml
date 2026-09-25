@@ -1,0 +1,151 @@
+services:
+  eduflex-api:
+    environment:
+      SPRING_PROFILES_ACTIVE: monitoring
+      EDUFLEX_ENVIRONMENT: ${EDUFLEX_ENVIRONMENT:-local}
+    expose:
+      - "8081"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/readyz"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  eduflex-rabbitmq:
+    volumes:
+      - ./monitoring/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
+    expose:
+      - "15692"
+
+  eduflex-postgres-monitoring-role:
+    image: pgvector/pgvector:pg16
+    restart: "no"
+    environment:
+      PGHOST: eduflex-postgres
+      PGPORT: 5432
+      PGDATABASE: ${POSTGRES_DB:-eduflex}
+      PGUSER: ${POSTGRES_USER:-eduflex}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-eduflex-local}
+      POSTGRES_MONITOR_PASSWORD: ${POSTGRES_MONITOR_PASSWORD:-eduflex-monitor-local}
+    volumes:
+      - ./monitoring/postgres/setup-monitoring-role.sql:/monitoring/setup-monitoring-role.sql:ro
+    command:
+      - sh
+      - -ec
+      - psql --set=ON_ERROR_STOP=1 --set=monitor_password="$$POSTGRES_MONITOR_PASSWORD" --file=/monitoring/setup-monitoring-role.sql
+    depends_on:
+      eduflex-postgres:
+        condition: service_healthy
+    networks:
+      - eduflex-network
+
+  eduflex-postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.17.1
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: postgresql://eduflex_monitor:${POSTGRES_MONITOR_PASSWORD:-eduflex-monitor-local}@eduflex-postgres:5432/${POSTGRES_DB:-eduflex}?sslmode=disable
+    depends_on:
+      eduflex-postgres-monitoring-role:
+        condition: service_completed_successfully
+    networks:
+      - eduflex-network
+
+  eduflex-redis-exporter:
+    image: oliver006/redis_exporter:v1.77.0
+    restart: unless-stopped
+    environment:
+      REDIS_ADDR: redis://eduflex-redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-eduflex-local}
+    depends_on:
+      eduflex-redis:
+        condition: service_healthy
+    networks:
+      - eduflex-network
+
+  eduflex-blackbox:
+    image: prom/blackbox-exporter:v0.27.0
+    restart: unless-stopped
+    command: ["--config.file=/etc/blackbox/blackbox.yml"]
+    volumes:
+      - ./monitoring/blackbox/blackbox.yml:/etc/blackbox/blackbox.yml:ro
+    networks:
+      - eduflex-network
+
+  eduflex-prometheus:
+    image: prom/prometheus:v3.5.0
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=7d
+      - --storage.tsdb.retention.size=2GB
+      - --web.enable-lifecycle
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9090/-/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    depends_on:
+      eduflex-api:
+        condition: service_healthy
+      eduflex-postgres-exporter:
+        condition: service_started
+      eduflex-redis-exporter:
+        condition: service_started
+      eduflex-blackbox:
+        condition: service_started
+    networks:
+      - eduflex-network
+
+  eduflex-alertmanager:
+    image: prom/alertmanager:v0.28.1
+    restart: unless-stopped
+    command: ["--config.file=/etc/alertmanager/alertmanager.yml", "--storage.path=/alertmanager"]
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    ports:
+      - "127.0.0.1:9093:9093"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9093/-/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - eduflex-network
+
+  eduflex-grafana:
+    image: grafana/grafana:12.1.0
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-eduflex-local}
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    depends_on:
+      eduflex-prometheus:
+        condition: service_healthy
+    networks:
+      - eduflex-network
+
+volumes:
+  prometheus-data:
+  alertmanager-data:
+  grafana-data:

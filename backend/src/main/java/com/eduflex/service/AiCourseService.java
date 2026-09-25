@@ -20,6 +20,7 @@ import com.eduflex.exception.ResourceNotFoundException;
 import com.eduflex.repository.course.CourseRepository;
 import com.eduflex.service.media.EmbeddingService;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.eduflex.monitoring.EduFlexMetrics;
 
 @Service
 public class AiCourseService {
@@ -31,18 +32,21 @@ public class AiCourseService {
   private final String apiKey;
   private final String model;
   private final String baseUrl;
+  private final EduFlexMetrics metrics;
 
   public AiCourseService(CourseRepository courses, EmbeddingService embeddings,
       RestClient.Builder restClientBuilder,
       @Value("${ai.gemini.api-key:}") String apiKey,
       @Value("${ai.gemini.model:gemini-2.0-flash}") String model,
-      @Value("${ai.gemini.base-url}") String baseUrl) {
+      @Value("${ai.gemini.base-url}") String baseUrl,
+      EduFlexMetrics metrics) {
     this.courses = courses;
     this.embeddings = embeddings;
     this.http = restClientBuilder.build();
     this.apiKey = apiKey;
     this.model = model;
     this.baseUrl = baseUrl;
+    this.metrics = metrics;
   }
 
   @Cacheable(value = "courseSummaries", key = "#courseId", unless = "!#result.generatedByAi()")
@@ -52,6 +56,7 @@ public class AiCourseService {
     String context = buildContext(course, lessons);
 
     if (apiKey.isBlank()) {
+      metrics.aiRequest("summary", false);
       return new CourseSummaryResponse(courseId, fallbackSummary(course, lessons), false);
     }
 
@@ -64,8 +69,11 @@ public class AiCourseService {
         COURSE CONTEXT:
         """ + context;
     try {
-      return new CourseSummaryResponse(courseId, generate(prompt), true);
+      CourseSummaryResponse response = new CourseSummaryResponse(courseId, generate(prompt), true);
+      metrics.aiRequest("summary", true);
+      return response;
     } catch (RuntimeException providerError) {
+      metrics.aiRequest("summary", false);
       return new CourseSummaryResponse(courseId, fallbackSummary(course, lessons), false);
     }
   }
@@ -83,6 +91,7 @@ public class AiCourseService {
     if (apiKey.isBlank()) {
       String answer = "AI generation is not configured yet. The most relevant lessons are: "
           + retrieved.stream().map(LessonContext::title).reduce((a, b) -> a + ", " + b).orElse("none");
+      metrics.aiRequest("ask", false);
       return new AskCourseResponse(answer, sources, false);
     }
 
@@ -98,10 +107,13 @@ public class AiCourseService {
         %s
         """.formatted(course.title(), question, buildContext(course, retrieved));
     try {
-      return new AskCourseResponse(generate(prompt), sources, true);
+      AskCourseResponse response = new AskCourseResponse(generate(prompt), sources, true);
+      metrics.aiRequest("ask", true);
+      return response;
     } catch (RuntimeException providerError) {
       String answer = "The AI provider is temporarily unavailable. Review these relevant lessons: "
           + retrieved.stream().map(LessonContext::title).reduce((a, b) -> a + ", " + b).orElse("none");
+      metrics.aiRequest("ask", false);
       return new AskCourseResponse(answer, sources, false);
     }
   }

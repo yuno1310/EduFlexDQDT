@@ -52,6 +52,37 @@ docker compose -f backend/docker-compose.yml up --build
 
 Set a strong Redis password, RabbitMQ password, JWT secret, and local PostgreSQL password in `backend/.env`. `GEMINI_API_KEY` is optional: without it, summaries return a deterministic course overview and Q&A returns retrieved lesson suggestions.
 
+## Monitoring
+
+The optional monitoring overlay adds Prometheus, Grafana, Alertmanager, a main API
+listener probe, and PostgreSQL/Redis/RabbitMQ metrics. Copy the example environment,
+set a strong `GRAFANA_ADMIN_PASSWORD`, and start both Compose files from the repository root:
+
+```bash
+cp backend/.env.example backend/.env
+docker compose --env-file backend/.env \
+  -f backend/docker-compose.yml \
+  -f backend/docker-compose.monitoring.yml up --build -d
+```
+
+Open Grafana at <http://127.0.0.1:3000>, Prometheus at
+<http://127.0.0.1:9090>, and Alertmanager at <http://127.0.0.1:9093>.
+Grafana provisions the service, dependency, and learning-operation dashboards from
+the repository. Exporters and Spring Boot's management listener are not published
+to the host.
+
+Validate the configuration, alert rules, targets, protected metrics route, and
+dashboard provisioning with:
+
+```bash
+bash backend/scripts/verify-monitoring.sh
+```
+
+The complete startup, triage, retention, and recovery procedures are in
+[`docs/monitoring-runbook.md`](docs/monitoring-runbook.md). The implementation choices
+and follow-up logging/tracing work are recorded in
+[`docs/MONITORING_IMPLEMENTATION_PLAN.md`](docs/MONITORING_IMPLEMENTATION_PLAN.md).
+
 Normal Maven builds do not connect to the database for jOOQ generation:
 
 ```bash

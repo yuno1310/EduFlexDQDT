@@ -2,7 +2,6 @@ services:
   # 1. Spring Boot Backend
   eduflex-api:
     build: .
-    container_name: eduflex-spring-boot
     ports:
       - "8080:8080"
     depends_on:
@@ -29,7 +28,6 @@ services:
   # 2. PostgreSQL + pgvector for application data and semantic search
   eduflex-postgres:
     image: pgvector/pgvector:pg16
-    container_name: eduflex-postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-eduflex}
       POSTGRES_USER: ${POSTGRES_USER:-eduflex}
@@ -47,7 +45,6 @@ services:
   # 3. Redis Caching
   eduflex-redis:
     image: redis:alpine
-    container_name: eduflex-redis
     command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-eduflex-local}"]
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-eduflex-local}
@@ -64,7 +61,6 @@ services:
   # 4. RabbitMQ Message Queue
   eduflex-rabbitmq:
     image: rabbitmq:3-management-alpine
-    container_name: eduflex-rabbitmq
     ports:
       - "15672:15672" # Port cho giao diện Web Admin
     environment:

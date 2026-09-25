@@ -14,6 +14,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import com.eduflex.monitoring.EduFlexMetrics;
 
 @Service
 public class UpdateDailyQuestProgressUseCase {
@@ -29,6 +30,9 @@ public class UpdateDailyQuestProgressUseCase {
 
     @Autowired
     private Clock clock;
+
+    @Autowired
+    private EduFlexMetrics metrics;
 
     @Transactional
     public CompletedQuestInfo execute(UUID userId, String questType, int increment) {
@@ -58,6 +62,7 @@ public class UpdateDailyQuestProgressUseCase {
         if (updated.currentCount() >= quest.targetCount()) {
             if (dailyQuestRepository.markCompletedIfNeeded(userId, questId, today)) {
                 addXpUseCase.execute(userId, new AddXpDTO.AddXpRequest(quest.xpReward()));
+                metrics.reward("quest");
                 return new CompletedQuestInfo(quest.title(), quest.xpReward());
             }
         }

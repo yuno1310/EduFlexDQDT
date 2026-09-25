@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.UUID;
+import com.eduflex.monitoring.EduFlexMetrics;
 
 /**
  * Awards +10 XP once per calendar day on check-in.
@@ -28,11 +29,15 @@ public class DailyCheckinUseCase {
     @Autowired
     private Clock clock;
 
+    @Autowired
+    private EduFlexMetrics metrics;
+
     @Transactional
     public GetGamificationStatsDTO.GetGamificationStatsResponse execute(UUID userId) {
         gamificationStatsRepository.ensureAndLock(userId);
         LocalDate today = LocalDate.now(clock);
-        gamificationStatsRepository.awardDailyLoginXp(userId, today, DAILY_LOGIN_XP);
+        boolean awarded = gamificationStatsRepository.awardDailyLoginXp(userId, today, DAILY_LOGIN_XP);
+        if (awarded) metrics.reward("checkin");
 
         return getGamificationStatsUseCase.execute(userId);
     }

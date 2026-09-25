@@ -1,0 +1,32 @@
+rule_files:
+  - ../rules/eduflex.yml
+
+evaluation_interval: 1m
+
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'probe_success{job="eduflex-api-probe",instance="http://eduflex-api:8080/readyz"}'
+        values: '0 0 0'
+      - series: 'up{job="eduflex-api"}'
+        values: '1 1 1'
+      - series: 'up{job="postgres"}'
+        values: '1 1 1'
+      - series: 'up{job="redis"}'
+        values: '1 1 1'
+      - series: 'up{job="rabbitmq"}'
+        values: '1 1 1'
+      - series: 'up{job="eduflex-api-probe"}'
+        values: '1 1 1'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: EduFlexApiUnavailable
+        exp_alerts:
+          - exp_labels:
+              alertname: EduFlexApiUnavailable
+              instance: http://eduflex-api:8080/readyz
+              job: eduflex-api-probe
+              severity: critical
+            exp_annotations:
+              summary: EduFlex application listener is unavailable
+              runbook: docs/monitoring-runbook.md#api-unavailable

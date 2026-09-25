@@ -1,0 +1,10 @@
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: eduflex-prometheus
+    type: prometheus
+    access: proxy
+    url: http://eduflex-prometheus:9090
+    isDefault: true
+    editable: false
