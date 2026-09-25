@@ -14,6 +14,7 @@ import com.eduflex.service.gamification.AddXpUseCase;
 import com.eduflex.service.gamification.CheckAndAwardBadgesUseCase;
 import com.eduflex.service.gamification.UpdateDailyQuestProgressUseCase;
 import com.eduflex.service.gamification.UpdateStreakUseCase;
+import com.eduflex.monitoring.EduFlexMetrics;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
@@ -46,6 +47,8 @@ public class SubmitQuizUseCase {
   private UpdateDailyQuestProgressUseCase updateDailyQuestProgressUseCase;
   @Autowired
   private GamificationStatsRepository gamificationStatsRepository;
+  @Autowired
+  private EduFlexMetrics metrics;
 
   @Transactional
   public SubmitQuizResponse execute(SubmitQuizRequest request) {
@@ -116,6 +119,7 @@ public class SubmitQuizUseCase {
 
     // 5. Award Quiz XP & Update Streak
     addXpUseCase.execute(userId, new AddXpDTO.AddXpRequest(QUIZ_PASS_XP));
+    metrics.reward("quiz");
     updateStreakUseCase.execute(userId);
 
     // 6. Mark quiz lesson as completed
@@ -144,6 +148,7 @@ public class SubmitQuizUseCase {
       if (newlyCompletedCourse) {
         totalXpRewarded += COURSE_COMPLETE_XP;
         addXpUseCase.execute(userId, new AddXpDTO.AddXpRequest(COURSE_COMPLETE_XP));
+        metrics.reward("course");
         checkAndAwardBadgesUseCase.checkCourseCompletionBadge(userId, courseId);
         msg = "Awesome! You have completed 100% of the course! (+" + totalXpRewarded + " XP)";
       }

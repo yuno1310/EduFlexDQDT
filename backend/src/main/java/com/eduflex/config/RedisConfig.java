@@ -61,6 +61,7 @@ public class RedisConfig {
         .cacheDefaults(defaultConfig)
         .withInitialCacheConfigurations(cacheConfigs)
         .transactionAware()
+        .enableStatistics()
         .build();
   }
 }

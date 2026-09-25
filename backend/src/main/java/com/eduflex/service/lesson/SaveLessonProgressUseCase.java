@@ -11,6 +11,7 @@ import com.eduflex.repository.quiz.QuizRepository;
 import com.eduflex.service.gamification.AddXpUseCase;
 import com.eduflex.service.gamification.CheckAndAwardBadgesUseCase;
 import com.eduflex.service.gamification.UpdateStreakUseCase;
+import com.eduflex.monitoring.EduFlexMetrics;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -46,6 +47,9 @@ public class SaveLessonProgressUseCase {
   @Autowired
   private QuizRepository quizRepository;
 
+  @Autowired
+  private EduFlexMetrics metrics;
+
   @Transactional
   public SaveLessonResponse execute(SaveLessonRequest request) {
     UUID userId = request.userId();
@@ -64,8 +68,10 @@ public class SaveLessonProgressUseCase {
     }
 
     boolean newlyCompleted = progressRepository.completeLessonIfNeeded(userId, lessonId);
+    metrics.progressCompletion(newlyCompleted);
     if (newlyCompleted) {
       addXpUseCase.execute(userId, new AddXpDTO.AddXpRequest(LESSON_COMPLETE_XP));
+      metrics.reward("lesson");
     }
 
     updateStreakUseCase.execute(userId);
@@ -86,6 +92,7 @@ public class SaveLessonProgressUseCase {
       // so the result does not depend on thread scheduling.
       if (quizRepository.hasPassedQuizInCourse(userId, courseId)) {
         addXpUseCase.execute(userId, new AddXpDTO.AddXpRequest(COURSE_COMPLETE_XP));
+        metrics.reward("course");
         totalXpRewarded += COURSE_COMPLETE_XP;
       }
       checkAndAwardBadgesUseCase.checkCourseCompletionBadge(userId, courseId);
