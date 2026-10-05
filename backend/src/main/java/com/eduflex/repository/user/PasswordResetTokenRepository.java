@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public class PasswordResetTokenRepository {
@@ -26,24 +27,24 @@ public class PasswordResetTokenRepository {
         .execute();
   }
 
+  @Transactional
   public UUID consume(String tokenHash, LocalDateTime now) {
-    return dsl.transactionResult(configuration -> {
-      DSLContext tx = org.jooq.impl.DSL.using(configuration);
-      var record = tx.select(org.jooq.impl.DSL.field("user_id", UUID.class))
-          .from(org.jooq.impl.DSL.table("password_reset_tokens"))
-          .where(org.jooq.impl.DSL.field("token_hash", String.class).eq(tokenHash))
-          .and(org.jooq.impl.DSL.field("used_at", LocalDateTime.class).isNull())
-          .and(org.jooq.impl.DSL.field("expires_at", LocalDateTime.class).gt(now))
-          .forUpdate()
-          .fetchOne();
-      if (record == null) return null;
-      UUID userId = record.value1();
-      int updated = tx.update(org.jooq.impl.DSL.table("password_reset_tokens"))
-          .set(org.jooq.impl.DSL.field("used_at", LocalDateTime.class), now)
-          .where(org.jooq.impl.DSL.field("token_hash", String.class).eq(tokenHash))
-          .and(org.jooq.impl.DSL.field("used_at", LocalDateTime.class).isNull())
-          .execute();
-      return updated == 1 ? userId : null;
-    });
+    // Join the service transaction so consumption and the password update commit together.
+    // A jOOQ nested transaction requests savepoints unsupported by JpaTransactionManager.
+    var record = dsl.select(org.jooq.impl.DSL.field("user_id", UUID.class))
+        .from(org.jooq.impl.DSL.table("password_reset_tokens"))
+        .where(org.jooq.impl.DSL.field("token_hash", String.class).eq(tokenHash))
+        .and(org.jooq.impl.DSL.field("used_at", LocalDateTime.class).isNull())
+        .and(org.jooq.impl.DSL.field("expires_at", LocalDateTime.class).gt(now))
+        .forUpdate()
+        .fetchOne();
+    if (record == null) return null;
+    UUID userId = record.value1();
+    int updated = dsl.update(org.jooq.impl.DSL.table("password_reset_tokens"))
+        .set(org.jooq.impl.DSL.field("used_at", LocalDateTime.class), now)
+        .where(org.jooq.impl.DSL.field("token_hash", String.class).eq(tokenHash))
+        .and(org.jooq.impl.DSL.field("used_at", LocalDateTime.class).isNull())
+        .execute();
+    return updated == 1 ? userId : null;
   }
 }

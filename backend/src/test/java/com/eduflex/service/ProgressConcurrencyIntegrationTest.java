@@ -10,11 +10,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Clock;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HexFormat;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -566,6 +569,67 @@ class ProgressConcurrencyIntegrationTest {
 
     passwordResetTokens.replaceForUser(userId, "expired-hash", now.minusSeconds(1));
     assertThat(passwordResetTokens.consume("expired-hash", now)).isNull();
+  }
+
+  @Test
+  void passwordResetEndpointRejectsUnknownTokenWithoutServerError() throws Exception {
+    mockMvc.perform(post("/api/user/reset-password")
+            .contentType("application/json")
+            .content("{\"token\":\"unknown-code\",\"newPassword\":\"Renewed1!Pass\"}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false));
+  }
+
+  @Test
+  void passwordResetEndpointUpdatesPasswordAndRejectsReuse() throws Exception {
+    UUID userId = createUser();
+    seedResetCode(userId, "single-use-code", LocalDateTime.now(Clock.systemUTC()).plusMinutes(15));
+    String body = "{\"token\":\"single-use-code\",\"newPassword\":\"Renewed1!Pass\"}";
+
+    mockMvc.perform(post("/api/user/reset-password").contentType("application/json").content(body))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true));
+    assertThat(passwordEncoder.matches("Renewed1!Pass",
+        dsl.fetchOne("SELECT password_hash FROM users WHERE user_id = ?", userId)
+            .get(0, String.class))).isTrue();
+    org.mockito.Mockito.verify(refreshTokenService).revokeAllTokens(userId);
+    mockMvc.perform(post("/api/user/reset-password").contentType("application/json").content(body))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void passwordResetEndpointRejectsExpiredCodeWithoutChangingPassword() throws Exception {
+    UUID userId = createUser();
+    seedResetCode(userId, "expired-code", LocalDateTime.now(Clock.systemUTC()).minusMinutes(1));
+
+    mockMvc.perform(post("/api/user/reset-password")
+            .contentType("application/json")
+            .content("{\"token\":\"expired-code\",\"newPassword\":\"Renewed1!Pass\"}"))
+        .andExpect(status().isBadRequest());
+    assertThat(dsl.fetchOne("SELECT password_hash FROM users WHERE user_id = ?", userId)
+        .get(0, String.class)).isEqualTo("unused");
+    assertThat(dsl.fetchOne("SELECT used_at FROM password_reset_tokens WHERE user_id = ?", userId)
+        .get(0, LocalDateTime.class)).isNull();
+  }
+
+  @Test
+  void concurrentPasswordResetConfirmationsConsumeCodeOnce() throws Exception {
+    UUID userId = createUser();
+    seedResetCode(userId, "concurrent-code", LocalDateTime.now(Clock.systemUTC()).plusMinutes(15));
+    List<Integer> statuses = concurrently(20, () -> mockMvc.perform(post("/api/user/reset-password")
+            .contentType("application/json")
+            .content("{\"token\":\"concurrent-code\",\"newPassword\":\"Renewed1!Pass\"}"))
+        .andReturn().getResponse().getStatus());
+
+    assertThat(statuses.stream().filter(code -> code == 200).count()).isEqualTo(1);
+    assertThat(statuses.stream().filter(code -> code == 400).count()).isEqualTo(19);
+    org.mockito.Mockito.verify(refreshTokenService, org.mockito.Mockito.times(1)).revokeAllTokens(userId);
+  }
+
+  private void seedResetCode(UUID userId, String code, LocalDateTime expiresAt) throws Exception {
+    String digest = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+        .digest(code.getBytes(StandardCharsets.UTF_8)));
+    passwordResetTokens.replaceForUser(userId, digest, expiresAt);
   }
 
   private Fixture createFixture(int lessonCount) {
