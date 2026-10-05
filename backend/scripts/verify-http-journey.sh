@@ -10,6 +10,7 @@ LEARNER_EMAIL="journey-learner-${RUN_ID}@example.test"
 PASSWORD='Journey1!Pass'
 COURSE_TITLE="Journey course ${RUN_ID}"
 CHECKS=0
+REQUEST_CHECKS="$(mktemp)"
 
 need() { command -v "$1" >/dev/null || { echo "Missing required command: $1" >&2; exit 2; }; }
 need curl
@@ -30,7 +31,8 @@ api() {
     rm -f "$response_file"
     exit 1
   fi
-  CHECKS=$((CHECKS + 1))
+  # Command substitutions and pipelines run in subshells; keep their counts too.
+  printf '.\n' >> "$REQUEST_CHECKS"
   cat "$response_file"
   rm -f "$response_file"
 }
@@ -41,7 +43,19 @@ db_value() {
 }
 
 cleanup() {
-  db_value "DELETE FROM courses WHERE title = '$COURSE_TITLE'; DELETE FROM users WHERE email IN ('$ADMIN_EMAIL', '$LEARNER_EMAIL');" >/dev/null 2>&1 || true
+  local result=$?
+  if ! db_value "BEGIN;
+    DELETE FROM transactions WHERE course_id IN (SELECT course_id FROM courses WHERE title = '$COURSE_TITLE');
+    DELETE FROM course_reviews WHERE course_id IN (SELECT course_id FROM courses WHERE title = '$COURSE_TITLE');
+    DELETE FROM badges WHERE condition_type IN (SELECT 'COURSE_' || course_id FROM courses WHERE title = '$COURSE_TITLE');
+    DELETE FROM courses WHERE title = '$COURSE_TITLE';
+    DELETE FROM users WHERE email IN ('$ADMIN_EMAIL', '$LEARNER_EMAIL');
+    COMMIT;" >/dev/null; then
+    echo 'FAILED: could not remove HTTP journey fixtures' >&2
+    result=1
+  fi
+  rm -f "$REQUEST_CHECKS"
+  exit "$result"
 }
 trap cleanup EXIT
 
@@ -97,4 +111,4 @@ jq -e '.accessToken | length > 20' <<<"$REFRESHED" >/dev/null
 api POST /api/auth/logout 200 "{\"refreshToken\":\"$LEARNER_REFRESH\"}" >/dev/null
 api POST /api/auth/refresh 401 "{\"refreshToken\":\"$LEARNER_REFRESH\"}" >/dev/null
 
-echo "HTTP journey passed: $CHECKS checks"
+echo "HTTP journey passed: $((CHECKS + $(wc -l < "$REQUEST_CHECKS"))) checks"
