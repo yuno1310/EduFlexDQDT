@@ -14,7 +14,7 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 
 import com.eduflex.android.api.ApiClient;
-import com.eduflex.android.auth.TokenManager;
+import com.eduflex.android.auth.SessionManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class AdminActivity extends AppCompatActivity {
@@ -42,12 +42,7 @@ public class AdminActivity extends AppCompatActivity {
      * Called from AdminProfileFragment to logout the admin.
      */
     public void logoutAdmin() {
-        TokenManager tokenManager = new TokenManager(this);
-        tokenManager.clearToken();
-        Intent intent = new Intent(this, LoginActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
+        SessionManager.logout(this);
     }
 
     /**

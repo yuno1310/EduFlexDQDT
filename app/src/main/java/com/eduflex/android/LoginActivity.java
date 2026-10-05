@@ -89,6 +89,7 @@ public class LoginActivity extends AppCompatActivity {
                 setLoading(false);
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                     tokenManager.saveToken(response.body().getToken());
+                    tokenManager.saveRefreshToken(response.body().getRefreshToken());
                     tokenManager.saveRole(response.body().getRole());
                     tokenManager.saveFullName(response.body().getFullName());
                     tokenManager.saveEmail(response.body().getEmail());

@@ -22,6 +22,16 @@
             android:textColor="@color/text_title"
             android:layout_marginBottom="20dp" />
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:background="@color/card_background"
+            android:padding="12dp"
+            android:text="Development payment simulation. No card, bank, or PayPal account will be charged."
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp" />
+
         <!-- Order Summary Card -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"

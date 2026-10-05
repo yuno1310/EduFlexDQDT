@@ -2,6 +2,7 @@ package com.eduflex.android.api;
 
 import com.eduflex.android.model.ForgotPasswordRequest;
 import com.eduflex.android.model.ForgotPasswordResponse;
+import com.eduflex.android.model.ResetPasswordRequest;
 import com.eduflex.android.model.UpdateProfileRequest;
 import com.eduflex.android.model.UpdateProfileResponse;
 
@@ -21,4 +22,7 @@ public interface UserApi {
 
     @POST("/api/user/forgot-password")
     Call<ForgotPasswordResponse> forgotPassword(@Body ForgotPasswordRequest request);
+
+    @POST("/api/user/reset-password")
+    Call<ForgotPasswordResponse> resetPassword(@Body ResetPasswordRequest request);
 }
