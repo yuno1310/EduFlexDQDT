@@ -71,6 +71,13 @@ public class UserRepository {
     return rows > 0;
   }
 
+  public boolean updatePasswordById(UUID userId, String newPasswordHash) {
+    return dsl.update(Users.USERS)
+        .set(Users.USERS.PASSWORD_HASH, newPasswordHash)
+        .where(Users.USERS.USER_ID.eq(userId))
+        .execute() == 1;
+  }
+
   /**
    * Delete a user by ID. Returns true if deleted.
    */
@@ -81,4 +88,3 @@ public class UserRepository {
     return rows > 0;
   }
 }
-

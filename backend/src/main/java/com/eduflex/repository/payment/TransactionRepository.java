@@ -20,8 +20,17 @@ public class TransactionRepository {
         .set(Transactions.TRANSACTIONS.AMOUNT, amount)
         .set(Transactions.TRANSACTIONS.PAYMENT_METHOD, "MOMO")
         .set(Transactions.TRANSACTIONS.STATUS, "SUCCESS")
+        .onConflictDoNothing()
         .execute();
 
     return insertedRows > 0;
+  }
+
+  public boolean hasSuccessfulTransaction(UUID userId, UUID courseId) {
+    return dsl.fetchExists(dsl.selectOne()
+        .from(Transactions.TRANSACTIONS)
+        .where(Transactions.TRANSACTIONS.USER_ID.eq(userId))
+        .and(Transactions.TRANSACTIONS.COURSE_ID.eq(courseId))
+        .and(Transactions.TRANSACTIONS.STATUS.eq("SUCCESS")));
   }
 }

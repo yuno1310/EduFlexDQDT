@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.security.core.Authentication;
+import com.eduflex.security.AuthenticatedUser;
 
 @RestController
 @RequestMapping("/api")
@@ -39,7 +41,8 @@ public class BadgeController {
 
   @GetMapping("/users/{userId}/badges")
   public ResponseEntity<List<GetUserBadgesDTO.GetUserBadgesResponse>> getUserBadges(
-      @PathVariable UUID userId) {
+      @PathVariable UUID userId, Authentication authentication) {
+    AuthenticatedUser.requireOwner(authentication, userId);
     return ResponseEntity.ok(getUserBadgesUseCase.execute(userId));
   }
 
@@ -59,7 +62,9 @@ public class BadgeController {
   @GetMapping("/badges/course-completion")
   public ResponseEntity<CourseBadgeResponse> getBadge(
       @RequestParam UUID userId,
-      @RequestParam UUID courseId) {
+      @RequestParam UUID courseId,
+      Authentication authentication) {
+    AuthenticatedUser.requireOwner(authentication, userId);
     var response = getCourseBadgeUseCase.execute(userId, courseId);
 
     if (response.success()) {

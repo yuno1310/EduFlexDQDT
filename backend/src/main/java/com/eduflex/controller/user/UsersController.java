@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -15,6 +16,8 @@ import com.eduflex.dto.user.CreateUserDTO.CreateUserRequest;
 import com.eduflex.dto.user.CreateUserDTO.CreateUserResponse;
 import com.eduflex.dto.user.ForgotPasswordDTO.ForgotPasswordRequest;
 import com.eduflex.dto.user.ForgotPasswordDTO.ForgotPasswordResponse;
+import com.eduflex.dto.user.ForgotPasswordDTO.ResetPasswordRequest;
+import com.eduflex.security.AuthenticatedUser;
 import com.eduflex.dto.user.LogInDTO.LogInRequest;
 import com.eduflex.dto.user.LogInDTO.LogInResponse;
 import com.eduflex.dto.user.UpdateProfileDTO.UpdateProfileRequest;
@@ -57,15 +60,25 @@ public class UsersController {
 
     @PutMapping("/update-profile/{userID}")
     public ResponseEntity<UpdateProfileResponse> updateProfile(@PathVariable UUID userID,
-            @Valid @RequestBody UpdateProfileRequest request) {
+            @Valid @RequestBody UpdateProfileRequest request, Authentication authentication) {
+        AuthenticatedUser.requireOwner(authentication, userID);
         var response = updateProfileUseCase.execute(userID, request);
         if (response.success()) return ResponseEntity.ok(response);
         return ResponseEntity.badRequest().body(response);
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<ForgotPasswordResponse> forgotPassword(@RequestBody ForgotPasswordRequest request) {
-        var response = forgotPasswordUseCase.execute(request);
+    public ResponseEntity<ForgotPasswordResponse> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        var response = forgotPasswordUseCase.request(request);
+        if (response.success()) return ResponseEntity.accepted().body(response);
+        return ResponseEntity.status(503).body(response);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ForgotPasswordResponse> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+        var response = forgotPasswordUseCase.confirm(request);
         if (response.success()) return ResponseEntity.ok(response);
         return ResponseEntity.badRequest().body(response);
     }

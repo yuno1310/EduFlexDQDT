@@ -56,6 +56,7 @@ public class SecurityConfig {
                 "/api/user/login",
                 "/api/user/register",
                 "/api/user/forgot-password",
+                "/api/user/reset-password",
                 "/api/auth/refresh",
                 "/api/auth/logout",
                 "/livez",
@@ -64,6 +65,9 @@ public class SecurityConfig {
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
             .requestMatchers(HttpMethod.POST, "/api/course").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.POST, "/api/lesson", "/api/quiz/create").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.POST, "/api/media/courses/*/image",
+                "/api/media/lessons/*/video", "/api/users/*/badges/*").hasRole("ADMIN")
             .requestMatchers(HttpMethod.POST, "/api/users/*/xp").hasRole("ADMIN")
             .anyRequest().authenticated())
         .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

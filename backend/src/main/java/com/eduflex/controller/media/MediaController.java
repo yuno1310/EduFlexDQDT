@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.UUID;
+import org.springframework.security.core.Authentication;
+import com.eduflex.security.AuthenticatedUser;
 
 @RestController
 @RequestMapping("/api/media")
@@ -20,7 +22,9 @@ public class MediaController {
   private DSLContext dsl;
 
   @PostMapping(value = "/users/{userId}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<?> uploadAvatar(@PathVariable UUID userId, @RequestParam("file") MultipartFile file) {
+  public ResponseEntity<?> uploadAvatar(@PathVariable UUID userId,
+      @RequestParam("file") MultipartFile file, Authentication authentication) {
+    AuthenticatedUser.requireOwner(authentication, userId);
     try {
       String url = storageService.uploadFile(file, "avatars");
       dsl.update(com.eduflex.generated.tables.Users.USERS)
