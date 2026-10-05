@@ -1,0 +1,15 @@
+{
+  "forgedQuizQuest": {
+    "attempts": 0,
+    "xp": 110,
+    "quest": {
+      "progress": 10,
+      "completed": true,
+      "reward": 100
+    }
+  },
+  "quizRetryXp": {
+    "totalXp": 170,
+    "attempts": 4
+  }
+}

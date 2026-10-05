@@ -1,0 +1,62 @@
+[
+  {
+    "name": "Grafana dashboard eduflex-overview",
+    "passed": true,
+    "expected": 200,
+    "actual": 200
+  },
+  {
+    "name": "Grafana dashboard eduflex-dependencies",
+    "passed": true,
+    "expected": 200,
+    "actual": 200
+  },
+  {
+    "name": "Grafana dashboard eduflex-learning",
+    "passed": true,
+    "expected": 200,
+    "actual": 200
+  },
+  {
+    "name": "Prometheus eduflex-api",
+    "passed": true,
+    "expected": "up",
+    "actual": "up"
+  },
+  {
+    "name": "Prometheus eduflex-api-probe",
+    "passed": true,
+    "expected": "up",
+    "actual": "up"
+  },
+  {
+    "name": "Prometheus postgres",
+    "passed": true,
+    "expected": "up",
+    "actual": "up"
+  },
+  {
+    "name": "Prometheus prometheus",
+    "passed": true,
+    "expected": "up",
+    "actual": "up"
+  },
+  {
+    "name": "Prometheus rabbitmq",
+    "passed": true,
+    "expected": "up",
+    "actual": "up"
+  },
+  {
+    "name": "Prometheus rabbitmq-queues",
+    "passed": true,
+    "expected": "up",
+    "actual": "up"
+  },
+  {
+    "name": "Prometheus redis",
+    "passed": true,
+    "expected": "up",
+    "actual": "up"
+  }
+]
