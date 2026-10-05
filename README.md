@@ -293,7 +293,18 @@ cd backend
 ./mvnw --batch-mode test
 ```
 
-The suite covers authentication utilities, AI fallback behavior, authorization and ownership, transaction rollback, date boundaries, and concurrent progress/reward behavior. The Android unit suite includes API-contract mapping checks.
+The suite covers authentication utilities, AI fallback behavior, authorization and ownership, transaction rollback, date boundaries, concurrent progress/reward behavior, and password-reset confirmation against PostgreSQL (including expired codes, reuse, and concurrent consumption). The Android unit suite includes API-contract mapping checks.
+
+With the local Compose API and dependencies running, execute the HTTP journey and the broader API/database regression checks from the repository root:
+
+```bash
+bash backend/scripts/verify-http-journey.sh
+python3 backend/scripts/verify-stack-regressions.py --report /tmp/eduflex-stack-regressions.json
+```
+
+The HTTP journey expects password-reset delivery to be disabled, matching the default local configuration. The regression runner creates disposable accounts and courses, exercises 100 simultaneous completion requests and admin CRUD, checks PostgreSQL records, and removes its fixtures and relevant cache entries. It returns a nonzero exit code for failed behavioral assertions; these include stronger enrollment, quiz-validation, quest-reward, and cache-consistency requirements that are not all implemented yet. It also invalidates shared catalogue/search caches during cleanup so deleted test courses are not served from Redis.
+
+The [October 5 E2E verification report](docs/e2e-verification-2026-10-05.md) records actual Android screen-to-API-to-database tests, screenshots, the issues reproduced, password-recovery fixes, and remaining coverage limits. Passing the unit/build checks alone does not establish that all application workflows pass.
 
 Run the complete Android verification required before delivery:
 

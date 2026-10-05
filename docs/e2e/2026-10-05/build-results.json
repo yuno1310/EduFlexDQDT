@@ -1,0 +1,21 @@
+{
+  "backend": {
+    "tests": 32,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "androidUnit": {
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "initialGradleForcedRerunPassed": true,
+  "postFixGradlePassed": true,
+  "debugLint": {
+    "errors": 0,
+    "warnings": 369
+  },
+  "releaseSigned": false
+}

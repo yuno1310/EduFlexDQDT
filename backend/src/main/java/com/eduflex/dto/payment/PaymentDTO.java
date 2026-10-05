@@ -14,6 +14,7 @@ public class PaymentDTO {
 
   public record ProcessPaymentResponse(
       boolean success,
-      String message) {
+      String message,
+      boolean simulated) {
   }
 }

@@ -18,19 +18,17 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.eduflex.android.R;
 import com.eduflex.android.api.ApiClient;
-import com.eduflex.android.api.CourseApi;
 import com.eduflex.android.api.PaymentApi;
 import com.eduflex.android.auth.TokenManager;
 import com.eduflex.android.cart.CartManager;
 import com.eduflex.android.model.CartItem;
-import com.eduflex.android.model.EnrollRequest;
-import com.eduflex.android.model.EnrollResponse;
 import com.eduflex.android.model.PaymentRequest;
 import com.eduflex.android.model.PaymentResponse;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -51,7 +49,6 @@ public class PaymentFragment extends Fragment {
     private String courseId;
 
     private PaymentApi paymentApi;
-    private CourseApi courseApi;
     private TokenManager tokenManager;
 
     public PaymentFragment() {
@@ -67,7 +64,6 @@ public class PaymentFragment extends Fragment {
         }
 
         paymentApi = ApiClient.createAuthenticatedService(PaymentApi.class);
-        courseApi = ApiClient.createAuthenticatedService(CourseApi.class);
         tokenManager = new TokenManager(requireContext());
 
         bindViews(view);
@@ -180,24 +176,28 @@ public class PaymentFragment extends Fragment {
 
         setLoading(true);
 
-        // Fake checkout: fire enroll API for each cart item, then clear cart and show success
+        AtomicBoolean failed = new AtomicBoolean(false);
         AtomicInteger pending = new AtomicInteger(cartItems.size());
         for (CartItem item : cartItems) {
-            courseApi.enrollCourse(item.getCourseId(), new EnrollRequest(userId))
-                    .enqueue(new Callback<EnrollResponse>() {
+            paymentApi.processPayment(new PaymentRequest(userId, item.getCourseId()))
+                    .enqueue(new Callback<PaymentResponse>() {
                         @Override
-                        public void onResponse(@NonNull Call<EnrollResponse> call,
-                                               @NonNull Response<EnrollResponse> response) {
+                        public void onResponse(@NonNull Call<PaymentResponse> call,
+                                               @NonNull Response<PaymentResponse> response) {
                             if (!isAdded()) return;
-                            Log.d(TAG, "Enrolled in " + item.getCourseId() + ": " + response.code());
-                            if (pending.decrementAndGet() == 0) onAllEnrolled();
+                            boolean succeeded = response.isSuccessful() && response.body() != null
+                                    && response.body().isSuccess();
+                            if (!succeeded) failed.set(true);
+                            Log.d(TAG, "Simulated checkout for " + item.getCourseId() + ": " + response.code());
+                            if (pending.decrementAndGet() == 0) finishCheckout(failed.get());
                         }
 
                         @Override
-                        public void onFailure(@NonNull Call<EnrollResponse> call, @NonNull Throwable t) {
+                        public void onFailure(@NonNull Call<PaymentResponse> call, @NonNull Throwable t) {
                             if (!isAdded()) return;
-                            Log.e(TAG, "Enroll failed for " + item.getCourseId() + ": " + t.getMessage());
-                            if (pending.decrementAndGet() == 0) onAllEnrolled();
+                            failed.set(true);
+                            Log.e(TAG, "Checkout failed for " + item.getCourseId() + ": " + t.getMessage());
+                            if (pending.decrementAndGet() == 0) finishCheckout(true);
                         }
                     });
         }
@@ -274,10 +274,16 @@ public class PaymentFragment extends Fragment {
         }
     }
 
-    private void onAllEnrolled() {
+    private void finishCheckout(boolean failed) {
         setLoading(false);
+        if (failed) {
+            Toast.makeText(requireContext(),
+                    "Some courses could not be enrolled. Retry the simulation.", Toast.LENGTH_LONG).show();
+            return;
+        }
         CartManager.getInstance().clear();
-        Toast.makeText(requireContext(), "Payment successful! You are now enrolled.", Toast.LENGTH_LONG).show();
+        Toast.makeText(requireContext(),
+                "Simulation completed. No real payment method was charged.", Toast.LENGTH_LONG).show();
         NavHostFragment.findNavController(PaymentFragment.this).popBackStack();
     }
 

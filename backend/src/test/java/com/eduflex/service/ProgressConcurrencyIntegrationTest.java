@@ -5,14 +5,19 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Clock;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HexFormat;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -50,6 +55,7 @@ import com.eduflex.dto.user.LogInDTO.LogInRequest;
 import com.eduflex.repository.enrollment.EnrollmentRepository;
 import com.eduflex.repository.gamification.GamificationStatsRepository;
 import com.eduflex.repository.lesson.LessonProgressRepository;
+import com.eduflex.repository.user.PasswordResetTokenRepository;
 import com.eduflex.security.RefreshTokenService;
 import com.eduflex.service.gamification.CheckAndAwardBadgesUseCase;
 import com.eduflex.service.gamification.DailyCheckinUseCase;
@@ -65,7 +71,8 @@ import org.springframework.transaction.annotation.Transactional;
     "spring.cache.type=none",
     "spring.datasource.hikari.maximum-pool-size=32",
     "JwtSecret=integration-test-secret-that-is-at-least-32-bytes",
-    "JwtExpirationMs=900000"
+    "JwtExpirationMs=900000",
+    "eduflex.payment.simulation-enabled=true"
 })
 @AutoConfigureMockMvc
 class ProgressConcurrencyIntegrationTest {
@@ -165,6 +172,7 @@ class ProgressConcurrencyIntegrationTest {
   @Autowired MockMvc mockMvc;
   @Autowired LogInUseCase logIn;
   @Autowired PasswordEncoder passwordEncoder;
+  @Autowired PasswordResetTokenRepository passwordResetTokens;
 
   @MockitoBean RefreshTokenService refreshTokenService;
 
@@ -482,6 +490,146 @@ class ProgressConcurrencyIntegrationTest {
 
     assertThat(statsRepository.findByUserId(unenrolledUser)).isNull();
     assertThat(dsl.fetchCount(dsl.selectFrom("lesson_progress"))).isZero();
+  }
+
+  @Test
+  void profileUpdateRejectsAnotherAuthenticatedUser() throws Exception {
+    UUID owner = createUser();
+    UUID attacker = createUser();
+
+    mockMvc.perform(put("/api/user/update-profile/{userId}", owner)
+            .with(authentication(auth(attacker, "ROLE_USER")))
+            .contentType("application/json")
+            .content("{\"fullName\":\"Taken over\"}"))
+        .andExpect(status().isForbidden());
+
+    assertThat(dsl.fetchValue("SELECT full_name FROM users WHERE user_id = ?", owner))
+        .isEqualTo("Integration User");
+  }
+
+  @Test
+  void aiAssistanceRequiresCourseEnrollment() throws Exception {
+    Fixture fixture = createFixture(1);
+    UUID outsider = createUser();
+
+    mockMvc.perform(get("/api/course/{courseId}/ai-summary", fixture.courseId())
+            .with(authentication(auth(outsider, "ROLE_USER"))))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void paidCourseRejectsFreeEnrollmentAndSimulationIsIdempotent() throws Exception {
+    UUID userId = createUser();
+    UUID courseId = UUID.randomUUID();
+    dsl.execute("INSERT INTO courses (course_id, title, learning_model, status, price) "
+        + "VALUES (?, 'Paid course', 'self-paced', 'active', 2500)", courseId);
+
+    String body = "{\"userId\":\"" + userId + "\"}";
+    mockMvc.perform(post("/api/enrollment/{courseId}/register", courseId)
+            .with(authentication(auth(userId, "ROLE_USER")))
+            .contentType("application/json").content(body))
+        .andExpect(status().isBadRequest());
+
+    String payment = "{\"userId\":\"" + userId + "\",\"courseId\":\"" + courseId + "\"}";
+    for (int i = 0; i < 2; i++) {
+      mockMvc.perform(post("/api/payment")
+              .with(authentication(auth(userId, "ROLE_USER")))
+              .contentType("application/json").content(payment))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.simulated").value(true));
+    }
+
+    assertThat(dsl.fetchCount(dsl.selectFrom("transactions"))).isEqualTo(1);
+    assertThat(dsl.fetchCount(dsl.selectFrom("enrollments"))).isEqualTo(1);
+  }
+
+  @Test
+  void paymentRejectsAnotherAuthenticatedUser() throws Exception {
+    UUID owner = createUser();
+    UUID attacker = createUser();
+    UUID courseId = UUID.randomUUID();
+    dsl.execute("INSERT INTO courses (course_id, title, learning_model, status, price) "
+        + "VALUES (?, 'Paid course', 'self-paced', 'active', 2500)", courseId);
+
+    mockMvc.perform(post("/api/payment")
+            .with(authentication(auth(attacker, "ROLE_USER")))
+            .contentType("application/json")
+            .content("{\"userId\":\"" + owner + "\",\"courseId\":\"" + courseId + "\"}"))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void passwordResetTokenIsSingleUseAndExpires() {
+    UUID userId = createUser();
+    LocalDateTime now = LocalDateTime.of(2026, 9, 24, 2, 0);
+    passwordResetTokens.replaceForUser(userId, "active-hash", now.plusMinutes(15));
+
+    assertThat(passwordResetTokens.consume("active-hash", now)).isEqualTo(userId);
+    assertThat(passwordResetTokens.consume("active-hash", now)).isNull();
+
+    passwordResetTokens.replaceForUser(userId, "expired-hash", now.minusSeconds(1));
+    assertThat(passwordResetTokens.consume("expired-hash", now)).isNull();
+  }
+
+  @Test
+  void passwordResetEndpointRejectsUnknownTokenWithoutServerError() throws Exception {
+    mockMvc.perform(post("/api/user/reset-password")
+            .contentType("application/json")
+            .content("{\"token\":\"unknown-code\",\"newPassword\":\"Renewed1!Pass\"}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false));
+  }
+
+  @Test
+  void passwordResetEndpointUpdatesPasswordAndRejectsReuse() throws Exception {
+    UUID userId = createUser();
+    seedResetCode(userId, "single-use-code", LocalDateTime.now(Clock.systemUTC()).plusMinutes(15));
+    String body = "{\"token\":\"single-use-code\",\"newPassword\":\"Renewed1!Pass\"}";
+
+    mockMvc.perform(post("/api/user/reset-password").contentType("application/json").content(body))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true));
+    assertThat(passwordEncoder.matches("Renewed1!Pass",
+        dsl.fetchOne("SELECT password_hash FROM users WHERE user_id = ?", userId)
+            .get(0, String.class))).isTrue();
+    org.mockito.Mockito.verify(refreshTokenService).revokeAllTokens(userId);
+    mockMvc.perform(post("/api/user/reset-password").contentType("application/json").content(body))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void passwordResetEndpointRejectsExpiredCodeWithoutChangingPassword() throws Exception {
+    UUID userId = createUser();
+    seedResetCode(userId, "expired-code", LocalDateTime.now(Clock.systemUTC()).minusMinutes(1));
+
+    mockMvc.perform(post("/api/user/reset-password")
+            .contentType("application/json")
+            .content("{\"token\":\"expired-code\",\"newPassword\":\"Renewed1!Pass\"}"))
+        .andExpect(status().isBadRequest());
+    assertThat(dsl.fetchOne("SELECT password_hash FROM users WHERE user_id = ?", userId)
+        .get(0, String.class)).isEqualTo("unused");
+    assertThat(dsl.fetchOne("SELECT used_at FROM password_reset_tokens WHERE user_id = ?", userId)
+        .get(0, LocalDateTime.class)).isNull();
+  }
+
+  @Test
+  void concurrentPasswordResetConfirmationsConsumeCodeOnce() throws Exception {
+    UUID userId = createUser();
+    seedResetCode(userId, "concurrent-code", LocalDateTime.now(Clock.systemUTC()).plusMinutes(15));
+    List<Integer> statuses = concurrently(20, () -> mockMvc.perform(post("/api/user/reset-password")
+            .contentType("application/json")
+            .content("{\"token\":\"concurrent-code\",\"newPassword\":\"Renewed1!Pass\"}"))
+        .andReturn().getResponse().getStatus());
+
+    assertThat(statuses.stream().filter(code -> code == 200).count()).isEqualTo(1);
+    assertThat(statuses.stream().filter(code -> code == 400).count()).isEqualTo(19);
+    org.mockito.Mockito.verify(refreshTokenService, org.mockito.Mockito.times(1)).revokeAllTokens(userId);
+  }
+
+  private void seedResetCode(UUID userId, String code, LocalDateTime expiresAt) throws Exception {
+    String digest = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+        .digest(code.getBytes(StandardCharsets.UTF_8)));
+    passwordResetTokens.replaceForUser(userId, digest, expiresAt);
   }
 
   private Fixture createFixture(int lessonCount) {

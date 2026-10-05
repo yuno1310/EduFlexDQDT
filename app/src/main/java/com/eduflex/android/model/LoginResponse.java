@@ -8,6 +8,7 @@ public class LoginResponse {
     private String message;
     @SerializedName(value = "accessToken", alternate = {"token"})
     private String token;
+    private String refreshToken;
     private String role;
     private String fullName;
     private String email;
@@ -16,6 +17,7 @@ public class LoginResponse {
     public boolean isSuccess() { return success; }
     public String getMessage() { return message; }
     public String getToken() { return token; }
+    public String getRefreshToken() { return refreshToken; }
     public String getRole() { return role != null ? role : "user"; }
     public String getFullName() { return fullName; }
     public String getEmail() { return email; }

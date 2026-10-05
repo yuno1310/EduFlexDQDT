@@ -5,6 +5,8 @@ import android.content.Context;
 import com.eduflex.android.BuildConfig;
 import com.eduflex.android.auth.SessionManager;
 import com.eduflex.android.auth.TokenManager;
+import com.eduflex.android.model.RefreshTokenRequest;
+import com.eduflex.android.model.RefreshTokenResponse;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Cache;
@@ -27,6 +29,9 @@ public class ApiClient {
     private static TokenManager tokenManager;
     private static Context appContext;
     private static Cache httpCache;
+    private static TokenRefreshCoordinator refreshCoordinator;
+    private static final ThreadLocal<Boolean> REFRESH_NETWORK_FAILURE =
+            ThreadLocal.withInitial(() -> false);
 
     /**
      * Initialise with application context so the auth interceptor can read the
@@ -35,6 +40,19 @@ public class ApiClient {
     public static void init(Context context) {
         appContext = context.getApplicationContext();
         tokenManager = new TokenManager(appContext);
+        refreshCoordinator = new TokenRefreshCoordinator(
+                new TokenRefreshCoordinator.TokenStore() {
+                    public String accessToken() { return tokenManager.getToken(); }
+                    public String refreshToken() { return tokenManager.getRefreshToken(); }
+                    public void saveAccessToken(String token) { tokenManager.saveToken(token); }
+                },
+                refreshToken -> {
+                    retrofit2.Response<RefreshTokenResponse> response = createService(AuthApi.class)
+                            .refresh(new RefreshTokenRequest(refreshToken)).execute();
+                    RefreshTokenResponse body = response.body();
+                    return response.isSuccessful() && body != null && body.isSuccess()
+                            ? body.getAccessToken() : null;
+                });
         httpCache = new Cache(new File(appContext.getCacheDir(), "http_cache"), 10L * 1024L * 1024L);
     }
 
@@ -83,6 +101,7 @@ public class ApiClient {
                     .writeTimeout(30, TimeUnit.SECONDS)
                     .callTimeout(45, TimeUnit.SECONDS)
                     .retryOnConnectionFailure(true)
+                    .authenticator((route, response) -> refreshRequest(response))
                     .addInterceptor(chain -> {
                         Request.Builder builder = chain.request().newBuilder();
                         if (tokenManager != null) {
@@ -99,7 +118,9 @@ public class ApiClient {
                     })
                     .addInterceptor(chain -> {
                         Response response = chain.proceed(chain.request());
-                        if (response.code() == 401 && appContext != null) {
+                        boolean refreshNetworkFailed = REFRESH_NETWORK_FAILURE.get();
+                        REFRESH_NETWORK_FAILURE.remove();
+                        if (response.code() == 401 && appContext != null && !refreshNetworkFailed) {
                             SessionManager.forceLogout(appContext, "Session expired. Please log in again.");
                         }
                         return response;
@@ -122,5 +143,22 @@ public class ApiClient {
 
     public static <T> T createAuthenticatedService(Class<T> serviceClass) {
         return getAuthenticatedInstance().create(serviceClass);
+    }
+
+    private static int responseCount(Response response) {
+        int count = 1;
+        while ((response = response.priorResponse()) != null) count++;
+        return count;
+    }
+
+    private static Request refreshRequest(Response response) {
+        if (responseCount(response) >= 2 || refreshCoordinator == null) return null;
+        String authorization = response.request().header("Authorization");
+        String sentToken = authorization != null && authorization.startsWith("Bearer ")
+                ? authorization.substring("Bearer ".length()) : null;
+        TokenRefreshCoordinator.Result result = refreshCoordinator.refresh(sentToken);
+        if (result.networkFailure()) REFRESH_NETWORK_FAILURE.set(true);
+        return result.accessToken() == null ? null : response.request().newBuilder()
+                .header("Authorization", "Bearer " + result.accessToken()).build();
     }
 }

@@ -1,0 +1,146 @@
+[
+  {
+    "name": "UI checkout persists payment",
+    "passed": true,
+    "expected": 1,
+    "actual": 1
+  },
+  {
+    "name": "UI quiz persists one attempt",
+    "passed": true,
+    "expected": 1,
+    "actual": 1
+  },
+  {
+    "name": "UI quiz reaches full course progress",
+    "passed": true,
+    "expected": 100,
+    "actual": 100.0
+  },
+  {
+    "name": "UI quiz plus login XP",
+    "passed": true,
+    "expected": 90,
+    "actual": 90
+  },
+  {
+    "name": "UI quiz course completion badge",
+    "passed": true,
+    "expected": 1,
+    "actual": 1
+  },
+  {
+    "name": "UI review comment persists",
+    "passed": true,
+    "expected": "E2E Android review persisted",
+    "actual": "E2E Android review persisted"
+  },
+  {
+    "name": "Course details immediately reflect completed quiz",
+    "passed": false,
+    "expected": "100%",
+    "actual": "0%"
+  },
+  {
+    "name": "Reopened course reflects completed quiz",
+    "passed": false,
+    "expected": "100%",
+    "actual": "0%"
+  },
+  {
+    "name": "UI profile name persists",
+    "passed": true,
+    "expected": "E2E Updated",
+    "actual": "E2E Updated"
+  },
+  {
+    "name": "App replaces rejected access token using refresh session",
+    "passed": true,
+    "expected": true,
+    "actual": true
+  },
+  {
+    "name": "API outage shows Retry",
+    "passed": true,
+    "expected": "Retry",
+    "actual": "Retry"
+  },
+  {
+    "name": "Retry reloads enrolled course after recovery",
+    "passed": true,
+    "expected": true,
+    "actual": true
+  },
+  {
+    "name": "Session survives temporary API outage",
+    "passed": true,
+    "expected": true,
+    "actual": true
+  },
+  {
+    "name": "Admin login opens user management",
+    "passed": true,
+    "expected": true,
+    "actual": true
+  },
+  {
+    "name": "Admin UI course create persists",
+    "passed": true,
+    "expected": 1,
+    "actual": 1
+  },
+  {
+    "name": "Admin newly created course appears after refresh",
+    "passed": false,
+    "expected": true,
+    "actual": false
+  },
+  {
+    "name": "Admin UI edit persists after explicit cache workaround",
+    "passed": true,
+    "expected": true,
+    "actual": true
+  },
+  {
+    "name": "Admin UI lesson create persists",
+    "passed": true,
+    "expected": 1,
+    "actual": 1
+  },
+  {
+    "name": "Admin newly created lesson appears after refresh",
+    "passed": false,
+    "expected": true,
+    "actual": false
+  },
+  {
+    "name": "Fresh app restores course progress from DB",
+    "passed": true,
+    "expected": "100%",
+    "actual": "100%"
+  },
+  {
+    "name": "Fresh app restores completed certificate",
+    "passed": false,
+    "expected": "Congratulations! You completed this course.",
+    "actual": "Certificate is locked. Reach 100% progress to claim it."
+  },
+  {
+    "name": "Empty quiz prevents submission",
+    "passed": true,
+    "expected": false,
+    "actual": false
+  },
+  {
+    "name": "Empty quiz displays visible failure state",
+    "passed": true,
+    "expected": true,
+    "actual": true
+  },
+  {
+    "name": "Free-course Android checkout persists enrollment",
+    "passed": true,
+    "expected": 1,
+    "actual": 1
+  }
+]

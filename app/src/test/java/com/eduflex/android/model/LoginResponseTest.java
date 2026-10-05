@@ -10,9 +10,10 @@ public class LoginResponseTest {
     @Test
     public void readsAccessTokenFromBackendResponse() {
         LoginResponse response = new Gson().fromJson(
-                "{\"success\":true,\"accessToken\":\"signed-jwt\",\"role\":\"user\"}",
+                "{\"success\":true,\"accessToken\":\"signed-jwt\",\"refreshToken\":\"refresh-jwt\",\"role\":\"user\"}",
                 LoginResponse.class);
 
         assertEquals("signed-jwt", response.getToken());
+        assertEquals("refresh-jwt", response.getRefreshToken());
     }
 }

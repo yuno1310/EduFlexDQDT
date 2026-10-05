@@ -10,6 +10,15 @@
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit,matrix,backgrounds,calc}
 \usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{placeins}
+\usepackage{etoolbox}
+\AtBeginEnvironment{tikzpicture}{\setstretch{1}}
+\setlength{\emergencystretch}{2em}
+\renewcommand{\arraystretch}{1.15}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+\captionsetup{font=small,labelfont=bf,skip=8pt}
+\setlist{itemsep=3pt,parsep=0pt}
 \def\UrlBreaks{\do\/\do\-\do\_\do\{\do\}}
 \hypersetup{colorlinks=true,linkcolor=blue!55!black,citecolor=blue!55!black,
 urlcolor=blue!65!black,pdftitle={EduFlex Mobile Learning Platform}}
@@ -27,7 +36,12 @@ numberstyle=\tiny\color{black!45},numbersep=8pt}
 \newcommand{\studentname}{Vu Thanh Dat}
 \newcommand{\studentid}{23127346}
 \newcommand{\supervisor}{Dr.\ Truong Toan Thinh}
-\newcommand{\submissiondate}{[Month Year]}
+\newcommand{\submissiondate}{October 2026}
+% One source of truth for the fresh backend verification in this report.
+\newcommand{\backendtests}{28}
+\newcommand{\integrationtests}{23}
+\newcommand{\migrationcount}{28}
+\newcommand{\verificationdate}{4 October 2026}
 
 \input{diagrams}
 
@@ -69,37 +83,41 @@ shape both the learning experience and the engineering decisions in this report.
 
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
-EduFlex is a full-stack mobile learning platform intended to make structured study
-accessible from an Android device. Learners can discover and enrol in courses,
-study lessons, complete quizzes, save progress, earn experience points and badges,
-maintain streaks, review courses, and obtain assistance grounded in course material.
-An administration area supports the management of users, courses, lessons, and quiz
-content.
+EduFlex is a native Android learning platform that connects course discovery,
+enrolment, lesson study, assessment feedback, and visible progress. XP, streaks,
+quests, badges, and a leaderboard support continued interaction, while an
+administration area manages users and learning content. The project investigates
+how a mobile learning journey can be supported by consistent backend state and
+observable operations.
 
-The mobile client is a native Android application developed in Java with XML layouts
-and Material components. It communicates with a Spring Boot REST API using Retrofit
-and JSON Web Tokens. PostgreSQL is the system of record, Flyway manages schema
-evolution, and jOOQ supports explicit type-safe SQL. Redis provides caching and
-refresh-token revocation, while RabbitMQ moves embedding generation away from the
-synchronous request. Semantic search uses local MiniLM embeddings stored with
-pgvector. Gemini generation is optional and grounded with retrieved lesson content.
+The Java/XML client uses Material components and Retrofit to communicate with a
+Spring Boot API. PostgreSQL is authoritative; Flyway versions the schema and jOOQ
+expresses explicit SQL. Redis caches reads and tracks refresh sessions. RabbitMQ
+defers content embedding, with local MiniLM vectors stored through pgvector.
+Optional Gemini generation uses retrieved course material. Docker Compose supplies
+the local topology, GitHub Actions automates verification, and Prometheus with
+Grafana and Alertmanager exposes operational signals.
 
-Reliability is treated as a functional property. Row locks, conditional state
-transitions, constraints, and transactions protect progress and rewards from
-duplicate concurrent requests. Testcontainers verifies these rules against a real
-PostgreSQL/pgvector database. Docker Compose provides local infrastructure.
-Prometheus, Grafana, Alertmanager, and exporters provide metrics, dashboards, and
-alerts. GitHub Actions verifies the backend, monitoring configuration, Android lint,
-and debug and release builds.
+The principal engineering result is tested protection of learning transitions under
+retry and concurrency. Transactions, learner row locks, conditional writes, and
+unique constraints coordinate progress and protected rewards. On
+\verificationdate{}, all \backendtests{} backend tests passed, including
+\integrationtests{} PostgreSQL integration scenarios and a clean application of
+\migrationcount{} migrations. One hundred simultaneous duplicate lesson-completion
+calls left one progress row and one 20-XP reward. Earlier Android, live HTTP, release
+build, and monitoring records are distinguished from this fresh backend run.
 
-At the recorded revision, 20 backend tests passed, including 18 PostgreSQL integration
-scenarios. A live HTTP journey passed 26 checks, and 100 simultaneous duplicate
-completion requests produced one progress row and one 20-XP reward. These results
-demonstrate tested consistency and integration behavior; they do not establish
-learning effectiveness, usability, or production-scale performance.
+The report traces these results through architecture, data models, API contracts,
+worked progression examples, failure analysis, and operational recovery design.
+Source review also identifies incomplete assessment validation, unequal quiz
+workflows, client-reported quest activity, order-sensitive course reward eligibility,
+and broker publication gaps. These boundaries qualify the tested consistency
+claims. Learning effectiveness, usability, sustained performance, and production
+recoverability require further experiments; this report does not infer those outcomes
+from the technology stack alone.
 
 \noindent\textbf{Keywords:} mobile learning, Android, Spring Boot, PostgreSQL,
-Redis, RabbitMQ, pgvector, concurrency, observability, continuous integration.
+concurrency, semantic retrieval, messaging, observability.
 
 \tableofcontents
 \listoffigures
@@ -107,7 +125,7 @@ Redis, RabbitMQ, pgvector, concurrency, observability, continuous integration.
 
 \chapter*{List of Abbreviations}
 \addcontentsline{toc}{chapter}{List of Abbreviations}
-\begin{longtable}{>{\bfseries}p{0.18\textwidth}p{0.72\textwidth}}
+\begin{longtable}{>{\bfseries}P{0.18\textwidth}P{0.72\textwidth}}
 API & Application Programming Interface \\
 CI/CD & Continuous Integration and Continuous Delivery \\
 DTO & Data Transfer Object \\
@@ -194,7 +212,10 @@ GitHub Actions, and a local monitoring stack. Firebase push, Supabase media stor
 and Gemini generation are optional integrations. The core development build works
 without their credentials.
 
-The project does not publish a signed application to Google Play. CI release outputs
+The checkout screen records development payment simulations and does not settle
+real payments. Recovery requires configured SMTP; without it the application reports
+that recovery is unavailable. The project does not publish a signed application to
+Google Play. CI release outputs
 are unsigned inspection artifacts. Centralized logs, distributed tracing, external
 alert delivery, and automated database backup are outside the current deployment.
 
@@ -203,6 +224,14 @@ The report moves from requirements and relevant research to implementation and
 evaluation. It first explains the technology and architectural decisions, then follows
 data, mobile, API, reliability, AI, and operational concerns. The final chapters map
 claims to recorded evidence, state evaluation limits, and identify future work.
+
+The report uses three distinct evidence levels. \emph{Implemented} means that a
+behavior is present in the inspected source. \emph{Verified} means that a named test
+or recorded experiment exercised it; the evaluation chapter states the date and
+scope. \emph{Proposed} means that a design, acceptance criterion, or experiment is
+future work. This distinction applies to diagrams as well as prose. In particular,
+an acceptance-state diagram or recovery plan must not be read as a completed device
+test or an executed disaster-recovery drill.
 
 \chapter{Related Work and Design Position}
 \section{Mobile learning}
@@ -216,13 +245,12 @@ progress, feedback, retry behavior, and access to ordered material---while reser
 pedagogical effectiveness for a later learner study.
 
 \section{Gamification}
-Gamification research reports generally positive but context-dependent outcomes.
-Hamari, Koivisto, and Sarsa found that most reviewed empirical studies reported some
-positive effects, while emphasizing that results depended on the users and setting
-\cite{hamari2014}. EduFlex implements XP, levels, streaks, quests, badges, and a
-leaderboard as feedback mechanisms. It does not infer improved motivation from their
-presence. The current evaluation establishes reward consistency; a study of motivation,
-continued use, and unintended competitive pressure remains necessary.
+Hamari, Koivisto, and Sarsa found positive effects in many reviewed empirical studies,
+while emphasizing that outcomes depended on the users and setting
+\cite{hamari2014}. EduFlex uses XP, levels, streaks, quests, badges, and a leaderboard
+to make activity and progress visible. Their presence does not establish improved
+motivation. The current tests evaluate reward transitions. A learner study would
+also need to examine continued use, perceived usefulness, and competitive pressure.
 
 \section{Retrieval-grounded assistance}
 Retrieval-augmented generation combines a generator with an explicit retrievable
@@ -242,6 +270,18 @@ embedding, and monitoring are arranged around that boundary so operational featu
 not become the source of truth. The project is a full-stack engineering case study,
 not a controlled study of educational outcomes.
 
+\section{Comparison with established platforms}
+Google Classroom's mobile application centres on joining classes, assignments,
+submission, communication, and limited offline access \cite{googleclassroommobile}.
+Moodle exposes a much broader learning-management feature set through its web and
+mobile clients, including course lists, activities, badges, and offline content, with
+some capabilities differing between clients \cite{moodlemobilefeatures}. EduFlex is
+not evaluated as a replacement for either platform. Its narrower contribution is an
+inspectable reference implementation in which retry-safe progress and reward updates,
+local semantic retrieval, and operational telemetry are evaluated together. It lacks
+the mature collaboration, institutional administration, plugin ecosystem, and offline
+learning support of established systems.
+
 \chapter{Requirements Analysis}
 \section{Actors}
 The learner needs a simple path from discovery to completion. The administrator
@@ -251,7 +291,7 @@ generated text.
 
 \begin{table}[H]\centering
 \caption{Primary actors}
-\begin{tabular}{p{0.2\textwidth}p{0.7\textwidth}}\toprule
+\begin{tabular}{P{0.2\textwidth}P{0.7\textwidth}}\toprule
 \textbf{Actor} & \textbf{Responsibilities and goals}\\\midrule
 Learner & Authenticate, discover courses, enrol, study, complete quizzes, track
 progress, earn rewards, and review material.\\
@@ -262,8 +302,9 @@ External provider & Supply optional storage, notification, or generation service
 \end{table}
 
 \section{Functional requirements}
-The account module shall support registration, login, profile update, password
-recovery, token refresh, and logout. The catalogue shall support listing, categories,
+The account module shall support registration, login, owner-checked profile update,
+single-use password recovery when SMTP delivery is configured, token refresh, and
+logout. The catalogue shall support listing, categories,
 search, details, reviews, and learner enrolments. Lessons may contain study content
 or multiple-choice and fill-in-the-blank quizzes. Progress shall be saved and
 reflected in continue-learning and course completion.
@@ -274,13 +315,13 @@ using retrieved context. Administration shall restrict content and user manageme
 to an administrator role.
 
 \section{Use cases and acceptance conditions}
-\begin{longtable}{p{0.20\textwidth}p{0.34\textwidth}p{0.35\textwidth}}
+\begin{longtable}{P{0.20\textwidth}P{0.34\textwidth}P{0.35\textwidth}}
 \caption{Representative use cases and observable completion conditions}\\\toprule
 \textbf{Use case} & \textbf{Main flow} & \textbf{Acceptance condition}\\\midrule\endfirsthead
 \toprule\textbf{Use case} & \textbf{Main flow} & \textbf{Acceptance condition}\\\midrule\endhead
 Authenticate & Register or log in, then establish a session & Valid credentials open the correct role area; invalid credentials do not.\\
 Discover & Browse categories or search for a course & Results, empty state, and request failure are visibly distinct.\\
-Enrol & Select a free course or complete its payment flow & One learner-course enrolment exists and appears in My Learning.\\
+Enrol & Select a free course or run the development payment simulation & One learner-course enrolment exists; paid courses reject the free route.\\
 Study & Open ordered content and mark a lesson complete & Progress changes once and remains stable under a retry.\\
 Complete quiz & Submit multiple-choice or fill-blank answers & Result is returned and protected rewards are awarded only when eligible.\\
 Track motivation & Open statistics, quests, badges, or leaderboard & Current backend state is displayed with a recoverable error state.\\
@@ -295,18 +336,18 @@ complete merely because a screen or endpoint exists; its success, empty, denied,
 duplicate, and failure behavior must also be understandable.
 
 \section{Non-functional requirements}
-\begin{longtable}{p{0.23\textwidth}p{0.67\textwidth}}
+\begin{longtable}{P{0.20\textwidth}P{0.48\textwidth}P{0.21\textwidth}}
 \caption{Non-functional requirements}\\\toprule
-\textbf{Quality} & \textbf{Requirement}\\\midrule\endfirsthead
-\toprule\textbf{Quality} & \textbf{Requirement}\\\midrule\endhead
-Usability & Screens communicate loading, empty results, validation, and recoverable failures.\\
-Security & Passwords are hashed; signed tokens, roles, and ownership are validated.\\
-Consistency & Retries and concurrent calls do not duplicate protected rewards.\\
-Performance & Expensive or frequent reads use bounded caches; embeddings run asynchronously.\\
-Maintainability & Schema changes are versioned and application concerns are separated.\\
-Testability & Critical rules run against the real database, including rollback and concurrency.\\
-Observability & API, database, cache, broker, and learning failures can be distinguished.\\
-Portability & Docker reproduces infrastructure and Android builds without private Firebase files.\\
+\textbf{Quality} & \textbf{Observable criterion} & \textbf{Status}\\\midrule\endfirsthead
+\toprule\textbf{Quality} & \textbf{Observable criterion} & \textbf{Status}\\\midrule\endhead
+Usability & Core data screens expose loading, empty, validation, failure, and retry states. & Partially verified by source inspection; no user study.\\
+Security & Cross-user and learner-to-admin mutations return 403; reset codes expire and are single-use. & Verified for selected routes, not a penetration test.\\
+Consistency & Duplicate and concurrent protected transitions leave one database reward. & Verified by PostgreSQL tests.\\
+Performance & Cache hit ratio, request percentiles, queue delay, and saturation are measured. & Partial telemetry; no controlled benchmark or explicit queue-age metric.\\
+Maintainability & A clean database applies every migration and the documented commands compile. & Fresh backend schema check; Android build evidence is historical.\\
+Testability & Critical rules run against PostgreSQL, including rollback and concurrency. & Verified.\\
+Observability & API loss fires and resolves an alert; dependency targets are separately visible. & Historical local Compose drill.\\
+Portability & Clean Android builds work without Firebase and Compose starts core dependencies. & Historical verification for the recorded environment.\\
 \bottomrule
 \end{longtable}
 
@@ -335,14 +376,14 @@ schedules persistent local reminders \cite{workmanager}. Firebase Messaging is
 optional and activated only by an untracked configuration file.
 
 \section{Spring Boot}
-Spring Boot 3.4 provides dependency injection, web routing, validation, security,
+Spring Boot 3.4.2 provides dependency injection, web routing, validation, security,
 data access, health endpoints, and external configuration \cite{springboot}.
 Controllers translate HTTP, services contain business rules, and repositories
 isolate persistence. Springdoc provides OpenAPI and Swagger UI.
 
 \section{Persistence}
 PostgreSQL 16 supplies transactions, constraints, row locking, indexing, and vector
-extension support \cite{postgresql}. Flyway applies 27 ordered migrations
+extension support \cite{postgresql}. Flyway applies \migrationcount{} versioned migrations
 \cite{flyway}. Hibernate validates mappings without creating the schema. jOOQ
 supports operations where locking and conditional SQL must be explicit \cite{jooq}.
 pgvector stores 384-dimensional MiniLM vectors beside relational course data
@@ -356,8 +397,30 @@ repeatable builds. JUnit and Testcontainers exercise PostgreSQL/pgvector integra
 \cite{testcontainers}. GitHub Actions coordinates backend, monitoring, and Android
 verification.
 
+\begin{table}[H]\centering
+\caption{Selected declared versions in the inspected project}\label{tab:versions}
+\begin{tabular}{P{0.28\textwidth}P{0.27\textwidth}P{0.34\textwidth}}\toprule
+\textbf{Area} & \textbf{Declared version} & \textbf{Source of truth}\\\midrule
+Android platform & Compile/target SDK 35; minimum 24 & Android module build file\\
+Android language & Java 17 & Compile options\\
+Material components & 1.12.0 & Android dependencies\\
+Retrofit / OkHttp & 2.11.0 / 4.12.0 & Android dependencies\\
+WorkManager & 2.10.1 & Android dependencies\\
+Spring Boot & 3.4.2; Java target 17 & Maven parent and properties\\
+Backend verification & JDK 21; Docker Engine 29.8.1 & Recorded 4 October run\\
+Database family & PostgreSQL 16 with pgvector & Compose image and integration fixture\\
+Monitoring & Prometheus 3.5.0; Grafana 12.1.0 & Monitoring Compose file\\
+Alertmanager & 0.28.1 & Monitoring Compose file\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+These are project-declared versions and one recorded verification environment, not
+a recommendation to use the latest upstream release. The Java compilation target
+and the JDK used to run the tests are deliberately listed separately.
+
 \section{Technology selection rationale}
-\begin{longtable}{p{0.22\textwidth}p{0.34\textwidth}p{0.33\textwidth}}
+\begin{longtable}{P{0.22\textwidth}P{0.34\textwidth}P{0.33\textwidth}}
 \caption{Technology choices and project trade-offs}\\\toprule
 \textbf{Choice} & \textbf{Reason in EduFlex} & \textbf{Trade-off}\\\midrule\endfirsthead
 \toprule\textbf{Choice} & \textbf{Reason in EduFlex} & \textbf{Trade-off}\\\midrule\endhead
@@ -379,6 +442,28 @@ This distinction is central to failure handling: losing a cache entry should cos
 time, while losing an authoritative progress row would cost correctness.
 
 \chapter{System Architecture and Design}
+\section{Architectural argument}
+EduFlex is a modular application deployed as one Spring Boot process, accompanied by
+specialized data and infrastructure services. It is not a collection of independently
+deployable business microservices. Course, assessment, enrolment, and reward modules
+share one relational database and can participate in the same transaction. This is
+useful at the current scale because completing a lesson must update several related
+facts without introducing a distributed commit protocol.
+
+The design separates the \emph{authoritative path} from the \emph{derived path}.
+Authenticated learning commands reach transactional services and PostgreSQL. Catalogue
+caches and embedding vectors are derived representations: their absence or temporary
+staleness must not authorize a learner or mint a reward. The monitoring path observes
+both without becoming a dependency of each application request.
+
+\responsibilitydiagram
+
+This separation also defines what a future deployment can scale. Additional API
+instances could share PostgreSQL and Redis because critical serialization occurs in
+the database rather than a Java monitor. Embedding consumers could be separated from
+HTTP serving to isolate CPU-heavy inference. Neither topology has been load-tested
+here, so those are architectural extension points rather than demonstrated capacity.
+
 \section{Overview}
 The Android app sends JSON over HTTP and attaches an access token to authenticated
 calls. The backend owns authorization, domain rules, storage, caching, messaging,
@@ -456,6 +541,31 @@ and loopback monitoring tools. Figure~\ref{fig:deployment} shows the topology.
 
 \deploymentdiagram
 
+The embedding listener currently runs in the same application process as the HTTP
+API. The separate consumer node in the runtime figure is a logical responsibility,
+not an independently deployed worker container. In addition, the base Compose file
+persists PostgreSQL and Redis but does not mount a RabbitMQ data volume. A durable
+queue declaration consequently must not be interpreted as durable broker storage
+across container replacement.
+
+\section{Decisions and rejected alternatives}
+\begin{longtable}{P{0.23\textwidth}P{0.35\textwidth}P{0.31\textwidth}}
+\caption{Architectural decisions and their practical consequences}\\\toprule
+\textbf{Decision} & \textbf{Reason and selected behavior} & \textbf{Cost or alternative}\\\midrule\endfirsthead
+\toprule\textbf{Decision} & \textbf{Reason and selected behavior} & \textbf{Cost or alternative}\\\midrule\endhead
+Keep reward writes synchronous & A successful learning command should leave a complete, inspectable reward state & A queue-based reward service would require reconciliation and a new consistency contract.\\
+Serialize per learner in SQL & One shared lock covers related progress and XP changes across requests & Lock waits consume database connections; work inside the transaction must stay short.\\
+Keep relational and vector data together & Course filtering and semantic ranking can share a query and lifecycle & A dedicated vector service may scale separately but adds synchronization work.\\
+Use explicit jOOQ statements & Affected-row counts expose whether a transition actually happened & Generated schema metadata and handwritten SQL both require migration discipline.\\
+Publish embeddings after commit & Consumers read committed content and inference does not run inside the write transaction & Publication can fail after the database has committed.\\
+Keep Java/XML Android & Fits the project conventions and existing Material navigation & Screen state and lifecycle handling remain explicit rather than supplied by a complete reactive architecture.\\
+\bottomrule
+\end{longtable}
+
+These decisions favour a small number of clear failure boundaries. A later change
+should be justified by a measured bottleneck or product requirement, rather than by
+adding infrastructure solely to make the architecture appear more complex.
+
 \section{Request and failure boundaries}
 A mobile operation crosses the device-to-API boundary, the security-to-application
 boundary, and usually an application-to-dependency boundary. Each can fail in a
@@ -470,7 +580,7 @@ token, or unavailable database needs a distinct user message and operational sig
 
 \chapter{Database Design}
 \section{Core model}
-\begin{longtable}{p{0.25\textwidth}p{0.64\textwidth}}
+\begin{longtable}{P{0.25\textwidth}P{0.64\textwidth}}
 \caption{Principal entity groups}\label{tab:entities}\\\toprule
 \textbf{Group} & \textbf{Stored information}\\\midrule\endfirsthead
 \toprule\textbf{Group} & \textbf{Stored information}\\\midrule\endhead
@@ -491,6 +601,27 @@ is linked to the learner while badge definitions remain reusable across learners
 
 \erdmodeldiagram
 
+\section{Aggregate boundaries and relational cardinality}
+The schema distinguishes definitions from learner activity. A course and its lessons
+describe reusable content. An enrolment connects one learner to one course. Progress
+connects one learner to one lesson. Quiz attempts retain a history of submissions,
+whereas a badge award represents a singular earned relationship. Combining these
+concepts into one table would blur the difference between history and current state.
+
+\learningerdetaildiagram
+
+The detailed model in Figure~\ref{fig:learning-er-detail} makes the natural keys
+explicit. Multiple learners can use the same lesson and a learner can study many
+lessons, so progress resolves a many-to-many relationship. The unique user--lesson
+pair prevents two completion records even when callers race. Attempts intentionally
+have a different cardinality: a learner may submit an assessment several times.
+This is why single XP does not imply a single attempt row.
+
+Identity also comes from two different places. UUID primary keys identify resources,
+while the verified JWT subject identifies the caller. Supplying a valid resource UUID
+does not prove that the caller owns the associated learner record. Referential
+integrity and authorization therefore solve complementary problems.
+
 \section{Ownership and lifecycle}
 The user row is the root for authentication and learner-specific records. Removing a
 user cascades through progress and quiz activity where migrations explicitly define
@@ -506,13 +637,90 @@ Gamification statistics aggregate learner rewards, while attempts retain assessm
 history. Keeping these concepts separate allows an attempt to be audited without
 recalculating an already awarded first-pass reward.
 
+\subsection{Assessment definitions and activity records}
+A lesson may contain several questions, and each question may contain several
+answer options. Correctness is stored on the option; the learner-facing
+\texttt{GetQuizResponse} returns option identifiers and text without the correctness
+flag. The question's \texttt{points} field is returned to the client, but the current
+multiple-choice grader counts correct submitted items equally. Consequently, stored
+points are content metadata rather than an implemented weighted scoring rule.
+
+\assessmentmodeldiagram
+
+Figure~\ref{fig:assessment-model} separates the answer key from attempt history.
+The attempt table stores the learner, lesson, percentage, pass flag, and timestamp.
+It does not persist each submitted answer or a version of the question set. A later
+edit can therefore change the assessment without preserving the exact historical
+answer key that produced a previous score. A durable assessment audit would need
+versioned definitions and attempt-answer rows, rather than relying on the current
+question options to reconstruct an old submission.
+
+The hierarchy is also consequential: a quiz child points to its content parent
+through \path{parent_lesson_id}. The foreign key confirms that the parent exists,
+but does not itself require the parent to be in the same course or prevent a cycle.
+Those rules would need additional validation. The diagram represents existing
+relationships; it does not imply those missing constraints have been implemented.
+
+\subsection{Reward definitions and daily state}
+Gamification uses a statistics row for current totals and separate definitions for
+badges and quests. The seeded quests are \texttt{QUIZ\_COUNT} (ten submissions,
+100 XP), \texttt{STUDY\_TIME} (1,200 reported seconds, 80 XP), and
+\texttt{PERFECT\_RUN} (three successive perfect submissions, 60 XP).
+These values come from migration 1.2.3 and can change if the stored definitions are
+edited. The daily progress key includes the configured local date, so the same quest
+can be earned on another day without resetting yesterday's record.
+
+\rewardmodeldiagram
+
+The unique learner--badge pair protects an award, while the unique
+learner--quest--date tuple protects a daily counter. Neither uniqueness rule proves
+that the triggering learning activity actually happened. That distinction becomes
+important at the quest reporting endpoint discussed in
+Section~\ref{sec:activity-trust}.
+
+\subsection{Deletion, retention, and reserved fields}
+Deleting a course cascades to lessons and their progress and attempts through the
+declared foreign keys. Reviews and transactions have separate foreign keys whose
+original definitions do not specify the same cascade. Thus a generic course or user
+delete can be blocked by dependent rows; the report must not promise universal
+cleanup. The delete services do not implement a retention workflow or an archive of
+historical achievements. Dynamic badge conditions encode a course UUID as text
+rather than a course foreign key, so deleting a course also does not automatically
+prove that its badge definition has been removed.
+
+\begin{longtable}{P{0.24\textwidth}P{0.34\textwidth}P{0.31\textwidth}}
+\caption{Data lifecycle boundaries in the inspected implementation}\label{tab:data-lifecycle}\\\toprule
+\textbf{Data} & \textbf{Existing behavior} & \textbf{Unimplemented policy}\\\midrule\endfirsthead
+\toprule\textbf{Data} & \textbf{Existing behavior} & \textbf{Unimplemented policy}\\\midrule\endhead
+Learning activity & Selected foreign keys cascade after parent deletion & Historical retention and achievement policy\\
+Reviews and transactions & Independent foreign-key relationships & Consistent deletion or archival policy across every dependent table\\
+Embeddings & Derived vector stored with course or lesson & Versioned model migration and reconciliation\\
+Supabase media & Database records store external object URLs & Coordinated removal of remote objects and orphan detection\\
+Reset tokens & Digest, expiry, and consumed timestamp & Scheduled deletion of expired records\\
+Metrics and alerts & Bounded labels; Prometheus retention is configured & Retention and access policy for application logs and backups\\
+\bottomrule
+\end{longtable}
+
+The schema contains an \path{ai_dropout_risk_score} enrolment field. Its presence is
+not evidence of a trained predictor or an evaluated dropout model. Likewise,
+completion badges labelled ``Certified'' are in-app achievements, not independently
+accredited educational certificates.
+
 \section{Schema evolution}
-The 27 migrations begin with users and progressively add courses, lessons, quizzes,
+The \migrationcount{} migrations begin with users and progressively add courses, lessons, quizzes,
 enrolments, gamification, payment, reviews, media, lesson hierarchy, embeddings,
-quests, indexes, and constraint alignment. A clean database and an upgraded database
-therefore reach the same versioned schema. Hibernate uses schema validation so drift
-fails at startup. jOOQ source generation is explicit, allowing ordinary builds to
-run without a developer database.
+quests, indexes, and constraint alignment. Fresh verification establishes that a
+clean database reaches version 1.2.7. It does not establish that every previously
+populated deployment upgrades without data conflicts. Hibernate validates mapped
+entities at startup, while Flyway checks migration history; neither substitutes for
+an upgrade rehearsal with representative existing data. jOOQ source generation is
+explicit, allowing ordinary builds to run without a developer database.
+
+Migration 1.2.7 removes duplicate successful transaction records before installing
+its partial unique index. This is an intentional data transformation, not merely
+the addition of a column. A real upgrade should preserve a backup, record the
+affected rows, and verify the retained payment and enrolment relationships. The
+current clean-database run does not measure that upgrade impact.
 
 \section{Integrity and connections}
 Foreign keys connect activity to users and content. Unique constraints protect
@@ -521,7 +729,7 @@ course, progress, ranking, and lookup paths. Constraints remain necessary even w
 application code checks for an existing row because simultaneous transactions can
 both pass a pre-insert check.
 
-\begin{longtable}{p{0.27\textwidth}p{0.31\textwidth}p{0.31\textwidth}}
+\begin{longtable}{P{0.27\textwidth}P{0.31\textwidth}P{0.31\textwidth}}
 \caption{Selected integrity rules and their purpose}\label{tab:constraints}\\\toprule
 \textbf{Data} & \textbf{Database rule} & \textbf{Invariant protected}\\\midrule\endfirsthead
 \toprule\textbf{Data} & \textbf{Database rule} & \textbf{Invariant protected}\\\midrule\endhead
@@ -530,6 +738,7 @@ Lesson progress & Unique user--lesson pair & One authoritative completion transi
 Gamification statistics & Unique user identifier & Concurrent initialization cannot create two totals.\\
 Badge award & Unique user--badge pair & A badge definition may be reused but its award is singular per learner.\\
 Course review & Unique user--course pair & A learner maintains one review for a course.\\
+Successful checkout & Partial unique user--course index where status is SUCCESS & Retries converge on one successful simulation record.\\
 Daily quest progress & Unique user--quest--date tuple & Daily work cannot create duplicate counters.\\
 Badge definition & Unique condition type & Concurrent course completion reuses one definition.\\
 Dependent learning rows & Foreign keys with selected cascades & User and content deletion has a defined direction.\\
@@ -552,6 +761,34 @@ The current MiniLM model produces 384 values. A future model change with a diffe
 dimension would require a planned migration and complete re-embedding. Recording the
 model identity with future vectors would make mixed-model transitions safer.
 
+\section{Queries, indexes, and connection budget}
+The application uses a HikariCP pool with a default maximum of ten connections and
+two minimum idle connections. Each active database transaction occupies a connection,
+including time spent waiting for a learner row lock. Increasing the pool without
+understanding query duration can move contention from the application to PostgreSQL.
+The 32-connection integration-test setting is intentionally different and is not a
+recommended runtime pool size.
+
+Relational uniqueness supports enrolment and progress lookups. The semantic migration
+adds IVFFlat cosine indexes with 50 lists to course and lesson embeddings. Such an
+index is a search mechanism, not evidence that every query uses it or meets a latency
+target. Query plans should be inspected on a representative dataset, and approximate
+retrieval should be compared with an exact baseline before tuning lists or probes
+\cite{pgvector}.
+
+Migration \path{V1_2_7__secure_password_reset_and_payment_idempotency.sql} adds a
+partial unique index for successful user--course transactions. Failed or non-success
+history does not occupy that uniqueness boundary. Before applying the index, the
+migration removes duplicate successful records; this is a data-changing upgrade and
+would require backup and audit review in a deployment with real financial records.
+The same migration adds hashed reset tokens with expiry and consumption timestamps.
+
+\begin{lstlisting}[language=SQL,caption={Implemented uniqueness for a successful development payment}]
+CREATE UNIQUE INDEX uq_successful_transaction_user_course
+  ON transactions (user_id, course_id)
+  WHERE status = 'SUCCESS';
+\end{lstlisting}
+
 \chapter{Mobile Application Implementation}
 \section{User experience}
 The UI shares a Material 3 theme, colors, typography, cards, and bottom navigation.
@@ -559,13 +796,17 @@ Home presents learner status and continuation. Discover and Search expose the
 catalogue. My Learning shows enrolments. Course Detail links to study, reviews, and
 AI assistance. Profile and gamification screens present personal progress.
 
-Data-driven screens explicitly show loading, empty results, and retryable failures.
-This prevents a blank screen from being interpreted as success or a crash.
+The screen review looks for loading, empty results, and retryable failures, with
+source evidence for representative catalogue and learning screens. These states
+help prevent a blank screen from being interpreted as success or a crash; their
+complete device coverage remains an evaluation task.
 
 The learner journey in Figure~\ref{fig:learner-journey} connects UI decisions to
 backend state changes. Free and paid courses converge on one enrolment concept.
-Content and quiz lessons also converge before reward evaluation, which keeps the
-mobile interface focused on interaction while the backend determines correctness.
+Content completion and multiple-choice first passes converge on protected progress
+updates. Fill-in-the-blank currently provides feedback through a separate, less
+complete backend path. The client should render the distinction instead of assuming
+that every successful quiz response proves a course-state transition.
 
 \learnerjourneydiagram
 
@@ -574,7 +815,7 @@ lesson; completed courses retain their terminal completion state.
 
 \begin{table}[H]\centering
 \caption{Implemented learner screens and required visible states}\label{tab:ui-states}
-\begin{tabular}{p{0.24\textwidth}p{0.31\textwidth}p{0.34\textwidth}}\toprule
+\begin{tabular}{P{0.24\textwidth}P{0.31\textwidth}P{0.34\textwidth}}\toprule
 \textbf{Screen} & \textbf{Successful content} & \textbf{Non-success state}\\\midrule
 Home & Statistics and continuation cards & Loading, absent progress, retryable request failure\\
 Discover/Search & Course cards and filtered results & Loading, empty result, clear query, retry\\
@@ -610,17 +851,66 @@ network failures keep a retry action close to the failed content. Debug HTTP log
 supports development diagnosis, and disabling it in release avoids routine token and
 payload exposure in release logs.
 
+\subsection{Coordinating concurrent token refresh}
+A mobile screen can issue several requests while its access token expires. If every
+401 independently refreshes the session, the device creates unnecessary network calls
+and races to update local credentials. \texttt{TokenRefreshCoordinator} synchronizes
+the refresh decision. After entering the synchronized method, a caller compares the
+token it sent with the token currently stored. If another request already installed a
+replacement, the caller reuses that value; otherwise it performs the refresh.
+
+\tokenrefreshdiagram
+
+The OkHttp authenticator bounds the retry chain to avoid an infinite refresh loop.
+The refresh request uses the unauthenticated Retrofit client so that it does not invoke
+its own authenticator recursively. An I/O failure is distinguished from an invalid
+refresh response: transient connectivity does not immediately erase the saved session.
+The existing Android unit test exercises concurrent expired requests and verifies that
+they share one refresh call. This is an in-process coordination property; it does not
+claim synchronization across devices or processes.
+
+\subsection{Transport budgets and device state}
+The clients configure a ten-second connection timeout, thirty-second read and write
+timeouts, and a forty-five-second total call budget. These values bound waiting on a
+dependency; they do not define a measured user-facing performance objective. The
+ten-megabyte OkHttp disk cache follows HTTP cache semantics and should not be confused
+with a complete offline course store.
+
+Local session data supplies navigation and bearer credentials, but the backend remains
+the authority for enrolment and rewards. The optional \texttt{X-User-Id} request header
+is not proof of identity: ownership checks use the authenticated principal. A production
+mobile threat review should also examine credential storage, device compromise, and
+TLS configuration rather than assuming that JWT usage secures every client boundary.
+
+The inspected main manifest enables cleartext traffic and application backup; the
+token manager persists session values in ordinary SharedPreferences. Those are
+concrete development defaults, not an encrypted transport or credential-storage
+guarantee. A production variant needs a deliberate HTTPS/network policy and a review
+of backup and local session handling. Release HTTP logging being disabled addresses
+one disclosure path while leaving these separate policies unresolved.
+
+Study-time reporting also has a device lifecycle boundary. The lesson fragment
+records elapsed foreground time between \texttt{onResume} and \texttt{onPause}, then
+posts the measured seconds to the quest endpoint. The callback logs a network failure
+but does not persist a retryable event. This measures foreground elapsed time rather
+than attention, and it can lose a contribution when delivery fails. A future offline
+outbox for study events would need server deduplication as well as persistent client
+storage; replay without an event identifier could otherwise credit the same interval
+twice.
+
 \section{Learning and engagement}
 Lessons render content or open multiple-choice and fill-in-the-blank quiz flows.
-Quiz results are sent to the backend so correctness, first-pass rewards, quests, and
-completion are decided centrally. Gamification displays XP, levels, streaks, quests,
+Multiple-choice answers are graded on the backend, where first-pass rewards and
+completion are coordinated. Fill-in-the-blank returns answer feedback but does not
+currently persist an attempt or award those rewards. Gamification displays XP, levels, streaks, quests,
 badges, and leaderboard position. WorkManager provides local reminders; optional
 Firebase Messaging provides remote notifications.
 
-Course completion is derived from required content and assessment state rather than
-from a button controlled by the device. The client submits the event and renders the
-returned result. This allows another device or a retried request to observe the same
-server state. The progress state model is discussed in the reliability chapter.
+Course progress counts top-level lessons. A first multiple-choice pass can mark both
+the quiz child and its parent complete; a child is excluded from the percentage's
+denominator. This is the implemented learning policy, not proof that every assessment
+in a course has been completed. The client submits the event and renders returned
+state. The reliability chapter explains this calculation and its trade-offs.
 
 \section{UI quality and accessibility considerations}
 Material components provide consistent touch targets, typography, colors, and control
@@ -633,6 +923,17 @@ back navigation, loading, empty, and offline states. Further accessibility work 
 add automated contrast and content-description checks plus TalkBack traversal tests.
 Those checks are proposed work and are not claimed as completed evaluation.
 
+\screenstatediagram
+
+Figure~\ref{fig:screen-state} documents the screen-state contract used to review data
+screens. Loading means that the outcome is still unknown; empty means that a successful
+query found no records; failure means that the query did not establish a result.
+After a learning submission, the client should render authoritative returned state
+rather than increment XP locally. During a retry it should preserve the selected
+course and lesson so the learner can recover without repeating navigation.
+The diagram is an acceptance model, not a claim that every branch has been exercised
+on every Android screen.
+
 \section{Build variants}
 The debug APK is installable for development. The release variant enables minification,
 optimization, and resource shrinking. CI verifies release APK and AAB generation,
@@ -643,8 +944,9 @@ but the artifacts remain unsigned and are not store-ready.
 Routes cover users, authentication, courses, lessons, enrolment, progress, quizzes,
 payments, reviews, media, gamification, badges, quests, and administration.
 Swagger UI is available at \texttt{/swagger-ui/index.html} and OpenAPI at
-\texttt{/v3/api-docs}. Validation and centralized exception handling make input and
-failure responses consistent.
+\texttt{/v3/api-docs}. Bean validation and centralized advice provide common input
+and failure handling for selected contracts; validation coverage and response shapes
+are not yet uniform across all controllers.
 
 The API is organized around resources rather than individual screens. Android may
 change its navigation without renaming the progress or course contract. Read routes
@@ -668,7 +970,7 @@ by security rules. The complete generated contract remains available through Ope
 the report groups related endpoints so the reader can understand responsibility and
 access without reproducing a large machine-generated document.
 
-\begin{longtable}{p{0.19\textwidth}p{0.70\textwidth}}
+\begin{longtable}{P{0.19\textwidth}P{0.70\textwidth}}
 \caption{Representative API contracts}\label{tab:api-contracts}\\\toprule
 \textbf{Operation} & \textbf{Contract, success, and failure boundary}\\\midrule\endfirsthead
 \toprule\textbf{Operation} & \textbf{Contract, success, and failure boundary}\\\midrule\endhead
@@ -686,13 +988,100 @@ A representative successful response is:
 \begin{lstlisting}[language={},caption={Lesson-completion response contract}]
 {
   "success": true,
-  "message": "Lesson progress saved",
+  "message": "...",
   "newProgressPercent": 50.0
 }
 \end{lstlisting}
+The omitted message is human-readable and varies with the transition. Clients
+should use the boolean and percentage fields rather than parsing reward numbers or
+course completion out of message text. The example shows field shape, not a captured
+production response.
 The request has no client idempotency key. Protected idempotency comes from the unique
 user--lesson row and conditional transaction. Quiz attempts have a different boundary
 and can still duplicate history after a lost response, as discussed later.
+
+\section{Assessment execution and grading boundaries}
+\label{sec:assessment-execution}
+The two submission endpoints share caller ownership checks but do not share the
+same application workflow. Multiple choice invokes a transactional use case that
+checks enrolment and lesson type, grades option membership, records an attempt,
+updates daily quests, and conditionally awards first-pass benefits. Fill-in-the-blank
+compares submitted text with stored correct option text after trimming and ignoring
+case. It returns per-question feedback without executing the transactional progress
+workflow.
+
+\quizworkflowdiagram
+
+\begin{longtable}{P{0.25\textwidth}P{0.32\textwidth}P{0.32\textwidth}}
+\caption{Implemented assessment behavior by submission type}\label{tab:quiz-behavior}\\\toprule
+\textbf{Concern} & \textbf{Multiple choice} & \textbf{Fill-in-the-blank}\\\midrule\endfirsthead
+\toprule\textbf{Concern} & \textbf{Multiple choice} & \textbf{Fill-in-the-blank}\\\midrule\endhead
+Caller identity & JWT owner check in controller & JWT owner check in controller\\
+Resource scope & Enrolment, quiz lesson, question--option membership & Submitted question IDs; no enrolment or lesson-membership check in the use case\\
+Grading & Equal item count; pass at 50\%; percentage rounded to one decimal & Trimmed, case-insensitive exact text comparison\\
+History & Every valid submission records an attempt & No attempt persisted\\
+Rewards & First pass gives 30 XP; quests evaluated on every submission & No first-pass XP or quest update\\
+Progress & First pass completes quiz and any parent lesson & No lesson or course update\\
+Feedback & Score, pass flag, optional course state and completed quests & Per-item correctness and expected answer\\
+\bottomrule
+\end{longtable}
+
+The multiple-choice SQL joins the supplied option to its question and the selected
+lesson, preventing a correct option from another lesson from being counted as a
+correct response. This is useful scope protection, but the use case sets
+\texttt{totalQuestions} to the size of the submitted list. It does not compare that
+list with the authoritative complete question set or reject repeated question IDs.
+For a four-question quiz, a submission containing one correct item is consequently
+computed as $1/1 = 100\%$, rather than $1/4 = 25\%$. Repeating a correct question
+can similarly distort the assessment and perfect-run count. These examples are
+deduced from the inspected grading loop, not presented as new live HTTP test results.
+
+Correct grading should first resolve the server-owned question set, require exactly
+one allowed answer per required question, reject unknown and duplicated identifiers,
+and then calculate the score against that set. Whether questions have equal weights
+or use stored points should be an explicit contract. No concurrency mechanism can
+repair a score computed from an invalid submission.
+
+The fill-in-the-blank path has additional gaps. Its \texttt{lessonId} is not used
+to restrict question lookup, and missing answer-key data can reach a null list before
+feedback is built. That is a server-error risk rather than a deliberate ``question
+not found'' response. The request also lacks the equivalent bean-validation coverage.
+These are reported implementation defects, not limitations inherent to text questions.
+The next implementation should reuse the validated assessment scope and define
+whether this mode is practice-only or earns the same persisted progression.
+
+\section{Activity trust and overlapping contracts}
+\label{sec:activity-trust}
+An owner check establishes whose record a caller can change. It does not establish
+that the caller studied, attempted a quiz, or measured time honestly. The daily quest
+progress endpoint currently accepts a \texttt{questType} and arbitrary integer
+\texttt{increment} from the authenticated owner. The service can award a quest when
+the resulting count reaches its target. This preserves one completion reward per
+day, but allows client-reported activity to qualify without server-observed evidence.
+The explicit XP-grant route is administrator-only; the quest reporting route is a
+separate trust boundary and must be evaluated independently.
+
+A stronger policy would derive quiz and perfect-run contributions only from
+validated, uniquely identified assessment submissions. Study-time credit needs a
+defined evidence model, bounded intervals, and replay handling. Even a heartbeat
+cannot prove learner attention, so the product should describe reported study time
+honestly. Merely adding a maximum increment would restrict obvious abuse without
+fully establishing activity authenticity.
+
+There are also overlapping review contracts. POST \url{/api/course/reviews} checks
+the request owner and enrolment. POST \url{/api/course/{courseId}/reviews} obtains
+the user from the JWT and validates the course and review fields, but its use case
+does not check enrolment. They share the review storage while applying different
+eligibility rules. A canonical policy and route should be selected before claiming
+that all course reviews are restricted to enrolled learners.
+
+Authenticated catalogue access should not be confused with course entitlement.
+GET \url{/api/lesson?courseID=...} and GET \url{/api/quiz/{lessonId}} have no
+course-enrolment check in their inspected controller/use-case paths. AI assistance
+does check enrolment, and progress mutations do check it. If paid courses are intended
+to protect content delivery as well as learning mutations, these reads require the
+same policy. The current development checkout is not a complete commercial access
+control system.
 
 \section{Authentication and authorization}
 Passwords use BCrypt. Login returns a 15-minute access token with identity, email,
@@ -720,6 +1109,78 @@ Application rules then check whether the authenticated learner owns the requeste
 user path and is enrolled in the relevant course. Role checks alone cannot protect a
 request such as ``save progress for user B'' made by authenticated user A.
 
+\section{Single-use password recovery}
+Account recovery is a separate credential lifecycle rather than a direct password
+update keyed by an email address. When delivery is configured, the service generates
+32 random bytes with \texttt{SecureRandom} and encodes them as a URL-safe token. Only
+the SHA-256 digest is stored in PostgreSQL; possession of the stored digest alone does
+not provide the code submitted by the learner. The default lifetime is fifteen minutes.
+
+\passwordresetdiagram
+
+The request response uses the same message for an existing and an unknown account,
+reducing direct account enumeration through response text. When no delivery bean is
+configured, recovery explicitly reports unavailability. SMTP is therefore an optional
+integration with a visible unavailable state, rather than a pretend successful reset.
+On confirmation, the repository locks an unused, unexpired token row and conditionally
+marks it consumed. The service then writes a BCrypt hash and revokes the user's refresh
+tokens. The reset-token integration test covers single use and expiry; SMTP delivery
+and concurrent recovery requests have not been demonstrated end to end.
+
+The transaction spans the PostgreSQL token and password changes, but it does not form
+a distributed transaction with SMTP or Redis. For example, a delivered email can outlive
+a database rollback, and Redis revocation cannot be undone by PostgreSQL. Rate limiting,
+delivery retries, a session-version strategy, and explicit failure tests remain useful
+next steps. Issued access tokens retain their normal expiry boundary.
+
+\section{Development checkout and enrolment integrity}
+The payment screen demonstrates a checkout journey; it is not a live MoMo integration.
+\texttt{ProcessPaymentUseCase} is gated by a simulation flag. Direct backend execution
+defaults the flag to false, while the local Compose file defaults it to true. The response
+explicitly marks simulation and says that no real payment method was charged.
+
+\paymentsimulationdiagram
+
+The controller checks ownership before the service reads the authoritative course price.
+Within one transaction, the repository inserts a successful record using
+\texttt{ON CONFLICT DO NOTHING}. If a successful record already exists, the service
+can return the existing outcome and ensure enrolment exists. The partial unique index
+prevents duplicate successful rows for one user--course pair; the enrolment constraint
+protects the corresponding access relationship. Paid courses reject the free-enrolment
+route. The integration suite verifies repeated simulation and wrong-owner rejection,
+not a real payment provider or a concurrent payment stress test.
+
+The schema's legacy \texttt{MOMO} method value names a demonstration option, not evidence
+of external settlement. A real payment implementation would require verified provider
+callbacks, provider transaction identifiers, amount and currency checks, a state machine
+for pending/succeeded/failed/refunded outcomes, and reconciliation. Those responsibilities
+cannot be replaced by a client-selected success flag.
+
+\section{Contract errors and authorization threats}
+Authentication and resource ownership are evaluated before sensitive commands. A
+request without a usable bearer token is rejected with 401; an authenticated caller
+outside the permitted role or ownership boundary receives 403. The global advice maps
+validation errors to field-specific 400 responses and missing resources to 404. Some
+use cases instead return an operation-specific \texttt{success=false} DTO, and filter
+errors are produced outside the controller advice. Consequently, the current API has
+several response shapes rather than one universal error envelope.
+
+\begin{longtable}{P{0.26\textwidth}P{0.36\textwidth}P{0.27\textwidth}}
+\caption{Concrete threats, implemented controls, and residual limits}\\\toprule
+\textbf{Threat} & \textbf{Implemented boundary} & \textbf{Residual limit}\\\midrule\endfirsthead
+\toprule\textbf{Threat} & \textbf{Implemented boundary} & \textbf{Residual limit}\\\midrule\endhead
+Cross-user record mutation & Compare request user ID with verified JWT subject & Route-by-route audit remains necessary.\\
+Learner grants own XP or edits content & ADMIN route restrictions and owner checks & Administrator provisioning and audit trail need deployment policy.\\
+Fabricated quest activity & Owner check and one daily completion transition & Client increment is trusted; server-derived activity is needed.\\
+Incomplete or repeated quiz answers & Question--option--lesson join & Complete question coverage and distinct IDs are not enforced.\\
+Refresh token used as bearer access & Signed token-type validation & A stolen access token lasts until expiry.\\
+Access to paid course AI & Require enrolment, or administrator authority, before retrieval & Content distribution and entitlement need broader review.\\
+Reuse of a reset code & Digest storage, expiry, row lock, conditional consumption & SMTP, enumeration timing, and rate limits need separate evaluation.\\
+Duplicate successful checkout & Partial unique transaction index and transactional enrolment & Simulation has no real settlement or refund state.\\
+Sensitive values in telemetry & Bounded outcome labels and release HTTP logging disabled & Operational logs and external provider handling still need review.\\
+\bottomrule
+\end{longtable}
+
 \section{Media}
 The server can upload avatars, course images, and lesson videos to Supabase Storage
 when configured. The secret stays on the backend. The core service can run without
@@ -737,8 +1198,12 @@ Course catalogue & 5 min & AI summaries & 6 hours\\
 Semantic search & 15 min & &\\\bottomrule
 \end{tabular}
 \end{table}
-Writes evict relevant entries. Embedding processing clears semantic and summary
-results affected by changed content. Cache statistics support measurement.
+Selected writes evict named entries. Embedding processing clears semantic and summary
+results after changed content. Cache statistics support measurement. The table lists
+configured lifetimes; it does not mean that every named cache has an active reader.
+Inspected cacheable paths use courses, course catalogue, lessons, semantic search,
+and AI summaries. Configured quiz, statistics, leaderboard, badge, and review cache
+names alone do not demonstrate caching of those endpoints.
 
 Figure~\ref{fig:cache-flow} shows the cache-aside behavior. A cache hit avoids a
 database query. A miss loads authoritative data and stores a bounded copy. Mutations
@@ -747,17 +1212,105 @@ representations in place.
 
 \cacheflowdiagram
 
-Short TTLs are used for rapidly changing learner state, while the badge catalogue
-and generated summaries can live longer. This is a consistency trade-off, not a
-guarantee that data remains unchanged for the whole TTL. Explicit eviction narrows
-the stale interval after known writes; expiration protects against missed eviction
-and limits memory growth.
+The configured lifetimes are shorter for changing learner state and longer for badge
+definitions and generated summaries. This is an intended consistency policy, with
+only selected readers currently connected to it. Explicit eviction can narrow the
+stale interval after known writes; expiration bounds the lifetime of each existing
+entry. A TTL does not by itself impose a maximum cache size under unbounded new keys.
+
+\subsection{Cache invalidation and consistency boundary}
+The configured cache manager is transaction-aware, so transaction-bound cache changes
+can be deferred until commit. This avoids evicting or publishing derived cache state
+as though an authoritative write had succeeded when its database transaction later
+rolls back. The embedding listener currently clears the entire semantic-search and
+summary caches, rather than selecting only one changed course.
+
+The inspected eviction lists are incomplete. Course listing is cached twice: an
+outer \texttt{courses} response keyed by user and an inner \texttt{courseCatalog}
+query keyed by administrator/active view. Course writes evict the inner catalogue,
+summary, and search entries, but do not evict the outer \texttt{courses} response.
+The client can consequently continue receiving an old outer result until its
+five-minute TTL expires. Lesson creation clears summary and search caches but omits
+the cached lesson list; lesson update and deletion do clear that list. This is a
+specific missing-invalidation issue in addition to the generic concurrent-fill race.
+Search also excludes already-enrolled courses, but successful enrolment does not
+invalidate that learner's cached search results. A cached suggestion can remain
+visible for up to its fifteen-minute lifetime after the learner joins the course.
+
+A regression should warm the actual route, mutate the content, immediately reread
+it, and verify the new version without waiting for expiry. Every outer and inner
+representation must appear in a mutation-to-cache dependency map. Clearing a
+different cache name is not sufficient simply because both caches describe courses.
+
+Annotation-based caching also has an important implementation constraint: calls must
+cross the Spring proxy for the annotations to apply \cite{springcache}. An annotation
+on a self-invoked method is not evidence of a cache hit. Similarly, enabled cache
+statistics describe instrumentation capability; a recorded hit ratio is needed before
+claiming fewer database reads. Fallback summaries are explicitly excluded from caching
+by the service's \texttt{unless} condition, and the course-question method itself is
+not annotated as a cached answer operation.
+
+TTL expiration bounds the lifetime of a stored copy, not every race. A reader that
+loads old data just before a commit may repopulate a stale copy after eviction.
+Versioned keys, coordinated cache loading, and a staleness test are possible future
+controls. No cache-stampede prevention or general Redis fail-open policy is claimed.
 
 \chapter{Reliability, Concurrency, and Messaging}
 \section{Transactional updates}
-One learning action may update progress, XP, quests, enrolment completion, and
-badges. These operations run inside one transaction. If an injected failure occurs
-after intermediate writes, all changes roll back and a later retry completes once.
+Content completion coordinates progress, XP, streak, course state, and badge
+evaluation. Multiple-choice submission additionally records assessment history and
+updates daily quests within its transaction. Fill-in-the-blank feedback does not
+currently execute those state changes. An injected failure after intermediate
+writes verifies rollback for the tested transactional path, so a later retry can
+complete its protected transitions once.
+
+The rollback argument is scoped to transaction boundaries and exception behavior.
+With Spring's default declarative rules, an unchecked exception reaching the
+transaction interceptor triggers rollback \cite{springrollback}. Catching an
+exception inside a transactional service and returning a failure DTO is not, by
+itself, a rollback instruction. For example, the lesson-creation service catches a
+broad exception while creating a main lesson, its quiz child, and content events.
+That path needs a dedicated failure test or an explicit rollback policy before the
+same all-or-nothing claim can be extended to every content command. The existing
+injected rollback test establishes its own exercised learning path.
+
+\subsection{Invariants rather than successful responses}
+The design starts from final-state rules. A content lesson has at most one
+user--lesson progress row. A successful first completion contributes 20 XP once.
+A repeated completion preserves its timestamp. Course completion and badge awards
+must not depend on whether the final content lesson or final quiz commits first.
+These are database properties, not claims about how many HTTP responses return 200.
+
+If two requests both read an incomplete state before either writes, an application-only
+check can award XP twice. EduFlex therefore creates the statistics row with
+\texttt{ON CONFLICT DO NOTHING}, locks it in the transaction, and uses affected-row
+counts to decide whether each transition is new. PostgreSQL holds conflicting row
+locks until transaction completion, which makes the serialized decision visible to
+the next writer \cite{postgreslocks}.
+
+\concurrenttransactiondiagram
+
+Figure~\ref{fig:concurrent-transaction} follows the same learner through two calls.
+The second waits for the first transaction, then observes completion and skips the
+protected reward. If the first transaction fails, the second can instead become the
+first committed completion. Calls for different learner rows do not acquire this
+same logical lock.
+
+\begin{lstlisting}[language=SQL,caption={Implemented per-learner lock initialization and acquisition}]
+INSERT INTO gamification_stats (user_id, xp, level, streak_days)
+SELECT user_id, 0, 1, 0 FROM users WHERE user_id = ?
+ON CONFLICT (user_id) DO NOTHING;
+
+SELECT * FROM gamification_stats
+WHERE user_id = ?
+FOR UPDATE;
+\end{lstlisting}
+
+The transaction updates XP arithmetically in SQL rather than performing a detached
+read--modify--write in Java. Level is derived from the resulting XP with
+$\lfloor XP/100 \rfloor + 1$. Conditional course completion determines the single
+transaction allowed to award completion benefits. The test suite deliberately changes
+the content/quiz ordering to verify this rule.
 
 \section{Per-learner serialization}
 The service locks the learner's statistics row with PostgreSQL
@@ -765,7 +1318,10 @@ The service locks the learner's statistics row with PostgreSQL
 transition, while different learners proceed independently. Conditional updates
 decide whether a transition is new and uniqueness constraints provide a final
 safeguard. Protected transitions include lesson completion, daily check-in,
-enrolment, first quiz pass, course completion, quest completion, and badge award.
+first quiz pass, course completion, quest completion, and badge award. Free-course
+registration separately relies on its unique learner--course constraint rather than
+this learner-lock workflow. Its pre-insert check can still race: one call succeeds
+and another can receive a failure even though the single enrolment is preserved.
 
 Figure~\ref{fig:progress-state} shows the lifecycle seen by repeated requests. A
 duplicate does not reverse the learner or create a second protected reward; it returns
@@ -778,14 +1334,14 @@ the server may commit even when the client never receives the response.
 \begin{tikzpicture}[node distance=.65cm,
 processbox/.style={draw,rounded corners,fill=teal!7,align=center,minimum width=8cm,minimum height=.75cm},
 arr/.style={-{Latex[length=2mm]},thick}]
-\node[processbox](a){Validate authentication, ownership, and enrolment};
+\node[processbox](a){Validate JWT and caller ownership in the controller};
 \node[processbox,below=of a](b){Begin transaction and lock learner statistics};
-\node[processbox,below=of b](c){Conditionally change lesson progress};
-\node[processbox,below=of c](d){If new: update XP, quests, course, and badges};
+\node[processbox,below=of b](c){Validate lesson and enrolment; conditionally complete};
+\node[processbox,below=of c](d){Evaluate eligible XP, streak, course state, and badges};
 \node[processbox,below=of d](e){Commit all changes or roll back all changes};
 \draw[arr](a)--(b);\draw[arr](b)--(c);\draw[arr](c)--(d);\draw[arr](d)--(e);
 \end{tikzpicture}
-\caption{Concurrency-safe progress transaction}\label{fig:progress}
+\caption{Content-completion transaction; multiple choice has additional attempt and quest writes}\label{fig:progress}
 \end{figure}
 
 \section{RabbitMQ embeddings}
@@ -793,6 +1349,11 @@ Course and lesson services publish a content-change event after transaction comm
 A durable queue feeds a listener with prefetch 10 and three retry attempts. The
 listener creates a MiniLM vector, stores it, and invalidates related caches.
 Publication outcomes and processing duration are measured.
+
+The configuration also declares a durable \path{gamification_queue} and its binding.
+No corresponding gamification listener implements the reward workflow in this
+snapshot. Rewards are computed synchronously inside PostgreSQL transactions. A
+declared queue is therefore not evidence of asynchronous gamification processing.
 
 Figure~\ref{fig:embedding-sequence} explains the ordering. Publishing before commit
 could let the consumer read old content or embed a write that later rolls back.
@@ -805,13 +1366,122 @@ The design currently has no transactional outbox or publisher confirmation. A
 committed content write can therefore exist without a durable event if publication
 fails. Operators must react to the alert and replay affected content.
 
+\subsection{Delivery semantics and stale vectors}
+The event payload contains a content type and UUID, and is routed through the
+\path{eduflex_exchange} direct exchange with \texttt{content.changed} to
+\path{content_embeddings_queue}. The listener reloads current content instead of
+trusting a full text snapshot carried by the message. Reprocessing can overwrite an
+embedding without awarding a learner reward because the consumer owns derived vectors,
+not gamification.
+
+Broker durability, publisher confirmation, and consumer acknowledgement are distinct
+boundaries \cite{rabbitconfirms}. Here, the \emph{sent} metric means that the RabbitTemplate
+call returned; it is not a durable broker confirmation. Listener retries are bounded,
+but there is no explicit dead-letter/reconciliation workflow. A transaction outbox
+would close the database-commit-to-publication gap by committing the event record with
+the content and delivering it later.
+
+Reloading current text avoids embedding an obsolete message snapshot, but it is not
+a full version-ordering protocol. With concurrent consumers, an older computation
+could still finish after a newer one and overwrite its vector. The current listener
+has no content-version comparison. Any future increase in worker concurrency should
+include versioned writes and an out-of-order completion test.
+
+\subsection{Calendar time and reward semantics}
+Daily rewards use the configured calendar zone, defaulting to
+\texttt{Asia/Ho\_Chi\_Minh}, rather than assuming every learner day ends at UTC midnight.
+The update awards ten XP only when the stored date is absent or earlier than today's
+date. Login and explicit check-in share this boundary. Fixed-clock tests cover same-day
+retries, the next local day, and a future-dated record that must not move backward.
+Time is therefore an explicit input to the rule rather than a dependence on when the
+test happens to execute.
+
+Daily check-in and study streak are separate fields and rules. The former records
+\path{last_login_xp_date}; it does not itself advance \path{last_study_date}. Streak
+updates set the count to one on first activity, preserve it on another activity on
+the same date, add one when the last date is yesterday, and restart at one after a
+gap. Unlike the check-in future-date guard, the streak method's remaining branch
+also restarts a future-dated record. The report does not claim a shared future-date
+policy for both operations.
+
+\section{Worked progression examples}
+\label{sec:progression-examples}
+Let $T$ be the number of lessons in a course with no parent, and let $C$ be the number
+of those lessons completed by the learner. The stored display percentage is
+\[
+ P = \begin{cases}
+  0, & T=0,\\
+  \operatorname{round}(100C/T,1), & T>0.
+ \end{cases}
+\]
+Terminal course completion uses the integer condition $C=T$ with $T>0$, rather than
+testing the rounded display value. This avoids treating a display rounded to 100 as
+proof that every counted lesson is complete.
+
+Consider a course with two top-level content lessons A and B, and one quiz child Q
+under B. Here $T=2$, not three. Completing A creates its progress row, gives 20 XP,
+and sets $P=50$. Passing Q for the first time gives 30 XP and completes both Q and
+its parent B. The two top-level lessons are now complete, so the winning course
+transition gives 50 additional XP and awards the course badge. Ignoring independent
+daily and quest rewards, this ordering totals 100 XP. It does not grant the 20-XP
+content reward for B because B was completed by the quiz workflow.
+
+If B was explicitly completed before Q, its first content transition earns its own
+20 XP. Course completion may therefore occur earlier according to the top-level
+counting rule. This example shows why progress, assessment mastery, and reward
+eligibility should be specified separately: the current state machine is not a rule
+that every child quiz must be passed before a course can appear complete. Product
+requirements should decide whether that policy is appropriate before changing the
+denominator or introducing prerequisite enforcement.
+
+\begin{table}[H]\centering
+\caption{Source-derived ordering examples for A, B, and quiz child Q}\label{tab:ordering-example}
+\begin{tabular}{P{0.24\textwidth}P{0.24\textwidth}P{0.41\textwidth}}\toprule
+\textbf{Ordering} & \textbf{Learning XP} & \textbf{Reason}\\\midrule
+A, then Q & $20+30+50=100$ & Q completes B; B's separate content reward is absent.\\
+B, then Q, then A & $20+30+20+50=120$ & Both content rewards precede their own completion boundaries; final A sees the prior quiz pass.\\
+A, then B, then Q & $20+20+30=70$ & Course becomes complete before any quiz pass; Q cannot win the already-completed course transition.\\
+\bottomrule\end{tabular}
+\end{table}
+
+These source-derived cases exclude login and quest XP and are not new executed
+integration scenarios. They expose a policy gap beyond duplicate safety: at-most-once
+course reward does not prove that every eligible ordering receives it. Existing tests
+cover a final independent content lesson racing a quiz pass, rather than every
+ordering of the quiz's own parent completion. A future regression should exercise
+Table~\ref{tab:ordering-example} against the agreed reward policy, potentially using
+a separate course-reward eligibility state instead of coupling eligibility to the
+first percentage-completion transition.
+
+\begin{longtable}{P{0.27\textwidth}P{0.32\textwidth}P{0.30\textwidth}}
+\caption{Reward rules and their actual qualifying boundaries}\label{tab:reward-rules}\\\toprule
+\textbf{Event} & \textbf{Current benefit} & \textbf{Qualifying boundary}\\\midrule\endfirsthead
+\toprule\textbf{Event} & \textbf{Current benefit} & \textbf{Qualifying boundary}\\\midrule\endhead
+Content completion & 20 XP & New user--lesson completion transition\\
+Multiple-choice pass & 30 XP & No previous passing attempt for that quiz lesson\\
+Course completion & 50 XP through quiz; content path requires a prior course quiz pass & Winning incomplete-to-completed enrolment transition\\
+Daily check-in/login & 10 XP & New configured local date\\
+Quest completion & Stored quest reward & New completion for user--quest--date\\
+Level & $\lfloor XP/100\rfloor+1$ & Resulting integer XP total\\
+Static badges & First login, streak 7/30, XP 500/1,000 & Named definition and singular user--badge award\\
+Course badge & Dynamic course condition & Course completion; not educational accreditation\\
+\bottomrule
+\end{longtable}
+
+Failed and already-passed multiple-choice submissions still contribute to unfinished
+quiz-count quests. A perfect submission increments an unfinished perfect-run quest;
+a non-perfect submission resets that counter. A completed quest is not reset later
+that day. Thus the response's \texttt{xpRewarded} field, which tracks first-pass and
+course XP, can be zero while \texttt{completedQuests} reports an independent quest
+reward. Clients must not assume the former is the complete XP delta for the request.
+
 \section{Known retry boundary}
 Quiz submissions create attempt records and do not accept a client idempotency key.
 A response-loss retry can create another attempt and increment an unfinished quest.
 First-pass XP, course XP, quest-completion XP, progress, and badges remain protected.
 
 \section{Failure analysis}
-\begin{longtable}{p{0.27\textwidth}p{0.32\textwidth}p{0.30\textwidth}}
+\begin{longtable}{P{0.27\textwidth}P{0.32\textwidth}P{0.30\textwidth}}
 \caption{Reliability mechanisms and remaining boundaries}\\\toprule
 \textbf{Failure} & \textbf{Current protection} & \textbf{Remaining action}\\\midrule\endfirsthead
 \toprule\textbf{Failure} & \textbf{Current protection} & \textbf{Remaining action}\\\midrule\endhead
@@ -833,20 +1503,90 @@ still required to measure connection-pool, database CPU, and lock-duration limit
 \chapter{AI-Assisted Learning}
 \section{Retrieval}
 The local all-MiniLM-L6-v2 model produces 384-dimensional course and lesson vectors.
-A learner question is embedded and compared with chunks from the selected course
+A learner question is embedded and compared with lesson vectors from the selected course
 using pgvector. Constraining retrieval by course reduces unrelated context.
+
+The embedding service uses LangChain4j's in-process ONNX model rather than an
+external embedding API \cite{langchainonnx}. Its wrapper passes a text segment to
+the model and serializes the returned floats for PostgreSQL. The upstream model card
+describes an English sentence and short-paragraph encoder, with default truncation
+beyond 256 word pieces \cite{minilmmodel}. That model-card default should not be
+mistaken for a separately verified token limit of this Java wrapper. The deployed
+library's tokenization and truncation need an explicit check before claiming that an
+entire long lesson is represented by its single vector. Vietnamese or mixed-language
+course retrieval also needs its own benchmark; local inference is not proof of
+multilingual retrieval quality.
 
 Embedding is a representation step rather than an answer-generation step. Vector
 distance lets differently worded questions locate related lessons. The relational
-course filter still defines the permitted knowledge boundary: SQL supplies ownership
-and scope, while vector similarity supplies relevance.
+course filter defines retrieval scope. The controller supplies the enrolment or
+administrator check before retrieval; vector similarity supplies ranking rather than
+authorization.
+
+\subsection{Catalogue search and course question retrieval}
+Catalogue search has a different ranking policy from course question retrieval.
+The catalogue search service first requests up to ten keyword matches. If those
+results do not fill the limit, it embeds the query and adds semantic course matches.
+A LinkedHashMap preserves keyword-first order and removes duplicate course UUIDs.
+The final list is capped at ten; it is not a single globally reranked blend of lexical
+and vector scores. The cache key includes user identity because the query excludes
+courses in which that learner is already enrolled.
+
+Course questions instead rank lesson vectors within one enrolled course. This
+separates discovery from grounded assistance: a good course-level title match does
+not prove that a particular lesson contains an answer. Query embedding remains
+synchronous in both search and question requests. RabbitMQ defers content-vector
+refresh; it does not move every AI operation off the request thread. Background
+inference also shares the API process's CPU and memory, so queuing does not create
+independent compute capacity.
+
+\subsection{Scoring and context construction}
+The repository ranks lessons by pgvector cosine distance and returns relevance as
+$1-d_{\mathrm{cosine}}$. This is a similarity score, not a probability that the answer
+is correct. The query filters by course UUID, excludes null embeddings, and returns
+at most five lessons. When no vector result exists, the service selects up to five
+stored course lessons. That fallback is ordered by lesson UUID in the repository and
+is not a learned relevance ranking.
+
+\begin{lstlisting}[language=SQL,caption={Course-scoped retrieval implemented by the repository}]
+SELECT lesson_id, title, content,
+       (1 - (embedding <=> ?::vector))::float AS relevance
+FROM lesson
+WHERE course_id = ? AND embedding IS NOT NULL
+ORDER BY embedding <=> ?::vector
+LIMIT 5;
+\end{lstlisting}
+
+One vector is stored per lesson, not per independently indexed text chunk. Context
+construction truncates each lesson excerpt to 1,500 characters and uses a 14,000-character
+budget check for the excerpt accumulation. Metadata and headings mean this is not a
+strict token cap. The generator requests temperature 0.2 and at most 700 output tokens.
+These are code-level bounds; their adequacy for long lessons has not been measured.
+Versioned chunking and a labelled retrieval benchmark are appropriate extensions.
+
+A useful future retrieval record would contain the content version, embedding model
+identifier, chunk boundaries, language, and generation timestamp. A model change
+cannot safely be treated as a cache refresh when vectors produced by different
+encoders share the same search space. The migration should regenerate a coherent
+index and compare ranked results before switching readers to it. These metadata and
+version-switching mechanisms are proposed; the current rows hold only the lesson or
+course vector alongside their other content fields.
 
 \section{Grounded generation and fallback}
-Retrieved chunks become context for optional Gemini generation. The result contains
+Retrieved lesson excerpts become context for optional Gemini generation. The result contains
 source information so the UI can identify supporting material. Expensive summaries
-and search results are cached. Without \texttt{GEMINI\_API\_KEY}, summaries use a
+and search results are cached. Without \path{GEMINI_API_KEY}, summaries use a
 deterministic overview and questions return retrieved lesson suggestions, allowing
 local development and tests without provider access.
+
+The inspected default model remains \texttt{gemini-2.0-flash}. Google's release
+notes record that model's shutdown on 1 June 2026 \cite{geminireleases}. Consequently,
+configuring only an API key is not evidence that the default live-generation path
+works at this report's October snapshot. A supported model must be selected through
+\path{GEMINI_MODEL} and verified against the integration's request/response contract.
+No credentialed provider check was performed during this report revision. Existing
+fallback behavior is useful degradation, but it does not repair an obsolete model
+configuration or establish generated-answer quality.
 
 The backend returns sources with the answer instead of presenting generated prose
 alone. This gives the learner a route back to the lesson and lets an evaluator inspect
@@ -872,6 +1612,13 @@ arr/.style={-{Latex[length=2mm]},thick}]
 Prompts, learner IDs, emails, tokens, and questions are excluded from metric labels.
 Answers remain attributable to stored course content and are not treated as
 authoritative academic assessment. Provider outcomes use bounded metric labels.
+
+Course text is embedded locally, but retrieved excerpts and the learner's question
+are sent to Gemini when generation is enabled. Local embeddings therefore do not mean
+that the entire AI path remains on the host. An instructor-uploaded excerpt is also
+untrusted prompt input: an instruction in course material should not override application
+policy. Source attribution and a low generation temperature are useful presentation
+choices, but they are not prompt-injection controls or guarantees against hallucination.
 
 \section{Quality evaluation approach}
 The current automated test proves deterministic fallback behavior. A broader AI
@@ -940,6 +1687,22 @@ heap, and Hikari connection-pool capacity. The near-idle request and latency pan
 reflect the capture workload; they must not be interpreted as a benchmark.
 
 \section{Operational security}
+\subsection{What custom metrics do and do not establish}
+Progress and reward counters register their increments after transaction commit, so
+an injected rollback does not appear as a committed reward. They remain operational
+counters: process restarts reset them, and they are not a durable accounting ledger.
+The statistics acquisition timer wraps both row initialization and the locking query;
+it includes database round-trip work and is not an isolated measurement of lock wait.
+Correlating it with Hikari pending connections and PostgreSQL activity is therefore
+more useful than assigning every increase to one cause.
+
+AI counters distinguish provider output from fallback by mode. The fallback label
+includes both absent configuration and provider failure, so it cannot by itself
+establish a provider-error rate. Similarly, an embedding processing success measures
+the listener operation, not necessarily the relevance of the stored vector. These
+definitions prevent visually impressive dashboards from overstating evidence.
+
+\subsection{Exposure and access}
 Liveness and readiness are exposed on the main API port. The monitoring profile
 exposes only health and Prometheus on internal port 8081. Grafana, Prometheus, and
 Alertmanager bind to loopback locally. The PostgreSQL exporter uses a dedicated
@@ -964,18 +1727,121 @@ connectivity. Redis eviction requires inspecting memory policy and workload befo
 capacity changes. The monitoring runbook records these decision paths and recovery
 checks.
 
+\subsection{Measured signals and configured thresholds}
+An availability signal describes an observed condition; an alert threshold describes
+the operator's configured decision policy. The current one-second latency threshold
+is not a measured service-level objective. Request-volume guards reduce noisy ratio
+alerts during very light traffic, which is particularly relevant to a local student
+project.
+
+\begin{longtable}{P{0.26\textwidth}P{0.35\textwidth}P{0.28\textwidth}}
+\caption{Selected implemented alert conditions}\\\toprule
+\textbf{Signal} & \textbf{Threshold and duration} & \textbf{Interpretation}\\\midrule\endfirsthead
+\toprule\textbf{Signal} & \textbf{Threshold and duration} & \textbf{Interpretation}\\\midrule\endhead
+Client-facing API probe & Probe fails continuously for one minute & API listener or readiness dependency unavailable.\\
+HTTP server errors & More than 5\% 5xx with at least 100 requests in five minutes; holds for five minutes & Investigate the failing route and dependency, not ordinary 4xx.\\
+API latency & Estimated p95 exceeds one second with the same volume guard; holds for five minutes & Inspect pool waiting, database work, JVM, and expensive AI routes.\\
+Hikari pending requests & Pending count remains above zero for two minutes & Connections are occupied or waiting; pool growth alone may worsen pressure.\\
+Embedding backlog & More than 100 ready messages for five minutes & Arrival rate exceeds processing capacity or processing has stalled.\\
+Embedding worker absent & Ready messages and zero consumers for two minutes & Listener is disconnected or failed to start.\\
+Publish failure & Failed publication counter increases within five minutes & Committed content may lack a refreshed vector.\\
+\bottomrule
+\end{longtable}
+
+\incidentdecisiondiagram
+
+Figure~\ref{fig:incident-decision} is an operator investigation model built from the
+versioned runbook. Checking the main listener and management scrape separately narrows
+the failure boundary before restarting anything. Recovery is complete only when traffic,
+dependency health, scrape targets, and alert resolution agree.
+
+\subsection{Operational maturity and deployment limits}
+The local topology has one database instance, one broker, and one API process. It does
+not provide automatic failover, database point-in-time recovery, an ingress TLS layer,
+or a rolling-deployment controller. Redis AOF and named database volumes preserve local
+state through ordinary restarts, but they are not backups. An operator must separately
+test restoration from an independent copy.
+
+Refresh-token revocation currently finds a user's Redis keys by pattern. This is simple
+for a small environment but should be replaced by a bounded scan or indexed session set
+before a large keyspace is supported. Separating session state from disposable caches
+would also make eviction policy easier to reason about. These limits explain why passing
+the monitoring smoke test does not establish production readiness.
+
+\section{Recovery design and state classification}
+\label{sec:recovery-design}
+Recoverability depends on which state was lost. PostgreSQL holds identities,
+enrolments, attempts, progress, and reward totals. Redis holds both disposable read
+caches and security-relevant refresh-token records. RabbitMQ carries unfinished
+embedding work; a vector can be regenerated from current content, but a missing
+reward history cannot be reconstructed from a cache. This classification determines
+the recovery order instead of treating every container as interchangeable.
+
+\begin{longtable}{P{0.20\textwidth}P{0.34\textwidth}P{0.35\textwidth}}
+\caption{Recovery requirements by stored state}\label{tab:recovery-state}\\\toprule
+\textbf{State} & \textbf{Current preservation} & \textbf{Recovery requirement}\\\midrule\endfirsthead
+\toprule\textbf{State} & \textbf{Current preservation} & \textbf{Recovery requirement}\\\midrule\endhead
+PostgreSQL & Named local volume & Independent backup, extension availability, roles, schema version, restored invariant checks\\
+Redis cache & AOF on named volume; values have TTLs & Safely invalidate derived values; do not serve pre-restore learner data\\
+Refresh sessions & Stored in the same Redis service & Explicit session invalidation decision; database-only restore does not revoke issued access tokens\\
+Embedding messages & Durable queue; no broker data volume in base Compose & Reconciliation and auditable replay of missing work\\
+Embeddings & Vectors reside in PostgreSQL & Match content/model versions or regenerate through future tooling\\
+Media & External storage objects referenced by URL & Verify independent provider backup and access; database restore does not restore remote objects\\
+Monitoring & Provisioned configuration and local data volumes & Restore configuration first; retained metrics do not restore application state\\
+\bottomrule
+\end{longtable}
+
+\restoreplandiagram
+
+Figure~\ref{fig:restore-plan} is a proposed exercise, not evidence of an executed
+recovery. A suitable first step is a PostgreSQL logical backup restored into an
+isolated compatible database. PostgreSQL documents the snapshot consistency of
+\texttt{pg\_dump}, custom-format restoration with \texttt{pg\_restore}, and the
+separate handling of cluster roles \cite{postgresbackup}. The project does not yet
+automate these procedures. A continuous WAL archive and base backup would be a
+different recovery design; the current Compose volume does not supply it.
+
+The drill should state the latest recoverable data boundary and elapsed time until
+verified service restoration, rather than inventing a recovery-time target. It should
+compare representative user, enrolment, progress, attempt, and XP records before and
+after restoration. It should also test whether stale caches or still-issued tokens
+can expose a database state that has moved backward. Resetting a container without
+restoring an independent copy is a restart test, not a backup-restoration test.
+
+\subsection{Reproducibility and deployment drift}
+The Compose files pin several monitoring images to explicit versions, while
+\path{pgvector/pgvector:pg16}, \path{redis:alpine}, and
+\path{rabbitmq:3-management-alpine} are floating tags. They identify a product or
+release family rather than immutable image bytes. An environment manifest should
+record resolved digests, JDK, schema version, active profile, dependency versions,
+and non-secret configuration alongside the source revision. Wrappers and Flyway
+improve repeatability, but they do not make mutable image tags or an uncommitted
+working tree immutable.
+
+Before a deployment, migrations should be rehearsed on a representative restored
+dataset, health checks should pass on both the application and management listeners,
+and the client contract should be checked against the active API. Adding API replicas
+would introduce additional cache and embedding races rather than automatically
+proving horizontal scalability. The report's single-host topology is the inspected
+implementation; a multi-host deployment requires its own design and evidence.
+
 \chapter{Testing and Evaluation}
 \section{Strategy}
 Verification combines unit tests, database integration tests, live API journeys,
 Android emulator checks, lint, builds, and monitoring smoke tests. Attention focuses
 on token semantics, rollback, ownership, duplicate rewards, concurrency, and startup.
 
-Unless a row states otherwise, the recorded evidence was produced on 24--25 September
-2026 from Git revision \texttt{3d21d21} on branch
-\path{dev/set-up-message-queue}. The detailed scenario record is versioned in
-\path{docs/reliable-progress-verification.md}; monitoring procedures and the dated
-smoke result are in \texttt{docs/monitoring-runbook.md}. Naming the revision matters:
-test totals are historical observations and must be rerun after functional changes.
+The report separates fresh evidence from historical checks. The backend was rerun on
+\verificationdate{} with JDK 21 and Docker against the working tree based on
+\texttt{3a71b37}, including uncommitted application changes. A commit identifier alone
+does not reproduce that working tree. The new run is summarized in
+\path{report/verification.md}. Android unit-test XML records are dated 3 October 2026.
+
+The earlier live HTTP, emulator, Android release-build, and monitoring results come
+from 24--25 September 2026 and are retained as historical evidence, not described as
+fresh passes for the current code. Their records are
+\path{docs/reliable-progress-verification.md} and \path{docs/monitoring-runbook.md}.
+This distinction matters because the payment and recovery contracts have evolved.
 
 No single test layer proves the whole system. Unit tests give fast feedback for token
 and fallback behavior. Testcontainers supplies real transaction, constraint, and lock
@@ -985,7 +1851,7 @@ Monitoring verification confirms that operational signals remain usable after st
 
 \begin{table}[H]\centering
 \caption{Evidence mapped to quality goals}\label{tab:evidence}
-\begin{tabular}{p{0.25\textwidth}p{0.32\textwidth}p{0.32\textwidth}}\toprule
+\begin{tabular}{P{0.25\textwidth}P{0.32\textwidth}P{0.32\textwidth}}\toprule
 \textbf{Goal} & \textbf{Evidence} & \textbf{What it establishes}\\\midrule
 Security & JWT tests and rejected HTTP flows & Token type, role, and ownership in tested routes.\\
 Consistency & PostgreSQL concurrency suite & Single protected transitions under duplicate calls.\\
@@ -997,7 +1863,7 @@ Observability & Targets, dashboards, and alert drill & Metrics and alert lifecyc
 \bottomrule\end{tabular}
 \end{table}
 
-\begin{longtable}{p{0.27\textwidth}p{0.31\textwidth}p{0.31\textwidth}}
+\begin{longtable}{P{0.27\textwidth}P{0.31\textwidth}P{0.31\textwidth}}
 \caption{Claim-to-evidence traceability}\label{tab:traceability}\\\toprule
 \textbf{Report claim} & \textbf{Repository evidence} & \textbf{Boundary}\\\midrule\endfirsthead
 \toprule\textbf{Report claim} & \textbf{Repository evidence} & \textbf{Boundary}\\\midrule\endhead
@@ -1013,11 +1879,13 @@ Release source compiles with shrinking & Gradle release APK/AAB tasks & Unsigned
 \end{longtable}
 
 \section{Backend results}
-The recorded run used Java 21, Docker Engine 29.8.1, and PostgreSQL 16/pgvector.
-All 27 migrations ran. The result was 20 tests with zero failures, errors, or skips;
-18 scenarios belong to the progress concurrency integration suite.
+The fresh run used Java 21, Docker Engine 29.8.1, and PostgreSQL 16/pgvector.
+All \migrationcount{} migrations ran. The result was \backendtests{} tests with zero
+failures, errors, or skips; \integrationtests{} scenarios belong to the progress
+concurrency integration suite. Three password-recovery unit tests and one test each
+for JWT semantics and AI fallback make up the remaining five.
 
-\begin{longtable}{p{0.58\textwidth}p{0.30\textwidth}}
+\begin{longtable}{P{0.58\textwidth}P{0.30\textwidth}}
 \caption{Selected verified scenarios}\label{tab:tests}\\\toprule
 \textbf{Scenario} & \textbf{Observed result}\\\midrule\endfirsthead
 \toprule\textbf{Scenario} & \textbf{Observed result}\\\midrule\endhead
@@ -1031,6 +1899,11 @@ Two learners complete one course & One badge definition and one award per learne
 Injected failure after related writes & Full rollback; retry succeeds once.\\
 Unauthorized and wrong-owner calls & Rejected without state mutation.\\
 Daily boundary with fixed clock & Same-day, next-day, zone, and future cases pass.\\
+Profile update for another learner & Rejected with 403.\\
+AI assistance without enrolment & Rejected; course access checked before retrieval.\\
+Paid course through free enrolment & Rejected; repeated enabled simulation creates one successful payment and enrolment.\\
+Payment for another learner & Rejected without granting course access.\\
+Reset code replay or expiry & Consumed or expired code does not authorize another reset.\\
 \bottomrule
 \end{longtable}
 These tests establish correctness for the tested cases; they are not a throughput
@@ -1043,7 +1916,7 @@ while still duplicating XP internally. A pinned PostgreSQL/pgvector image and Fl
 startup keep tested database behavior close to the local runtime.
 
 \section{End-to-end and Android results}
-A live HTTP journey completed 26 checks with no failures. It covered administrator
+The historical live HTTP journey completed 26 checks with no failures. It covered administrator
 and learner registration, protected content creation, catalogue reads, cross-user
 rejection, enrolment, progress, quiz retry, XP totals, embedding completion, refresh,
 logout, and revoked-token rejection.
@@ -1070,6 +1943,65 @@ resolution confirms that the rule, scrape path, and restored service agree after
 recovery instead of leaving a stale incident.
 
 \section{Evaluation limits}
+\subsection{Answers to the evaluation questions}
+\begin{longtable}{P{0.13\textwidth}P{0.42\textwidth}P{0.34\textwidth}}
+\caption{Evaluation questions answered within the available evidence}\\\toprule
+\textbf{Question} & \textbf{Answer supported by evidence} & \textbf{Qualification}\\\midrule\endfirsthead
+\toprule\textbf{Question} & \textbf{Answer supported by evidence} & \textbf{Qualification}\\\midrule\endhead
+Q1: journey & Historical HTTP checks cover the main learning lifecycle; emulator evidence covers registration, login, Home, and Learn & A complete current Android course-to-certificate journey remains unverified.\\
+Q2: consistency & Fresh PostgreSQL tests preserve singular protected rewards, timestamps, ownership, and rollback in the defined scenarios & Quiz attempts may still duplicate; the test is not a throughput benchmark.\\
+Q3: derived work & Source inspection and historical delivery checks show embedding inference outside the content transaction and versioned operational signals & Missing outbox, cache race tests, and broker persistence prevent a universal recovery guarantee.\\
+Q4: reproducibility & Fresh backend run applies the versioned schema and executes every current test; report source is self-contained & Current application tree includes uncommitted changes; other build and monitoring evidence is historical.\\
+\bottomrule
+\end{longtable}
+
+\subsection{Threats to validity}
+The clean Testcontainers database controls schema setup and makes transaction tests
+repeatable, but does not reproduce a large upgraded dataset or prolonged production
+traffic. The concurrency harness synchronizes service callers and verifies final state;
+it does not reproduce arbitrary mobile network delay, every transaction isolation
+setting, or independent API instances. Test configuration also differs from runtime
+configuration in its pool size and external-service substitutes.
+
+The historical emulator evidence covers one API level and representative navigation.
+It cannot establish accessibility, usability, or device diversity. AI fallback tests
+validate deterministic behavior rather than educator-approved answers. These are limits
+of coverage and experimental design, rather than reasons to discard the verified
+database invariants.
+
+\subsection{Source audit findings outside the passing suite}
+\label{sec:audit-findings}
+The report review found gaps that the current passing tests do not establish as
+correct. Table~\ref{tab:audit-gaps} records source-derived findings and the next
+test needed to validate a correction. These are findings about the application
+snapshot, not claims that this report revision has changed the application.
+
+\begin{longtable}{P{0.28\textwidth}P{0.30\textwidth}P{0.31\textwidth}}
+\caption{Uncovered implementation gaps and required regression evidence}\label{tab:audit-gaps}\\\toprule
+\textbf{Finding} & \textbf{Practical effect} & \textbf{Required correction evidence}\\\midrule\endfirsthead
+\toprule\textbf{Finding} & \textbf{Practical effect} & \textbf{Required correction evidence}\\\midrule\endhead
+Submitted-list quiz denominator & A subset or repeated question may receive a passing score & Reject missing, duplicate, foreign, and null answer items; grade a complete server-owned set\\
+Fill-blank lacks shared scope and persistence & Feedback does not establish enrolled access or progression; missing key can fail & Wrong-course and non-enrolled requests rejected; defined practice/progress semantics; missing data returns a controlled error\\
+Client-reported quest increment & An owner can claim unobserved activity toward rewards & Only approved server events affect quiz quests; replayed events have one contribution; bounded time policy\\
+Review eligibility differs by route & The same storage has two enrolment policies & Equivalent accepted/rejected outcomes for canonical and compatibility routes\\
+Content reads lack course entitlement checks & Authentication alone does not enforce paid-course content access & Enrolled, non-enrolled, and administrator read matrix\\
+Progress counts parents, not every child quiz & Display completion is not proof of full assessment mastery & Product-approved required-unit model and ordering tests\\
+Parent completion can precede quiz eligibility & A course bonus can be omitted when completion wins before the first quiz pass & Exercise all A/B/Q orderings and verify the agreed total with an explicit reward-eligibility model\\
+Default Gemini model is retired & API-key configuration alone does not restore live generation & Select a supported model and verify a credentialed response, fallback, and source contract\\
+Eviction omits outer courses and newly created lesson lists & A successful mutation may remain invisible until cached data expires & Warm route, mutate, immediately reread; assert updated state for every dependent representation\\
+Broad catches in transactional content creation & Failure DTO does not independently prove rollback & Inject failure between parent and child creation; verify neither persists\\
+No representative populated-schema upgrade & Clean migration success misses data transformations & Restore older fixtures, migrate, compare relationships and retained successful payments\\
+\bottomrule
+\end{longtable}
+
+The current concurrency fixtures use known valid answer sets and verify reward
+transitions. That makes them useful for transaction correctness while leaving
+assessment completeness untested. A convincing evaluation should separate three
+questions: whether an input is permitted, whether its business result is correct,
+and whether concurrent execution preserves that result. A test count is a coverage
+inventory, not a substitute for these distinct assertions.
+
+\subsection{Unmeasured product and performance outcomes}
 Emulator checks do not cover every device, screen size, or accessibility setting.
 No formal usability study or load-test dataset has been completed. External providers
 require separate credentials. These limits prevent unsupported claims and define
@@ -1090,7 +2022,7 @@ mechanism and does not attach numerical speed-up claims to it.
 
 \begin{table}[H]\centering
 \caption{Required performance experiment design}\label{tab:performance-plan}
-\begin{tabular}{p{0.26\textwidth}p{0.31\textwidth}p{0.32\textwidth}}\toprule
+\begin{tabular}{P{0.26\textwidth}P{0.31\textwidth}P{0.32\textwidth}}\toprule
 \textbf{Question} & \textbf{Controlled comparison} & \textbf{Reportable measures}\\\midrule
 Does caching help? & Cold/miss, warm/hit, and post-eviction reads with the same dataset & p50/p95/p99 latency, database calls, hit ratio\\
 Does queuing shorten writes? & Content update with synchronous embedding baseline versus post-commit publication & HTTP latency, queue delay, end-to-end embedding time\\
@@ -1098,6 +2030,43 @@ Where does concurrency saturate? & Increasing learners and requests with fixed h
 How does failure recover? & Stop and restore Redis, RabbitMQ, API, and consumer independently & Detection time, recovery time, lost/replayed work\\
 \bottomrule\end{tabular}
 \end{table}
+
+\subsection{A repeatable measurement protocol}
+The following protocol is proposed, not a completed benchmark. First, seed a fixed
+dataset with documented numbers of users, courses, lessons, enrolments, and vectors.
+Keep the same data, API profile, database pool, image digests, machine resources,
+and test script for each comparison. Disable external generation for core API
+measurements and evaluate provider-backed requests separately, so remote provider
+variation is not mistaken for database or cache behavior.
+
+Measure catalogue reads, progress mutations, and course questions as separate
+workloads. For cache experiments, use cold, warm, and post-mutation phases. Confirm
+the expected cache outcome and returned content in each phase; warm reads with stale
+data are not a successful optimization. For concurrency, compare many callers for
+one learner with the same request count spread across distinct learners. These
+exercise deliberate per-learner serialization and shared resource saturation
+respectively. Include new completions and retries separately because their database
+work and reward outcomes differ.
+
+Record the offered request rate, completed throughput, client-observed latency,
+timeouts, HTTP outcomes, and correctness assertions. Report percentiles per route
+rather than only a pooled average. Count timed-out and failed requests in the
+experiment outcome instead of silently excluding them. Repeat steady-state runs,
+publish the raw records, and preserve the warm-up and measurement windows in the
+script. A closed-loop caller count must be described as such; it does not represent
+an independently scheduled arrival rate.
+
+For embeddings, record both content commit time and the time the matching current
+vector becomes available. Consumer execution duration alone excludes time waiting
+in the queue. The existing metrics expose backlog and processing duration, but not
+an explicit event-age measurement. A timestamp/version signal and a reconciliation
+assertion are needed to measure end-to-end freshness. This separates the shorter
+HTTP write path from the eventual availability of updated search results.
+
+The published result should include a configuration manifest, dataset seed, workload
+script, raw request records, final invariant checks, and an interpretation of the
+first saturated resource. Configured alert thresholds may help interpret the run,
+but they should not be retroactively presented as a measured service-level objective.
 
 \chapter{Conclusion and Future Work}
 \section{Conclusion}
@@ -1118,8 +2087,11 @@ has been exercised. CI combines backend correctness, monitoring, and Android del
 
 \section{Future work}
 \begin{enumerate}[leftmargin=*]
+\item validate complete assessment submissions, define fill-blank progression,
+derive reward activity on the server, and align content/review entitlement rules;
 \item add a transactional outbox, publisher confirmation, and reconciliation;
-\item add client idempotency keys and a reward ledger for quiz and payment retries;
+\item add client idempotency keys and a reward ledger for quiz retries, and replace
+payment simulation with verified provider settlement if commercial checkout is required;
 \item add structured centralized logs and OpenTelemetry traces;
 \item configure external alert delivery and encrypted backups with restore drills;
 \item load-test catalogue, progress, and AI paths and define measured objectives;
@@ -1127,6 +2099,28 @@ has been exercised. CI combines backend correctness, monitoring, and Android del
 \item implement secure release signing and an approved store workflow; and
 \item evaluate AI answers with a labelled dataset and educator review.
 \end{enumerate}
+
+\section{Prioritized engineering roadmap}
+The next increments should close known correctness and recovery gaps before adding
+more visible features. The roadmap distinguishes implemented mechanisms from proposed
+work and names an acceptance condition for each increment.
+
+\begin{longtable}{P{0.13\textwidth}P{0.39\textwidth}P{0.37\textwidth}}
+\caption{Future increments and required proof}\\\toprule
+\textbf{Priority} & \textbf{Change and justification} & \textbf{Acceptance evidence}\\\midrule\endfirsthead
+\toprule\textbf{Priority} & \textbf{Change and justification} & \textbf{Acceptance evidence}\\\midrule\endhead
+P1 & Assessment scope, full question coverage, and consistent quiz semantics & Missing, duplicate, foreign, and unknown questions rejected; valid complete sets scored against the server definition.\\
+P1 & Trusted activity and canonical entitlement rules & Arbitrary client increments cannot earn quiz rewards; both review routes and content reads follow the approved policy.\\
+P1 & Supported optional generation model and bounded provider calls & Verify credentialed request compatibility, timeout recovery, fallback, and returned source metadata.\\
+P1 & Outbox, broker persistence, confirmations, and dead-letter/replay tooling & Commit during broker outage; restore it; observe one current vector and an auditable replay trail.\\
+P1 & Quiz request identity and durable result storage & Repeat one client key after response loss; preserve one attempt and one quest contribution.\\
+P1 & Recovery abuse controls and explicit cross-system failure handling & Test expired/reused codes, concurrent issuance, SMTP failure, and Redis failure without unauthorized reset.\\
+P2 & Load tests and route-specific objectives & Publish workload, cache state, hardware, throughput, latency percentiles, and saturation behavior.\\
+P2 & Android device and accessibility evaluation & Record task success, recovery behavior, large-font rendering, and TalkBack findings.\\
+P2 & AI chunk/version lifecycle and groundedness benchmark & Report source recall, unsupported claims, provider failures, and long-lesson retrieval quality.\\
+P3 & External alerts, backup restoration, TLS, and signed delivery & Demonstrate notification receipt, recovery from a backup, protected ingress, and a verified signed release.\\
+\bottomrule
+\end{longtable}
 
 \section{Portfolio summary}
 \begin{quote}
@@ -1162,7 +2156,7 @@ bash backend/scripts/verify-monitoring.sh
 \end{lstlisting}
 
 \chapter{Selected API Groups}
-\begin{longtable}{p{0.28\textwidth}p{0.61\textwidth}}\toprule
+\begin{longtable}{P{0.28\textwidth}P{0.61\textwidth}}\toprule
 \textbf{Route group} & \textbf{Responsibility}\\\midrule\endfirsthead
 \toprule\textbf{Route group} & \textbf{Responsibility}\\\midrule\endhead
 \texttt{/api/user} & Registration, login, recovery, and profile update.\\
@@ -1178,28 +2172,106 @@ bash backend/scripts/verify-monitoring.sh
 \texttt{/api/admin} & Protected user and content administration.\\
 \bottomrule\end{longtable}
 
+\section{Methods, identity, and policy differences}
+Table~\ref{tab:route-access} expands the groups into selected concrete methods.
+``Owner'' means comparison with the verified JWT subject. ``Authenticated'' means
+that a bearer access token is required, without implying course entitlement.
+Public session routes still validate the credentials or token submitted in their
+payload. These distinctions describe the inspected source, including known gaps.
+
+\begin{longtable}{P{0.44\textwidth}P{0.45\textwidth}}
+\caption{Selected route access and contract characteristics}\label{tab:route-access}\\\toprule
+\textbf{Method and route} & \textbf{Identity and behavior}\\\midrule\endfirsthead
+\toprule\textbf{Method and route} & \textbf{Identity and behavior}\\\midrule\endhead
+POST \url{/api/user/register}, \url{/api/user/login} & Public JSON account/session requests; validated DTOs\\
+POST \url{/api/user/forgot-password}, \url{/api/user/reset-password} & Public; configured delivery and single-use reset code\\
+POST \url{/api/auth/refresh}, \url{/api/auth/logout} & Public route policy; supplied refresh token determines session operation\\
+PUT \url{/api/user/update-profile/{userID}} & Owner; validated JSON profile update\\
+GET \url{/api/course}, \url{/api/course/search} & Authenticated catalogue reads; search uses caller identity\\
+GET \url{/api/course/my-courses} & JWT identity determines learner's list\\
+POST \url{/api/course} & ADMIN content creation\\
+GET \url{/api/lesson?courseID=...} & Authenticated; no enrolment check in inspected read path\\
+POST \url{/api/lesson} & ADMIN; model-bound lesson request\\
+GET \url{/api/quiz/{lessonId}} & Authenticated; no enrolment check in inspected read path\\
+POST \url{/api/quiz/submit-multiple-choice} & Owner plus enrolled quiz lesson; JSON; transactional result\\
+POST \url{/api/quiz/fill-blank} & Owner; JSON feedback; no equivalent scope/progression workflow\\
+POST \url{/api/enrollment/{courseId}/register} & Owner; JSON; paid courses reject free enrolment\\
+GET \url{/api/enrollment/{userId}} & Owner enrolment list\\
+POST \url{/api/progress/lesson} & Owner plus enrolment; form-encoded completion\\
+GET \url{/api/progress/course/{courseId}/user/{userId}} & Owner course progress read\\
+POST \url{/api/payment}, \url{/api/course/payment} & Owner; shared development simulation; server-side amount\\
+GET \url{/api/course/{courseId}/ai-summary}; POST \url{/api/course/{courseId}/ask} & Enrolled learner or ADMIN; optional generation with fallback\\
+POST \url{/api/course/reviews} & Owner from payload; enrolment required\\
+POST \url{/api/course/{courseId}/reviews} & JWT identity; current use case omits enrolment rule\\
+POST \url{/api/users/{userId}/daily-quests/progress} & Owner; client-reported quest type and increment\\
+POST \url{/api/users/{userId}/xp} & ADMIN; explicit XP grant\\
+POST \url{/api/users/{userId}/daily-checkin}, \url{/api/users/{userId}/streak} & Owner; separate calendar rules\\
+POST \url{/api/media/users/{userId}/avatar} & Owner; multipart upload\\
+POST \url{/api/media/courses/{courseId}/image}, \url{/api/media/lessons/{lessonId}/video} & ADMIN; multipart content media\\
+\url{/api/admin/**} & ADMIN list/create/update/delete contracts\\
+GET \url{/livez}, \url{/readyz} & Public main-listener liveness/readiness\\
+GET \url{/actuator/health}, \url{/actuator/prometheus} & Separate Actuator filter policy; internal management listener in monitoring profile\\
+\bottomrule
+\end{longtable}
+
+Path parameter spelling and request binding are part of the existing contract.
+For example, the lesson list uses \texttt{courseID}, while progress uses
+\texttt{courseId}. They should be normalized only through a reviewed compatibility
+change with Android API interfaces and HTTP contract tests updated together.
+
+\section{Implementation entry points}
+The following source classes let a reviewer trace the major engineering arguments.
+Package names are relative to \path{backend/src/main/java/com/eduflex/}; Android
+classes are relative to \path{app/src/main/java/com/eduflex/android/}.
+
+\begin{longtable}{P{0.24\textwidth}P{0.65\textwidth}}
+\caption{Source entry points for report claims}\label{tab:source-entry}\\\toprule
+\textbf{Concern} & \textbf{Classes or files to inspect}\\\midrule\endfirsthead
+\toprule\textbf{Concern} & \textbf{Classes or files to inspect}\\\midrule\endhead
+Authorization & \path{config/SecurityConfig.java}; \path{security/AuthenticatedUser.java}; route controllers\\
+Progress & \path{service/lesson/SaveLessonProgressUseCase.java}; \path{repository/lesson/LessonProgressRepository.java}\\
+Serialization & \path{repository/gamification/GamificationStatsRepository.java}\\
+Assessment & \path{service/quiz/SubmitQuizUseCase.java}; \path{SubmitFillBlankUseCase.java} in the same package; \path{repository/quiz/QuizRepository.java}\\
+Quests & \path{controller/gamification/DailyQuestController.java}; \path{service/gamification/UpdateDailyQuestProgressUseCase.java}\\
+Recovery & \path{service/user/ForgotPasswordUseCase.java}; password reset repository; migration 1.2.7\\
+Messaging & \path{config/ContentEventPublisher.java}; \path{config/RabbitMQConfig.java}; content embedding listener\\
+AI & \path{service/AiCourseService.java}; \path{repository/course/CourseRepository.java}\\
+Telemetry & \path{monitoring/EduFlexMetrics.java}; monitoring rules and Grafana provisioning\\
+Android sessions & \path{auth/TokenManager.java}; \path{api/TokenRefreshCoordinator.java}; Retrofit API interfaces\\
+Study-time signal & \path{ui/lesson/LessonStudyFragment.java}; daily quest API interface\\
+Correctness tests & \path{backend/src/test/java/com/eduflex/service/ProgressConcurrencyIntegrationTest.java} from repository root\\
+\bottomrule
+\end{longtable}
+
 \chapter{Configuration Reference}
 \small
-\begin{longtable}{p{0.38\textwidth}p{0.39\textwidth}p{0.10\textwidth}}
+\begin{longtable}{P{0.38\textwidth}P{0.39\textwidth}P{0.10\textwidth}}
 \toprule
 \textbf{Variable} & \textbf{Purpose} & \textbf{Scope}\\\midrule\endfirsthead
 \toprule\textbf{Variable} & \textbf{Purpose} & \textbf{Scope}\\\midrule\endhead
-\texttt{API\_BASE\_URL} & Android REST endpoint, including trailing slash & Mobile\\
-\texttt{SPRING\_DATASOURCE\_URL} & JDBC connection for direct backend execution & Backend\\
-\texttt{SPRING\_DATASOURCE\_USERNAME} & Application database user & Backend\\
-\texttt{SPRING\_DATASOURCE\_PASSWORD} & Application database password & Backend\\
-\texttt{JWT\_SECRETKEY} & HMAC signing secret for access and refresh tokens & Backend\\
-\texttt{REDIS\_PASSWORD} & Redis authentication & Infra\\
-\texttt{RABBITMQ\_USERNAME} & Broker login name & Infra\\
-\texttt{RABBITMQ\_PASSWORD} & Broker login password & Infra\\
-\texttt{EDUFLEX\_TIME\_ZONE} & Calendar zone for streaks and daily rewards & Backend\\
-\texttt{GEMINI\_API\_KEY} & Optional server-side generation credential & Optional\\
-\texttt{GEMINI\_MODEL} & Optional generation model selection & Optional\\
-\texttt{SUPABASE\_URL} & Optional media-storage project URL & Optional\\
-\texttt{SUPABASE\_SECRET\_KEY} & Optional server-side storage credential & Optional\\
-\texttt{GRAFANA\_ADMIN\_PASSWORD} & Local Grafana administrator password & Monitor\\
-\texttt{POSTGRES\_MONITOR\_PASSWORD} & Dedicated exporter role password & Monitor\\
-\texttt{EDUFLEX\_ENVIRONMENT} & Stable environment label on metrics & Monitor\\
+\path{API_BASE_URL} & Android REST endpoint, including trailing slash & Mobile\\
+\path{SPRING_DATASOURCE_URL} & JDBC connection for direct backend execution & Backend\\
+\path{SPRING_DATASOURCE_USERNAME} & Application database user & Backend\\
+\path{SPRING_DATASOURCE_PASSWORD} & Application database password & Backend\\
+\path{JWT_SECRETKEY} & HMAC signing secret for access and refresh tokens & Backend\\
+\path{REDIS_PASSWORD} & Redis authentication & Infra\\
+\path{RABBITMQ_USERNAME} & Broker login name & Infra\\
+\path{RABBITMQ_PASSWORD} & Broker login password & Infra\\
+\path{EDUFLEX_TIME_ZONE} & Calendar zone for streaks and daily rewards & Backend\\
+\path{GEMINI_API_KEY} & Optional server-side generation credential & Optional\\
+\path{GEMINI_MODEL} & Optional generation model selection & Optional\\
+\path{SUPABASE_URL} & Optional media-storage project URL & Optional\\
+\path{SUPABASE_SECRET_KEY} & Optional server-side storage credential & Optional\\
+\path{GRAFANA_ADMIN_PASSWORD} & Local Grafana administrator password & Monitor\\
+\path{POSTGRES_MONITOR_PASSWORD} & Dedicated exporter role password & Monitor\\
+\path{EDUFLEX_ENVIRONMENT} & Stable environment label on metrics & Monitor\\
+\path{PAYMENT_SIMULATION_ENABLED} & Enable local checkout simulation; direct execution defaults off & Backend\\
+\path{PASSWORD_RESET_DELIVERY_ENABLED} & Activate configured SMTP recovery delivery & Backend\\
+\path{PASSWORD_RESET_TTL_MINUTES} & Reset-code lifetime; default fifteen minutes & Backend\\
+\path{PASSWORD_RESET_FROM} & SMTP sender for recovery messages & Backend\\
+\path{SMTP_HOST}, \path{SMTP_PORT} & Recovery mail-server address & Backend\\
+\path{SMTP_USERNAME}, \path{SMTP_PASSWORD} & Recovery delivery credentials & Backend\\
+\path{DB_POOL_MAX_SIZE} & Maximum active database connections; default ten & Backend\\
 \bottomrule
 \end{longtable}
 \normalsize
@@ -1209,25 +2281,37 @@ Provider keys and passwords must not appear in screenshots, source control, metr
 labels, build logs, or the submitted report archive.
 
 \chapter{Diagram and Evidence Index}
-\begin{longtable}{p{0.31\textwidth}p{0.57\textwidth}}
+\begin{longtable}{P{0.31\textwidth}P{0.57\textwidth}}
 \toprule
 \textbf{View} & \textbf{Repository evidence represented}\\\midrule\endfirsthead
 \toprule\textbf{View} & \textbf{Repository evidence represented}\\\midrule\endhead
 System context & Android application, backend, optional Supabase, Gemini, and Firebase integrations.\\
+Responsibility boundaries & PostgreSQL authority, derived caches/vectors, and independent observation.\\
 Runtime architecture & Compose services, API dependency configuration, and embedding listener.\\
 Backend layers & Controller, service, repository, security, configuration, and monitoring packages.\\
 Android navigation & Learner and administrator navigation XML plus screen classes.\\
 Deployment topology & Base and monitoring Compose files, exposed ports, and named volumes.\\
 Database model & Flyway migrations, generated records, entities, and foreign keys.\\
+Detailed learning model & Natural-key constraints and cardinality for enrolment, progress, and attempts.\\
+Assessment model & Question/option definitions, lesson hierarchy, and the limits of stored attempt history.\\
+Reward model & Learner statistics, badge definitions/awards, and date-keyed quest progress.\\
 API boundaries & Controller mappings and Spring Security route rules.\\
 Authentication sequence & Login use case, JWT utility, refresh service, and Redis revocation.\\
+Coordinated refresh & Android TokenRefreshCoordinator and OkHttp authenticator.\\
+Screen states & Conceptual loading/content/empty/failure acceptance model, not complete device evidence.\\
+Password recovery & Random token, digest storage, consume lock, BCrypt update, optional SMTP.\\
+Payment simulation & Simulation flag, owner check, partial unique index, transactional enrolment.\\
 Learner journey & Course, payment, enrolment, lesson, quiz, progress, and reward services.\\
 Progress state & Conditional progress transitions and concurrency integration tests.\\
+Concurrent transactions & Two requests serialized on one learner statistics row.\\
+Quiz workflows & Multiple-choice transaction compared with fill-blank feedback-only use case.\\
 Cache flow & Redis configuration plus cacheable and eviction annotations.\\
 Embedding sequence & After-commit publisher, RabbitMQ binding, listener, and embedding service.\\
 AI retrieval & MiniLM embedding service, pgvector search, Gemini client, and fallback test.\\
 CI flow & GitHub Actions backend, monitoring, and Android jobs.\\
 Monitoring flow & Prometheus jobs and rules, exporters, Grafana provisioning, and Alertmanager.\\
+Incident decision & Main-listener versus management-port investigation from the runbook.\\
+Restoration plan & Proposed isolated restoration and state reconciliation, not an executed backup drill.\\
 \bottomrule
 \end{longtable}
 
@@ -1242,5 +2326,8 @@ verification dates after new test runs. Never include secrets, private Firebase
 configuration, signing files, real user data, or access tokens in the report.
 
 \bibliographystyle{plain}
+\begingroup
+\raggedright
 \bibliography{references}
+\endgroup
 \end{document}

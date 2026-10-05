@@ -57,7 +57,8 @@ public class QuizController {
 
   @PostMapping("/fill-blank")
   public ResponseEntity<SubmitFillBlankResponse> submitFillBlank(
-      @RequestBody SubmitFillBlankRequest request) {
+      @RequestBody SubmitFillBlankRequest request, Authentication authentication) {
+    AuthenticatedUser.requireOwner(authentication, request.userId());
     var response = submitFillBlankUseCase.execute(request);
     if (response.success() == true) {
       return ResponseEntity.ok(response);

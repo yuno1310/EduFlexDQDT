@@ -1,0 +1,80 @@
+[
+  {
+    "name": "Unknown account gets generic success",
+    "passed": true,
+    "expected": 202,
+    "actual": 202
+  },
+  {
+    "name": "Known and unknown account messages match",
+    "passed": true,
+    "expected": {
+      "success": true,
+      "message": "If the account exists, a single-use reset code has been sent."
+    },
+    "actual": {
+      "success": true,
+      "message": "If the account exists, a single-use reset code has been sent."
+    }
+  },
+  {
+    "name": "Only token digest stored",
+    "passed": true,
+    "expected": 64,
+    "actual": 64
+  },
+  {
+    "name": "Invalid reset code rejected",
+    "passed": true,
+    "expected": 400,
+    "actual": 400
+  },
+  {
+    "name": "Invalid reset code does not consume valid code",
+    "passed": true,
+    "expected": 0,
+    "actual": 0
+  },
+  {
+    "name": "Weak reset password rejected",
+    "passed": true,
+    "expected": 400,
+    "actual": 400
+  },
+  {
+    "name": "UI password reset consumes one token",
+    "passed": true,
+    "expected": 1,
+    "actual": 1
+  },
+  {
+    "name": "Old password rejected",
+    "passed": true,
+    "expected": 400,
+    "actual": 400
+  },
+  {
+    "name": "New password accepted",
+    "passed": true,
+    "expected": 200,
+    "actual": 200
+  },
+  {
+    "name": "Reset revokes earlier refresh session",
+    "passed": true,
+    "expected": 401,
+    "actual": 401
+  },
+  {
+    "name": "Consumed reset code rejected",
+    "passed": true,
+    "expected": 400,
+    "actual": 400
+  },
+  {
+    "name": "Expired reset code rejected",
+    "passed": true,
+    "expected": 400,
+    "actual": 400
+  }
+]

@@ -1,0 +1,13 @@
+{
+  "api": "UP",
+  "targets": {
+    "eduflex-api": "up",
+    "eduflex-api-probe": "up",
+    "postgres": "up",
+    "prometheus": "up",
+    "rabbitmq": "up",
+    "rabbitmq-queues": "up",
+    "redis": "up"
+  },
+  "localMailboxRemoved": true
+}

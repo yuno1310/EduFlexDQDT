@@ -1,6 +1,293 @@
 % Diagram commands used by main.tex. All figures are native TikZ so the
 % Overleaf package does not depend on generated image files.
 
+% Detailed views added during the October report review. Each diagram has an
+% explicit implemented/conceptual scope in its caption or surrounding text.
+\tikzset{
+  efbox/.style={draw=eduflexteal!75!black,rounded corners=3pt,
+    fill=teal!6,align=center,
+    font={\small\setstretch{1}\hyphenpenalty=10000\exhyphenpenalty=10000},inner sep=7pt},
+  efderived/.style={efbox,draw=blue!65!black,fill=blue!5},
+  efdecision/.style={draw,diamond,aspect=2.4,align=center,
+    fill=orange!10,font=\small,inner sep=3pt},
+  efarrow/.style={-{Latex[length=2mm]},thick},
+  eflabel/.style={font=\scriptsize,fill=white,inner sep=2pt}
+}
+
+\newcommand{\assessmentmodeldiagram}{
+\begin{figure}[H]\centering
+\begin{tikzpicture}
+\node[efbox,text width=3.7cm](user) at (0,0){
+\textbf{users}\\PK: user\_id};
+\node[efbox,text width=3.7cm](lesson) at (7,0){
+\textbf{lesson}\\PK: lesson\_id\\Optional parent FK};
+\node[efderived,text width=3.7cm](attempt) at (0,-3){
+\textbf{quiz\_attempts}\\FK: user, lesson\\Score, pass, timestamp};
+\node[efbox,text width=3.7cm](question) at (7,-3){
+\textbf{questions}\\FK: lesson\_id\\Text and points};
+\node[efderived,text width=3.7cm](audit) at (0,-6){
+\textbf{History boundary}\\No stored submitted answers\\No question-set version};
+\node[efbox,text width=3.7cm](option) at (7,-6){
+\textbf{question\_options}\\FK: question\_id\\Text and correctness};
+\draw[efarrow](user)--node[eflabel,left]{1 to many}(attempt);
+\draw[efarrow](lesson.west)--(3.5,0)|-node[eflabel,pos=.8,above]{1 to many}(attempt.east);
+\draw[efarrow](lesson)--node[eflabel,right]{1 to many}(question);
+\draw[efarrow](question)--node[eflabel,right]{1 to many}(option);
+\draw[efarrow,dashed](attempt)--(audit);
+\draw[efarrow](lesson.east)--++(.7,0)--++(0,1.2)-|(lesson.north);
+\node[eflabel,above] at (7,1.2){optional parent relationship};
+\end{tikzpicture}
+\caption{Assessment definitions and persisted history; dashed note identifies missing audit detail}
+\label{fig:assessment-model}
+\end{figure}}
+
+\newcommand{\rewardmodeldiagram}{
+\begin{figure}[H]\centering
+\begin{tikzpicture}
+\node[efbox,text width=3.5cm](user) at (0,0){\textbf{users}\\PK: user\_id};
+\node[efbox,text width=3.5cm](stats) at (-4.5,-2.8){
+\textbf{Learner statistics}\\UQ: user\_id\\XP, level, calendar dates};
+\node[efderived,text width=3.5cm](award) at (0,-2.8){
+\textbf{user\_badges}\\UQ: (user, badge)\\earned\_at};
+\node[efderived,text width=3.5cm](progress) at (4.5,-2.8){
+\textbf{Daily quest progress}\\UQ: (user, quest, date)\\Count and completed flag};
+\node[efbox,text width=3.5cm](badge) at (0,-6.5){
+\textbf{badges}\\Reusable condition\\Unique condition type};
+\node[efbox,text width=3.5cm](quest) at (4.5,-6.5){
+\textbf{daily\_quests}\\Type, target count\\XP reward};
+\draw[efarrow](user)--node[eflabel,above,sloped]{1 to 0 or 1}(stats);
+\draw[efarrow](user)--node[eflabel,left]{1 to many}(award);
+\draw[efarrow](user)--node[eflabel,above,sloped]{1 to many}(progress);
+\draw[efarrow](badge)--node[eflabel,left]{1 to many}(award);
+\draw[efarrow](quest)--node[eflabel,right]{1 to many}(progress);
+\end{tikzpicture}
+\caption{Reward definitions, aggregate totals, and per-learner earned relationships}
+\label{fig:reward-model}
+\end{figure}}
+
+\newcommand{\quizworkflowdiagram}{
+\begin{figure}[H]\centering
+\begin{tikzpicture}
+\node[efbox,text width=12cm](owner) at (0,0){
+Controller: require the authenticated owner of the submitted user ID};
+\node[efbox,text width=5.7cm](mc) at (-3.4,-2.3){
+\textbf{Multiple choice}\\Transaction + learner lock\\Enrolment and lesson type};
+\node[efderived,text width=5.7cm](fb) at (3.4,-2.3){
+\textbf{Fill-in-the-blank}\\Separate feedback use case\\No course entitlement check};
+\node[efbox,text width=5.7cm](grade) at (-3.4,-5.1){
+Check option and lesson scope\\Score submitted items\\Save attempt; update quests};
+\node[efderived,text width=5.7cm](text) at (3.4,-5.1){
+Load answer key by question ID\\Trim and ignore case\\Compare submitted text};
+\node[efbox,text width=5.7cm](reward) at (-3.4,-7.9){
+If first pass: 30 XP\\Complete quiz and parent\\Evaluate course benefits};
+\node[efderived,text width=5.7cm](feedback) at (3.4,-7.9){
+Correctness and expected text\\No attempt history\\No progress or XP};
+\node[efbox,text width=5.7cm](result) at (-3.4,-10.7){
+Commit or roll back\\Return score and eligible state};
+\draw[efarrow](owner)--(mc);\draw[efarrow](owner)--(fb);
+\draw[efarrow](mc)--(grade);\draw[efarrow](grade)--(reward);
+\draw[efarrow](reward)--(result);
+\draw[efarrow](fb)--(text);\draw[efarrow](text)--(feedback);
+\end{tikzpicture}
+\caption{Existing quiz workflows differ in scope, persistence, and rewards; grading gaps remain}
+\label{fig:quiz-workflow}
+\end{figure}}
+
+\newcommand{\restoreplandiagram}{
+\begin{figure}[H]\centering
+\begin{tikzpicture}[node distance=.55cm]
+\node[efbox,text width=11.5cm](isolate){
+Isolate a restore environment; preserve the damaged state for diagnosis};
+\node[efbox,text width=11.5cm,below=of isolate](db){
+Restore independent PostgreSQL backup with required extension and roles};
+\node[efbox,text width=11.5cm,below=of db](check){
+Validate Flyway version, row relationships, progress, and reward totals};
+\node[efderived,text width=5cm,below=.8cm of check,xshift=-3.2cm](cache){
+Discard disposable DTO caches\\Apply explicit session invalidation policy};
+\node[efderived,text width=5cm,below=.8cm of check,xshift=3.2cm](vector){
+Reconcile or regenerate vectors\\Replay tool is future work};
+\node[efbox,text width=11.5cm,below=1cm of cache,xshift=3.2cm](verify){
+Verify media references, client journey, metrics, and alert resolution\\Record observed recovery time and recovered data boundary};
+\draw[efarrow](isolate)--(db);\draw[efarrow](db)--(check);
+\draw[efarrow](check.south)--(cache.north);
+\draw[efarrow](check.south)--(vector.north);
+\draw[efarrow](cache.south)--(verify.north);
+\draw[efarrow](vector.south)--(verify.north);
+\end{tikzpicture}
+\caption{Proposed isolated restoration drill; backup automation and replay are not implemented}
+\label{fig:restore-plan}
+\end{figure}}
+
+\newcommand{\responsibilitydiagram}{
+\begin{figure}[H]\centering
+\begin{tikzpicture}[node distance=.7cm]
+\node[efbox,text width=12cm](client){\textbf{Interaction boundary}\\
+Android navigation, loading/empty/error states, bearer credentials};
+\node[efbox,text width=12cm,below=of client](rules){\textbf{Authoritative application boundary}\\
+Caller ownership, enrolment, quiz evaluation, transaction coordination};
+\node[efbox,text width=5.1cm,below=of rules,xshift=-3.3cm](db){
+\textbf{PostgreSQL source of truth}\\Progress, XP, attempts, enrolment, constraints};
+\node[efderived,text width=5.1cm,below=of rules,xshift=3.3cm](derived){
+\textbf{Derived representations}\\Redis DTO caches; RabbitMQ-driven vectors};
+\node[efderived,text width=12cm,below=1cm of db,xshift=3.3cm](obs){
+\textbf{Observation boundary}\\Micrometer metrics, exporters, probes, dashboards, alerts};
+\draw[efarrow](client)--(rules);
+\draw[efarrow](rules.south)--(db.north);
+\draw[efarrow](rules.south)--(derived.north);
+\draw[efarrow,dashed](db)--(obs);
+\draw[efarrow,dashed](derived)--(obs);
+\end{tikzpicture}
+\caption{Responsibility boundaries: authoritative, derived, and observed state}
+\label{fig:responsibility}
+\end{figure}}
+
+\newcommand{\learningerdetaildiagram}{
+\begin{figure}[H]\centering
+\begin{tikzpicture}
+\node[efbox,text width=3.5cm](user) at (0,0){
+\textbf{users}\\PK: user\_id\\Identity and role};
+\node[efbox,text width=3.5cm](course) at (7,0){
+\textbf{courses}\\PK: course\_id\\Metadata, price, embedding};
+\node[efderived,text width=3.5cm](enrol) at (3.5,-3.2){
+\textbf{enrollments}\\FK: user\_id, course\_id\\UQ: (user, course)};
+\node[efbox,text width=3.5cm](progress) at (0,-6.2){
+\textbf{lesson\_progress}\\FK: user\_id, lesson\_id\\UQ: (user, lesson)};
+\node[efbox,text width=3.5cm](lesson) at (7,-6.2){
+\textbf{lesson}\\FK: course\_id\\Content, hierarchy, embedding};
+\node[efderived,text width=3.5cm](attempt) at (3.5,-9.3){
+\textbf{quiz\_attempts}\\FK: user\_id, lesson\_id\\Repeated assessment history};
+\draw[efarrow](user)--node[eflabel,above,sloped]{1 to many}(enrol);
+\draw[efarrow](course)--node[eflabel,above,sloped]{1 to many}(enrol);
+\draw[efarrow](user)--node[eflabel,left]{1 to many}(progress);
+\draw[efarrow](course)--node[eflabel,right]{1 to many}(lesson);
+\draw[efarrow](lesson)--node[eflabel,above]{1 to many}(progress);
+\draw[efarrow](lesson)--node[eflabel,above,sloped]{1 to many}(attempt);
+\draw[efarrow](user.west)--++(-.6,0)|-node[eflabel,pos=.85,above]{1 to many}(attempt.west);
+\end{tikzpicture}
+\caption{Learning data model with cardinality and natural-key constraints}
+\label{fig:learning-er-detail}
+\end{figure}}
+
+\newcommand{\tokenrefreshdiagram}{
+\begin{figure}[H]\centering
+\begin{tikzpicture}[font=\small]
+\foreach \x/\name in {0/Request A,4.5/Coordinator,9/Request B}{
+\node[efbox,text width=2.8cm] at (\x,0){\name};
+\draw[dashed](\x,-.45)--(\x,-8.2);}
+\draw[efarrow](0,-1)--node[eflabel,above]{401 with old token}(4.5,-1);
+\draw[efarrow](9,-1.8)--node[eflabel,above]{401 with same old token}(4.5,-1.8);
+\node[efderived,text width=5.4cm] at (4.5,-3.1){
+Synchronized decision\\A refreshes through public client\\Store replacement token};
+\draw[efarrow](4.5,-4.6)--node[eflabel,above]{A retries with replacement}(0,-4.6);
+\node[efderived,text width=5.4cm] at (4.5,-6.2){
+B enters after A\\Current token differs from sent token\\Reuse stored replacement};
+\draw[efarrow](4.5,-7.8)--node[eflabel,above]{B retries; no second refresh}(9,-7.8);
+\end{tikzpicture}
+\caption{Implemented in-process coordination for concurrent expired-token requests}
+\label{fig:token-refresh}
+\end{figure}}
+
+\newcommand{\screenstatediagram}{
+\begin{figure}[H]\centering
+\begin{tikzpicture}
+\node[efbox,text width=2.8cm](loading) at (0,0){Loading\\Request in flight};
+\node[efbox,text width=2.8cm](content) at (-4,-3.2){Content\\Render returned state};
+\node[efderived,text width=2.8cm](empty) at (0,-3.2){Empty\\Offer next action};
+\node[efderived,text width=2.8cm](failure) at (4,-3.2){Failure\\Explain and allow retry};
+\draw[efarrow](loading.south)--(0,-1.6)-|(content.north);
+\draw[efarrow](loading.south)--node[eflabel,left,pos=.8]{no data}(empty.north);
+\draw[efarrow](loading.south)--(0,-1.6)-|(failure.north);
+\node[eflabel,above] at (-2.3,-1.6){success with data};
+\node[eflabel,above] at (2.3,-1.6){request failed};
+\draw[efarrow](failure.east)--(6,-3.2)--(6,1.2)--(0,1.2)--(loading.north);
+\node[eflabel,above] at (2.8,1.2){retry; preserve selected resource};
+\end{tikzpicture}
+\caption{Screen-state acceptance model for loaded data; device coverage remains partial}
+\label{fig:screen-state}
+\end{figure}}
+
+\newcommand{\passwordresetdiagram}{
+\begin{figure}[H]\centering
+\resizebox{\textwidth}{!}{
+\begin{tikzpicture}[font=\small]
+\foreach \x/\name in {0/Learner,4/API,8/PostgreSQL,12/SMTP}{
+\node[efbox,text width=2.2cm] at (\x,0){\name};
+\draw[dashed](\x,-.45)--(\x,-9.5);}
+\draw[efarrow](0,-1)--node[eflabel,above]{request(email)}(4,-1);
+\draw[efarrow](4,-1.9)--node[eflabel,above]{store SHA-256 digest + expiry}(8,-1.9);
+\draw[efarrow](4,-2.8)--node[eflabel,above]{deliver plaintext random code}(12,-2.8);
+\draw[efarrow](4,-3.7)--node[eflabel,above]{generic request response}(0,-3.7);
+\draw[efarrow](0,-4.6)--node[eflabel,above]{confirm(code, new password)}(4,-4.6);
+\draw[efarrow](4,-5.5)--node[eflabel,above]{lock valid unused digest}(8,-5.5);
+\draw[efarrow](4,-6.4)--node[eflabel,above]{consume + write BCrypt hash}(8,-6.4);
+\node[efderived,text width=4.5cm] at (4,-7.3){Revoke refresh tokens in Redis\\Separate system boundary};
+\draw[efarrow](4,-9.2)--node[eflabel,above]{success or invalid/expired}(0,-9.2);
+\end{tikzpicture}}
+\caption{Implemented recovery lifecycle when SMTP is configured; not one distributed transaction}
+\label{fig:password-reset}
+\end{figure}}
+
+\newcommand{\paymentsimulationdiagram}{
+\begin{figure}[H]\centering
+\begin{tikzpicture}[node distance=.55cm]
+\node[efbox,text width=10.5cm](owner){Validate JWT owner and simulation flag};
+\node[efbox,text width=10.5cm,below=of owner](price){Load server-side course price};
+\node[efbox,text width=10.5cm,below=of price](write){
+Transaction: insert SUCCESS record\\ON CONFLICT DO NOTHING; accept existing successful record};
+\node[efbox,text width=10.5cm,below=of write](enrol){
+Ensure unique learner--course enrolment};
+\node[efderived,text width=10.5cm,below=of enrol](result){
+Commit and return simulation=true\\No external payment or settlement};
+\draw[efarrow](owner)--(price);
+\draw[efarrow](price)--(write);
+\draw[efarrow](write)--(enrol);
+\draw[efarrow](enrol)--(result);
+\end{tikzpicture}
+\caption{Retry-safe development checkout; repeated requests converge on one successful record}
+\label{fig:payment-simulation}
+\end{figure}}
+
+\newcommand{\concurrenttransactiondiagram}{
+\begin{figure}[H]\centering
+\begin{tikzpicture}[font=\small]
+\foreach \x/\name in {0/Transaction A,5/PostgreSQL,10/Transaction B}{
+\node[efbox,text width=2.8cm] at (\x,0){\name};
+\draw[dashed](\x,-.45)--(\x,-8);}
+\draw[efarrow](0,-1)--node[eflabel,above]{lock learner row}(5,-1);
+\draw[efarrow](10,-1.8)--node[eflabel,above]{request same row lock}(5,-1.8);
+\node[efderived,text width=2.7cm] at (10,-3){Wait for A};
+\draw[efarrow](0,-3.2)--node[eflabel,above]{new completion; add 20 XP}(5,-3.2);
+\draw[efarrow](0,-4.3)--node[eflabel,above]{commit; release lock}(5,-4.3);
+\draw[efarrow](5,-5.3)--node[eflabel,above]{B acquires lock}(10,-5.3);
+\draw[efarrow](10,-6.3)--node[eflabel,above]{already complete; no new XP}(5,-6.3);
+\draw[efarrow](10,-7.3)--node[eflabel,above]{commit existing result}(5,-7.3);
+\end{tikzpicture}
+\caption{Successful duplicate completion ordering for one learner under a row lock}
+\label{fig:concurrent-transaction}
+\end{figure}}
+
+\newcommand{\incidentdecisiondiagram}{
+\begin{figure}[H]\centering
+\begin{tikzpicture}
+\node[efbox,text width=11cm](alert) at (0,0){Availability alert: inspect main-listener probe and management scrape};
+\node[efderived,text width=4.4cm](listener) at (-3,-2.1){
+Probe fails; scrape succeeds\\Inspect listener, readiness dependencies, network};
+\node[efderived,text width=4.4cm](process) at (3,-2.1){
+Probe and scrape fail\\Inspect API process, JVM startup, container health};
+\node[efbox,text width=11cm](recover) at (0,-4.3){
+Identify cause; restore affected service or dependency\\Avoid destructive volume removal};
+\node[efbox,text width=11cm](verify) at (0,-6.1){
+Verify client request, readiness, scrape targets, and alert resolution};
+\draw[efarrow](alert)--(listener);
+\draw[efarrow](alert)--(process);
+\draw[efarrow](listener)--(recover);
+\draw[efarrow](process)--(recover);
+\draw[efarrow](recover)--(verify);
+\end{tikzpicture}
+\caption{Runbook-based investigation and recovery decision model}
+\label{fig:incident-decision}
+\end{figure}}
+
 \newcommand{\systemcontextdiagram}{
 \begin{figure}[H]\centering
 \resizebox{0.94\textwidth}{!}{
@@ -21,7 +308,7 @@ arr/.style={-{Latex[length=2mm]},thick}]
 \draw[arr](operator)--(platform);
 \draw[arr](platform)--(supabase);
 \draw[arr](platform)--(gemini);
-\draw[arr](platform)--(firebase);
+\draw[arr](firebase)--(platform);
 \end{tikzpicture}}
 \caption{System context and external actors}\label{fig:system-context}
 \end{figure}}
@@ -56,7 +343,7 @@ arr/.style={-{Latex[length=1.7mm]},thick}]
 \node[screen,right=1cm of discover](detail){Course Detail};
 \node[screen,right=1cm of detail](lesson){Lesson Study};
 \node[screen,below=.8cm of lesson](quiz){Quiz / Result};
-\node[screen,below=.8cm of detail](ai){AI Summary / Ask};
+\node[screen,below=.8cm of detail](ai){AI Summary};
 \node[screen,below=.8cm of discover](cart){Cart / Payment};
 \node[screen,below=.8cm of home](profile){Profile / Rewards};
 \node[screen,below=.8cm of auth](learn){My Learning};
@@ -74,78 +361,75 @@ arr/.style={-{Latex[length=1.7mm]},thick}]
 
 \newcommand{\deploymentdiagram}{
 \begin{figure}[H]\centering
-\resizebox{\textwidth}{!}{
-\begin{tikzpicture}[
-svc/.style={draw,rounded corners,align=center,minimum width=2.5cm,minimum height=.9cm,fill=teal!7},
-obs/.style={draw,rounded corners,align=center,minimum width=2.5cm,minimum height=.9cm,fill=orange!10},
-store/.style={draw,cylinder,shape border rotate=90,aspect=.28,align=center,minimum width=2.3cm,minimum height=1cm,fill=blue!7},
-arr/.style={-{Latex[length=1.7mm]},thick}]
-\node[svc] at (0,2.4)(android){Android device\\API base URL};
-\node[svc] at (3.8,2.4)(api){eduflex-api\\8080 / 8081};
-\node[store] at (7.7,5.0)(pg){PostgreSQL 16\\pgvector volume};
-\node[store] at (7.7,2.7)(redis){Redis\\AOF volume};
-\node[store] at (7.7,.4)(rabbit){RabbitMQ\\management 15672};
-\node[obs] at (0,-2.3)(blackbox){Blackbox\\API probe};
-\node[obs] at (3.8,-2.3)(prom){Prometheus\\9090};
-\node[obs] at (7.7,-2.3)(grafana){Grafana\\3000};
-\node[obs] at (11.5,-2.3)(alert){Alertmanager\\9093};
-\node[obs] at (11.5,.4)(exporters){PostgreSQL + Redis\\exporters};
-\draw[arr](android)--(api);\draw[arr](api)--(pg);\draw[arr](api)--(redis);\draw[arr](api)--(rabbit);
-\draw[arr](prom)--(blackbox);\draw[arr](blackbox)--(api);
-\draw[arr](prom)--(api);\draw[arr](prom)--(exporters);
-\draw[arr](exporters)--(pg);\draw[arr](exporters)--(redis);
-\draw[arr](prom)--(rabbit);\draw[arr](grafana)--(prom);
-\draw[arr](prom)--(alert);
+\resizebox{\textwidth}{!}{\begin{tikzpicture}
+\node[efbox,text width=2.8cm](android) at (-4,2.2){Android device\\API base URL};
+\node[efbox,text width=3.2cm](api) at (0,0){Spring Boot API\\HTTP 8080\\Management 8081};
+\node[efbox,text width=2.8cm](pg) at (-4,-3){PostgreSQL\\pgvector extension\\Named data volume};
+\node[efbox,text width=2.8cm](redis) at (0,-3){Redis\\AOF data volume};
+\node[efbox,text width=2.8cm](rabbit) at (4,-3){RabbitMQ\\Management 15672\\No mounted data volume};
+\node[efderived,text width=2.8cm](exporters) at (-4,-6){PostgreSQL and Redis\\exporters};
+\node[efderived,text width=2.8cm](prom) at (0,-6){Prometheus 9090\\Scrape and evaluate};
+\node[efderived,text width=2.8cm](blackbox) at (4,-6){Blackbox exporter\\Probe API listener};
+\node[efderived,text width=2.8cm](grafana) at (-4,-8.5){Grafana 3000\\Query and visualize};
+\node[efderived,text width=2.8cm](alert) at (4,-8.5){Alertmanager 9093\\Local alert receiver};
+\draw[efarrow](android)--(api);
+\draw[efarrow](api)--(pg);\draw[efarrow](api)--(redis);\draw[efarrow](api)--(rabbit);
+\draw[efarrow](prom.west)--(exporters.east);
+\draw[efarrow](exporters)--(pg);
+\draw[efarrow](exporters.north east)--(redis.south west);
+\draw[efarrow](prom.east)--(blackbox.west);
+\draw[efarrow](prom.north east)--node[eflabel,above,sloped]{broker metrics}(rabbit.south west);
+\draw[efarrow](grafana.north east)--(prom.south west);
+\draw[efarrow](prom.south east)--(alert.north west);
+\draw[efarrow](prom.north west)--(-6,-5)--(-6,0)--(api.west);
+\node[eflabel,rotate=90] at (-6,-2.1){management scrape};
+\draw[efarrow](blackbox.north east)--(6,-5)--(6,0)--(api.east);
+\node[eflabel,rotate=90] at (6,-2.1){main-listener readiness probe};
 \end{tikzpicture}}
-\caption{Docker Compose deployment and monitoring topology}\label{fig:deployment}
+\caption{Compose service dependencies: arrows follow callers; broker data storage is not mounted}
+\label{fig:deployment}
 \end{figure}}
 
 \newcommand{\erdmodeldiagram}{
 \begin{figure}[H]\centering
-\resizebox{\textwidth}{!}{
-\begin{tikzpicture}[
-entity/.style={draw,rounded corners,fill=blue!5,align=center,minimum width=2.6cm,minimum height=.92cm},
-core/.style={draw,rounded corners,fill=teal!10,very thick,align=center,minimum width=2.35cm,minimum height=.82cm},
-rel/.style={thick}]
-\node[core](users){users\\\scriptsize PK user\_id};
-\node[core,right=2.2cm of users](courses){courses\\\scriptsize PK course\_id};
-\node[core,right=2.2cm of courses](lessons){lesson\\\scriptsize PK lesson\_id, FK course\_id};
-\node[entity,above=1.25cm of courses](enrol){enrollments\\\scriptsize UQ(user\_id, course\_id)};
-\node[entity,above=1.25cm of lessons](progress){lesson\_progress\\\scriptsize UQ(user\_id, lesson\_id)};
-\node[entity,right=1.7cm of lessons,yshift=1.05cm](questions){questions\\\scriptsize FK lesson\_id};
-\node[entity,right=1.7cm of lessons,yshift=-1.05cm](attempts){quiz\_attempts\\\scriptsize FK user\_id, lesson\_id};
-\node[entity,below=1.25cm of users](stats){gamification\_stats\\\scriptsize UQ user\_id};
-\node[entity,below=1.25cm of courses](badges){badges / user\_badges\\\scriptsize UQ(user\_id, badge\_id)};
-\node[entity,below=1.25cm of lessons](quests){daily quests / progress\\\scriptsize UQ(user, quest, date)};
-\node[entity,above=2.6cm of users](reviews){course\_reviews\\\scriptsize UQ(user\_id, course\_id)};
-\node[entity,above=2.6cm of courses](payments){transactions\\\scriptsize FK user\_id, course\_id};
-\draw[rel](users)--(enrol);\draw[rel](courses)--(enrol);
-\draw[rel](courses)--(lessons);\draw[rel](lessons)--(progress);
-\draw[rel](lessons)--(questions);\draw[rel](questions)--(attempts);
-\draw[rel](users)--(stats);\draw[rel](users)--(badges);\draw[rel](users)--(quests);
-\draw[rel](users)--(reviews);\draw[rel](courses)--(reviews);
-\draw[rel](users)--(payments);\draw[rel](courses)--(payments);
-\end{tikzpicture}}
-\caption{Logical database relationship model}\label{fig:erd}
+\begin{tikzpicture}
+\node[efbox,text width=3.7cm](users) at (-3.4,0){\textbf{Identity}\\users};
+\node[efbox,text width=3.7cm](courses) at (3.4,0){\textbf{Catalogue}\\courses};
+\node[efderived,text width=4.9cm](shared) at (0,-2.5){
+\textbf{Learner--course relationships}\\enrollments, course\_reviews, transactions};
+\node[efbox,text width=4.2cm](state) at (-3.4,-5.2){
+\textbf{Learner state}\\lesson\_progress, statistics, badge awards, daily quest progress};
+\node[efbox,text width=4.2cm](content) at (3.4,-5.2){
+\textbf{Course content}\\lesson hierarchy, questions, answer options, embeddings};
+\node[efderived,text width=4.9cm](attempts) at (0,-8){
+\textbf{Assessment history}\\quiz\_attempts connects users and lessons};
+\draw[efarrow](users)--(shared);\draw[efarrow](courses)--(shared);
+\draw[efarrow](users.south west)--(state.north west);
+\draw[efarrow](courses.south east)--(content.north east);
+\draw[efarrow](state)--(attempts);\draw[efarrow](content)--(attempts);
+\draw[efarrow,dashed](content.west)--node[eflabel,above]{lesson links}(state.east);
+\end{tikzpicture}
+\caption{Domain relationship overview; detailed figures specify keys and cardinality}
+\label{fig:erd}
 \end{figure}}
 
 \newcommand{\apiboundarydiagram}{
 \begin{figure}[H]\centering
-\resizebox{\textwidth}{!}{
-\begin{tikzpicture}[
-group/.style={draw,rounded corners,align=center,minimum width=3.4cm,minimum height=1.05cm},
-gate/.style={draw,very thick,rounded corners,fill=gray!12,align=center,minimum width=3.5cm,minimum height=1.1cm},
-arr/.style={-{Latex[length=1.8mm]},thick}]
-\node[group,fill=green!9](public){Public\\register, login, refresh\\logout, health, OpenAPI};
-\node[gate,right=1.2cm of public](filter){JWT filter\\signature, expiry, type\\identity and role};
-\node[group,fill=teal!8,right=1.2cm of filter,yshift=1.4cm](learner){Authenticated learner\\catalogue, enrolment, progress\\quiz, review, AI, rewards};
-\node[group,fill=orange!10,right=1.2cm of filter,yshift=-1.4cm](admin){ADMIN role\\users, courses, lessons\\questions, direct XP};
-\node[group,fill=red!6,below=1.2cm of filter](ownership){Ownership checks\\path user = token user\\course enrolment required};
-\draw[arr](public)--(filter);
-\draw[arr](filter)--(learner);
-\draw[arr](filter)--(admin);
-\draw[arr](learner)--(ownership);\draw[arr](admin)--(ownership);
-\end{tikzpicture}}
+\begin{tikzpicture}
+\node[efbox,text width=10cm](policy) at (0,0){Request enters security filter chain\\Evaluate route policy};
+\node[efderived,text width=3.7cm](public) at (-3,-2){
+Public route\\Login, register, recovery, refresh, logout, health, OpenAPI};
+\node[efbox,text width=3.7cm](jwt) at (3,-2){
+Protected route\\Verify access-token signature, issuer, expiry, type};
+\node[efbox,text width=3.7cm](learner) at (0,-5.4){
+Learner commands\\Verify caller ownership\\Enrolment where required};
+\node[efderived,text width=3.7cm](admin) at (5.3,-5.4){
+\texttt{ADMIN} commands\\Privileged content and user changes\\Operation-specific rules};
+\draw[efarrow](policy)--(public);
+\draw[efarrow](policy)--(jwt);
+\draw[efarrow](jwt)--(learner);
+\draw[efarrow](jwt)--(admin);
+\end{tikzpicture}
 \caption{API groups and authorization boundaries}\label{fig:api-boundaries}
 \end{figure}}
 
@@ -177,7 +461,7 @@ arr/.style={-{Latex[length=1.5mm]},thick}]
 \node[state](discover){Discover course};
 \node[state,below=.45cm of discover](detail){Read details};
 \node[decision,below=.45cm of detail](paid){Paid?};
-\node[state,right=2.2cm of paid](payment){Record payment};
+\node[state,right=2.2cm of paid](payment){Simulate payment\\record};
 \node[state,below=.55cm of paid](enrol){Create enrolment};
 \node[state,below=.45cm of enrol](study){Study lesson};
 \node[decision,below=.45cm of study](quiz){Quiz lesson?};

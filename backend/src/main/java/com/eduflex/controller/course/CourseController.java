@@ -39,6 +39,8 @@ import com.eduflex.service.payment.ProcessPaymentUseCase;
 import com.eduflex.service.course.SearchCourseUseCase;
 import com.eduflex.service.course.SubmitCourseReviewUseCase;
 import com.eduflex.service.course.SubmitReviewUseCase;
+import com.eduflex.security.AuthenticatedUser;
+import com.eduflex.repository.enrollment.EnrollmentRepository;
 
 import jakarta.validation.Valid;
 
@@ -73,6 +75,9 @@ public class CourseController {
   @Autowired
   private AiCourseService aiCourseService;
 
+  @Autowired
+  private EnrollmentRepository enrollmentRepository;
+
   @PostMapping
   public ResponseEntity<CreateCourseResponse> createCourse(
       @RequestBody CreateCourseRequest request) {
@@ -95,7 +100,9 @@ public class CourseController {
 
   @PostMapping("/payment")
   public ResponseEntity<ProcessPaymentResponse> processPayment(
-      @RequestBody ProcessPaymentRequest request) {
+      @RequestBody ProcessPaymentRequest request, Authentication authentication) {
+
+    AuthenticatedUser.requireOwner(authentication, request.userId());
 
     var response = paymentUseCase.execute(request);
     return response.success()
@@ -105,7 +112,8 @@ public class CourseController {
 
   @PostMapping("/reviews")
   public ResponseEntity<SubmitReviewResponse> submitReview(
-      @RequestBody SubmitReviewRequest request) {
+      @RequestBody SubmitReviewRequest request, Authentication authentication) {
+    AuthenticatedUser.requireOwner(authentication, request.userId());
     var response = submitReviewUseCase.execute(request);
     return response.success()
         ? ResponseEntity.ok(response)
@@ -129,14 +137,29 @@ public class CourseController {
   }
 
   @GetMapping("/{courseId}/ai-summary")
-  public ResponseEntity<CourseSummaryResponse> summarizeCourse(@PathVariable UUID courseId) {
+  public ResponseEntity<CourseSummaryResponse> summarizeCourse(
+      @PathVariable UUID courseId, Authentication authentication) {
+    requireCourseAccess(authentication, courseId);
     return ResponseEntity.ok(aiCourseService.summarize(courseId));
   }
 
   @PostMapping("/{courseId}/ask")
   public ResponseEntity<AskCourseResponse> askCourse(
-      @PathVariable UUID courseId, @Valid @RequestBody AskCourseRequest request) {
+      @PathVariable UUID courseId, @Valid @RequestBody AskCourseRequest request,
+      Authentication authentication) {
+    requireCourseAccess(authentication, courseId);
     return ResponseEntity.ok(aiCourseService.ask(courseId, request.question()));
+  }
+
+  private void requireCourseAccess(Authentication authentication, UUID courseId) {
+    boolean admin = authentication != null && authentication.getAuthorities().stream()
+        .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+    if (admin) return;
+    if (authentication == null || !(authentication.getPrincipal() instanceof UUID userId)
+        || !enrollmentRepository.isUserEnrolled(userId, courseId)) {
+      throw new org.springframework.security.access.AccessDeniedException(
+          "Course enrolment is required for AI assistance");
+    }
   }
 
   @GetMapping("/{courseId}/reviews")

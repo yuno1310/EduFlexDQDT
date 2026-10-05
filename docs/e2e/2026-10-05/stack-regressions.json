@@ -1,0 +1,431 @@
+{
+  "run": "1791196236-d8d73b06",
+  "fixtureCleanup": true,
+  "runnerError": null,
+  "checks": [
+    {
+      "name": "Register API test learner",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Login API learner",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Ready probe",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Anonymous catalogue denied",
+      "passed": true,
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "name": "Learner admin users denied",
+      "passed": true,
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "name": "Cross-user enrollment read denied",
+      "passed": true,
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "name": "Cross-user profile write denied",
+      "passed": true,
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "name": "Cross-user stats read denied",
+      "passed": true,
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "name": "Cross-user lesson completion denied",
+      "passed": true,
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "name": "Unenrolled AI summary denied",
+      "passed": true,
+      "expected": 403,
+      "actual": 403
+    },
+    {
+      "name": "Unenrolled paid lesson contents denied",
+      "passed": false,
+      "expected": 403,
+      "actual": 200
+    },
+    {
+      "name": "Unenrolled quiz contents denied",
+      "passed": false,
+      "expected": 403,
+      "actual": 200
+    },
+    {
+      "name": "Unenrolled reviews rejected",
+      "passed": false,
+      "expected": 403,
+      "actual": 200
+    },
+    {
+      "name": "Paid free-registration rejected",
+      "passed": true,
+      "expected": 400,
+      "actual": 400
+    },
+    {
+      "name": "Free enrollment",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Simulated paid enrollment",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Repeat simulated paid enrollment",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Exactly one payment",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "Exactly one paid enrollment",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "Invalid review rating rejected",
+      "passed": true,
+      "expected": 400,
+      "actual": 400
+    },
+    {
+      "name": "Enrolled review saved",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Enrolled review updated",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Review update stores one row",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "Daily quests load",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Daily checkin",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Repeat daily checkin",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Repeated checkin after login adds no XP",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "100 concurrent live completion requests",
+      "passed": true,
+      "expected": {
+        "200": 100
+      },
+      "actual": {
+        "200": 100
+      }
+    },
+    {
+      "name": "Concurrent completion writes one record",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "Concurrent completion rewards 20 XP once",
+      "passed": true,
+      "expected": 20,
+      "actual": 20
+    },
+    {
+      "name": "Quiz loads without answer keys",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Quiz does not expose correctness",
+      "passed": true,
+      "expected": false,
+      "actual": false
+    },
+    {
+      "name": "Incomplete quiz rejected",
+      "passed": false,
+      "expected": 400,
+      "actual": 200
+    },
+    {
+      "name": "Partial quiz cannot pass",
+      "passed": false,
+      "expected": false,
+      "actual": true
+    },
+    {
+      "name": "Full quiz submission",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Correct quiz passes",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "Repeated full quiz",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Repeated quiz gives zero completion XP",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "Repeated quiz does not increase total XP",
+      "passed": false,
+      "expected": 110,
+      "actual": 170
+    },
+    {
+      "name": "Null nested quiz answer rejected",
+      "passed": false,
+      "expected": 400,
+      "actual": 200
+    },
+    {
+      "name": "Unenrolled fill-blank answer lookup denied",
+      "passed": false,
+      "expected": 403,
+      "actual": 200
+    },
+    {
+      "name": "Client cannot forge completed quiz quest",
+      "passed": false,
+      "expected": 400,
+      "actual": 200
+    },
+    {
+      "name": "AI summary enrolled",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Course AI question",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Course vector has 384 dimensions",
+      "passed": true,
+      "expected": "384",
+      "actual": "384"
+    },
+    {
+      "name": "Content lesson vector has 384 dimensions",
+      "passed": true,
+      "expected": "384",
+      "actual": "384"
+    },
+    {
+      "name": "Refresh session",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Logout session",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Revoked session cannot refresh",
+      "passed": true,
+      "expected": 401,
+      "actual": 401
+    },
+    {
+      "name": "Admin user directory",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Admin course create",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Admin course update",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Course update persisted",
+      "passed": true,
+      "expected": "E2E CRUD 1791196236-d8d73b06 changed",
+      "actual": "E2E CRUD 1791196236-d8d73b06 changed"
+    },
+    {
+      "name": "Cached catalogue reflects course update",
+      "passed": false,
+      "expected": false,
+      "actual": true
+    },
+    {
+      "name": "Admin lesson create",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Admin second lesson create",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Cached lesson list reflects new lesson",
+      "passed": false,
+      "expected": true,
+      "actual": false
+    },
+    {
+      "name": "Admin lesson update",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Lesson update persisted",
+      "passed": true,
+      "expected": "Updated lesson",
+      "actual": "Updated lesson"
+    },
+    {
+      "name": "Admin quiz question create",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Admin quiz question update",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Question update persisted",
+      "passed": true,
+      "expected": "CRUD changed question",
+      "actual": "CRUD changed question"
+    },
+    {
+      "name": "Admin quiz question delete",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Question removed",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "Admin lesson delete",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Lesson removed",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "Admin course delete",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "Course removed",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "Admin user delete",
+      "passed": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "User removed",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    }
+  ]
+}

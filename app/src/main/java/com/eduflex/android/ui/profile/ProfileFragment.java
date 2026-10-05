@@ -456,12 +456,8 @@ public class ProfileFragment extends Fragment {
                 .setTitle(R.string.logout)
                 .setMessage(R.string.logout_confirm)
                 .setPositiveButton(R.string.logout, (dialog, which) -> {
-                    tokenManager.clearToken();
                     profilePrefs.edit().clear().apply();
-                    Intent intent = new Intent(requireContext(), LoginActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(intent);
-                    requireActivity().finish();
+                    com.eduflex.android.auth.SessionManager.logout(requireContext());
                 })
                 .setNegativeButton("Cancel", null)
                 .show();

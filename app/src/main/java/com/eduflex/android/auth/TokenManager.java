@@ -12,6 +12,7 @@ public class TokenManager {
     private static final String TAG = "TokenManager";
     private static final String PREF_NAME = "eduflex_auth";
     private static final String KEY_TOKEN = "jwt_token";
+    private static final String KEY_REFRESH_TOKEN = "refresh_token";
     private static final String KEY_ROLE = "user_role";
     private static final String KEY_FULL_NAME = "user_full_name";
     private static final String KEY_EMAIL = "user_email";
@@ -29,6 +30,14 @@ public class TokenManager {
 
     public String getToken() {
         return prefs.getString(KEY_TOKEN, null);
+    }
+
+    public void saveRefreshToken(String token) {
+        prefs.edit().putString(KEY_REFRESH_TOKEN, token).apply();
+    }
+
+    public String getRefreshToken() {
+        return prefs.getString(KEY_REFRESH_TOKEN, null);
     }
 
     public void saveRole(String role) {
@@ -72,7 +81,8 @@ public class TokenManager {
     }
 
     public void clearToken() {
-        prefs.edit().remove(KEY_TOKEN).remove(KEY_ROLE).remove(KEY_FULL_NAME).remove(KEY_EMAIL).remove(KEY_AVATAR_URL).apply();
+        prefs.edit().remove(KEY_TOKEN).remove(KEY_REFRESH_TOKEN).remove(KEY_ROLE)
+                .remove(KEY_FULL_NAME).remove(KEY_EMAIL).remove(KEY_AVATAR_URL).apply();
     }
 
     /**
