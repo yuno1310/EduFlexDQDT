@@ -22,7 +22,7 @@ public class UpdateCourseUseCase {
     private ContentEventPublisher contentEvents;
 
     @Transactional
-    @CacheEvict(value = {"courseCatalog", "courseSummaries", "semanticSearch"}, allEntries = true)
+    @CacheEvict(value = {"courses", "courseCatalog", "courseSummaries", "semanticSearch"}, allEntries = true)
     public UpdateCourseResponse execute(UUID courseId, UpdateCourseRequest request) {
         if (!courseRepository.existsById(courseId)) {
             return new UpdateCourseResponse(false, "Course not found");

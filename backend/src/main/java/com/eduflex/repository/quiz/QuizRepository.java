@@ -133,7 +133,7 @@ public class QuizRepository {
       }
       return list;
     } else {
-      return null;
+      return List.of();
     }
   }
 

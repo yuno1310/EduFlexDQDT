@@ -24,7 +24,7 @@ public class CreateLessonUseCase {
     private ContentEventPublisher contentEvents;
 
     @Transactional
-    @CacheEvict(value = {"courseSummaries", "semanticSearch"}, allEntries = true)
+    @CacheEvict(value = {"lessons", "courseSummaries", "semanticSearch"}, allEntries = true)
     public CreateLessonResponse execute(CreateLessonRequest request) {
 
         if (request.courseID() == null) {

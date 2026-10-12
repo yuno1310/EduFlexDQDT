@@ -21,6 +21,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
+import java.util.stream.Collectors;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -67,7 +69,25 @@ public class SubmitQuizUseCase {
       throw new IllegalArgumentException("The selected lesson is not a quiz");
     }
 
-    // 1. Grade the quiz (Calculate correct count and percent)
+    // A submission must answer the complete server-defined quiz exactly once.
+    var questions = quizRepository.getQuestionsByLessonId(lessonId);
+    var questionIds = questions.stream().map(q -> q.getQuestionId())
+        .collect(Collectors.toSet());
+    var submittedIds = new HashSet<Long>();
+    if (questionIds.isEmpty() || request.answers() == null
+        || request.answers().size() != questionIds.size()) {
+      throw new IllegalArgumentException("Answer every question in the quiz exactly once");
+    }
+    for (AnswerItem answer : request.answers()) {
+      if (answer == null || answer.questionId() == null || answer.selectedOptionId() == null
+          || !questionIds.contains(answer.questionId()) || !submittedIds.add(answer.questionId())
+          || quizRepository.getOptionsByQuestionId(answer.questionId()).stream()
+              .noneMatch(option -> option.getOptionId().equals(answer.selectedOptionId()))) {
+        throw new IllegalArgumentException("Each answer must identify a quiz question and one of its options");
+      }
+    }
+
+    // 1. Grade against the complete quiz stored on the server.
     int correctCount = 0;
     for (AnswerItem answer : request.answers()) {
       if (quizRepository.isAnswerCorrectForLesson(
@@ -76,7 +96,7 @@ public class SubmitQuizUseCase {
       }
     }
 
-    int totalQuestions = request.answers().size();
+    int totalQuestions = questionIds.size();
     double scorePercent = totalQuestions == 0 ? 0.0 : ((double) correctCount / totalQuestions) * 100;
     scorePercent = Math.round(scorePercent * 10.0) / 10.0;
 
@@ -87,14 +107,16 @@ public class SubmitQuizUseCase {
     boolean alreadyPassed = quizRepository.hasPassedQuiz(userId, lessonId);
     quizRepository.saveQuizAttempt(userId, lessonId, scorePercent, passed);
 
-    // Daily quest: count every quiz submission
     List<CompletedQuestInfo> completedQuests = new ArrayList<>();
-    CompletedQuestInfo quizCountCompleted = updateDailyQuestProgressUseCase.execute(userId, "QUIZ_COUNT", 1);
-    if (quizCountCompleted != null) completedQuests.add(quizCountCompleted);
-    // Daily quest: perfect run — increment on 100%, reset on any wrong answer
-    boolean isPerfect = correctCount == totalQuestions && totalQuestions > 0;
-    CompletedQuestInfo perfectRunCompleted = updateDailyQuestProgressUseCase.execute(userId, "PERFECT_RUN", isPerfect ? 1 : -1);
-    if (perfectRunCompleted != null) completedQuests.add(perfectRunCompleted);
+    // Replaying a passed quiz must not advance quests or award indirect XP.
+    if (!alreadyPassed) {
+      CompletedQuestInfo quizCountCompleted = updateDailyQuestProgressUseCase.execute(userId, "QUIZ_COUNT", 1);
+      if (quizCountCompleted != null) completedQuests.add(quizCountCompleted);
+      boolean isPerfect = correctCount == totalQuestions;
+      CompletedQuestInfo perfectRunCompleted = updateDailyQuestProgressUseCase.execute(
+          userId, "PERFECT_RUN", isPerfect ? 1 : -1);
+      if (perfectRunCompleted != null) completedQuests.add(perfectRunCompleted);
+    }
 
     // 3. Handle FAILED case
     if (!passed) {

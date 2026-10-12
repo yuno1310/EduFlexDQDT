@@ -208,9 +208,10 @@ def run_checks():
     b = req('Admin lesson create', 'POST', '/api/admin/lessons', {'courseID': c, 'title': 'CRUD lesson', 'contentType': 'text', 'content': 'Original lesson'})
     l = b['lessonId']
     q = db(f"SELECT lesson_id FROM lesson WHERE parent_lesson_id='{l}'")
-    api('GET', f'/api/lesson?courseID={c}', token=t)
+    request('Cache fixture free enrollment', 'POST', f'/api/enrollment/{c}/register', 200, {'userId': s['outsider']['id']}, t)
+    request('Prime enrolled lesson cache', 'GET', f'/api/lesson?courseID={c}', 200, token=t)
     b = req('Admin second lesson create', 'POST', '/api/admin/lessons', {'courseID': c, 'title': 'CRUD second lesson', 'contentType': 'text', 'content': 'New lesson'})
-    code, data = api('GET', f'/api/lesson?courseID={c}', token=t)
+    code, data = request('Read refreshed enrolled lesson cache', 'GET', f'/api/lesson?courseID={c}', 200, token=t)
     check('Cached lesson list reflects new lesson', True, 'CRUD second lesson' in json.dumps(data))
     req('Admin lesson update', 'PUT', f'/api/admin/lessons/{l}', {'title': 'CRUD changed lesson', 'contentType': 'text', 'content': 'Updated lesson'})
     check('Lesson update persisted', 'Updated lesson', db(f"SELECT content FROM lesson WHERE lesson_id='{l}'"))

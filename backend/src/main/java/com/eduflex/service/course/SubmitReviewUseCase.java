@@ -3,18 +3,19 @@ package com.eduflex.service.course;
 import com.eduflex.dto.course.ReviewDTO.SubmitReviewRequest;
 import com.eduflex.dto.course.ReviewDTO.SubmitReviewResponse;
 import com.eduflex.repository.course.CourseReviewRepository;
-import com.eduflex.repository.enrollment.EnrollmentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.eduflex.security.CourseAccess;
 
 @Service
 public class SubmitReviewUseCase {
+  @Autowired
+  private CourseAccess courseAccess;
+
 
   @Autowired
   private CourseReviewRepository courseReviewRepository;
 
-  @Autowired
-  private EnrollmentRepository enrollmentRepository;
 
   public SubmitReviewResponse execute(SubmitReviewRequest request) {
 
@@ -31,10 +32,7 @@ public class SubmitReviewUseCase {
       return new SubmitReviewResponse(false, "Please enter your review comment!");
     }
 
-    boolean isEnrolled = enrollmentRepository.isUserEnrolled(request.userId(), request.courseId());
-    if (!isEnrolled) {
-      return new SubmitReviewResponse(false, "You must enroll in this course before leaving a review!");
-    }
+    courseAccess.requireEnrollment(request.userId(), request.courseId());
 
     try {
       courseReviewRepository.upsertReview(

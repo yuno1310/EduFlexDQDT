@@ -100,6 +100,12 @@ class ProgressConcurrencyIntegrationTest {
     }
 
     @Bean
+    @Primary
+    org.springframework.cache.CacheManager testCacheManager() {
+      return new org.springframework.cache.concurrent.ConcurrentMapCacheManager();
+    }
+
+    @Bean
     RollbackProbe rollbackProbe(GamificationStatsRepository stats,
         LessonProgressRepository progress, EnrollmentRepository enrollments,
         CheckAndAwardBadgesUseCase badges) {
@@ -175,6 +181,9 @@ class ProgressConcurrencyIntegrationTest {
   @Autowired PasswordResetTokenRepository passwordResetTokens;
 
   @MockitoBean RefreshTokenService refreshTokenService;
+  @MockitoBean com.eduflex.config.ContentEventPublisher contentEvents;
+  @Autowired com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+  @Autowired org.springframework.cache.CacheManager cacheManager;
 
   @BeforeEach
   void resetDatabaseAndClock() {
@@ -183,6 +192,7 @@ class ProgressConcurrencyIntegrationTest {
         + "RESTART IDENTITY CASCADE");
     dsl.execute("DELETE FROM badges WHERE condition_type LIKE 'COURSE_%'");
     clock.setInstant(Instant.parse("2026-09-24T02:00:00Z"));
+    cacheManager.getCacheNames().forEach(name -> cacheManager.getCache(name).clear());
   }
 
   @Test
@@ -630,6 +640,140 @@ class ProgressConcurrencyIntegrationTest {
     String digest = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
         .digest(code.getBytes(StandardCharsets.UTF_8)));
     passwordResetTokens.replaceForUser(userId, digest, expiresAt);
+  }
+
+  @Test
+  void enrollmentChecksProtectCachedLessonsQuizzesAndBothReviewRoutes() throws Exception {
+    QuizFixture fixture = createQuizFixture();
+    UUID outsider = createUser();
+    // Prime the shared lesson cache with an authorized request first.
+    mockMvc.perform(get("/api/lesson").param("courseID", fixture.courseId().toString())
+            .with(authentication(auth(fixture.userId(), "ROLE_USER"))))
+        .andExpect(status().isOk());
+    mockMvc.perform(get("/api/lesson").param("courseID", fixture.courseId().toString())
+            .with(authentication(auth(outsider, "ROLE_USER"))))
+        .andExpect(status().isForbidden());
+    mockMvc.perform(get("/api/quiz/{id}", fixture.quizLessonId())
+            .with(authentication(auth(outsider, "ROLE_USER"))))
+        .andExpect(status().isForbidden());
+    mockMvc.perform(get("/api/quiz/{id}", fixture.quizLessonId())
+            .with(authentication(auth(fixture.userId(), "ROLE_USER"))))
+        .andExpect(status().isOk());
+    mockMvc.perform(get("/api/lesson").param("courseID", fixture.courseId().toString())
+            .with(authentication(auth(outsider, "ROLE_ADMIN"))))
+        .andExpect(status().isOk());
+    for (String route : List.of("/api/course/reviews", "/api/course/" + fixture.courseId() + "/reviews")) {
+      mockMvc.perform(post(route).with(authentication(auth(outsider, "ROLE_USER")))
+              .contentType("application/json").content(objectMapper.writeValueAsString(java.util.Map.of(
+                  "userId", outsider, "courseId", fixture.courseId(), "rating", 5, "comment", "Review"))))
+          .andExpect(status().isForbidden());
+    }
+    assertThat(dsl.fetchCount(dsl.selectFrom("course_reviews"))).isZero();
+  }
+
+  @Test
+  void incompleteDuplicateForeignAndNullQuizAnswersDoNotWriteAttempts() throws Exception {
+    QuizFixture fixture = createQuizFixture();
+    QuizFixture other = createQuizFixture();
+    Long secondQuestion = dsl.fetchOne("INSERT INTO questions (lesson_id, question_text) "
+        + "VALUES (?, 'Second?') RETURNING question_id", fixture.quizLessonId()).get(0, Long.class);
+    Long secondOption = dsl.fetchOne("INSERT INTO question_options (question_id, option_text, is_correct) "
+        + "VALUES (?, 'Yes', true) RETURNING option_id", secondQuestion).get(0, Long.class);
+    AnswerItem first = new AnswerItem(fixture.questionId(), fixture.correctOptionId());
+    var invalidAnswers = List.of(
+        List.of(first), List.of(first, first),
+        List.of(first, new AnswerItem(other.questionId(), other.correctOptionId())),
+        List.of(first, new AnswerItem(secondQuestion, fixture.correctOptionId())),
+        List.of(first, new AnswerItem(null, null)),
+        java.util.Arrays.asList(first, (AnswerItem) null));
+    for (var answers : invalidAnswers) {
+      mockMvc.perform(post("/api/quiz/submit-multiple-choice")
+              .with(authentication(auth(fixture.userId(), "ROLE_USER")))
+              .contentType("application/json").content(objectMapper.writeValueAsString(
+                  new SubmitQuizRequest(fixture.userId(), fixture.quizLessonId(), answers))))
+          .andExpect(status().isBadRequest());
+    }
+    assertThat(dsl.fetchCount(dsl.selectFrom("quiz_attempts"))).isZero();
+    assertThat(dsl.fetchCount(dsl.selectFrom("user_daily_quest_progress"))).isZero();
+    assertThat(dsl.fetchCount(dsl.selectFrom("lesson_progress"))).isZero();
+    assertThat(submitQuiz.execute(new SubmitQuizRequest(fixture.userId(), fixture.quizLessonId(),
+        List.of(first, new AnswerItem(secondQuestion, secondOption)))).passed()).isTrue();
+  }
+
+  @Test
+  void repeatedPassedQuizCannotAdvanceQuestsOrAwardIndirectXp() throws Exception {
+    QuizFixture fixture = createQuizFixture();
+    var request = new SubmitQuizRequest(fixture.userId(), fixture.quizLessonId(),
+        List.of(new AnswerItem(fixture.questionId(), fixture.correctOptionId())));
+    submitQuiz.execute(request);
+    int initialXp = xp(fixture.userId());
+    var initialProgress = dsl.fetch("SELECT quest_id, current_count, completed "
+        + "FROM user_daily_quest_progress WHERE user_id = ? ORDER BY quest_id", fixture.userId());
+    concurrently(12, () -> submitQuiz.execute(request));
+    assertThat(xp(fixture.userId())).isEqualTo(initialXp);
+    assertThat(dsl.fetch("SELECT quest_id, current_count, completed "
+        + "FROM user_daily_quest_progress WHERE user_id = ? ORDER BY quest_id", fixture.userId()))
+        .isEqualTo(initialProgress);
+  }
+
+  @Test
+  void fillBlankCannotExposeAnswersWithoutEnrollmentOrAcrossQuizzes() throws Exception {
+    QuizFixture fixture = createQuizFixture();
+    UUID outsider = createUser();
+    var body = new com.eduflex.dto.quiz.FillBlankDTO.SubmitFillBlankRequest(outsider,
+        fixture.quizLessonId(), List.of(new com.eduflex.dto.quiz.FillBlankDTO.BlankAnswer(fixture.questionId(), "No")));
+    mockMvc.perform(post("/api/quiz/fill-blank").with(authentication(auth(outsider, "ROLE_USER")))
+            .contentType("application/json").content(objectMapper.writeValueAsString(body)))
+        .andExpect(status().isForbidden());
+    QuizFixture other = createQuizFixture();
+    body = new com.eduflex.dto.quiz.FillBlankDTO.SubmitFillBlankRequest(fixture.userId(),
+        fixture.quizLessonId(), List.of(new com.eduflex.dto.quiz.FillBlankDTO.BlankAnswer(other.questionId(), "No")));
+    mockMvc.perform(post("/api/quiz/fill-blank").with(authentication(auth(fixture.userId(), "ROLE_USER")))
+            .contentType("application/json").content(objectMapper.writeValueAsString(body)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void clientCanReportStudyTimeButCannotForgeServerQuestEvents() throws Exception {
+    UUID userId = createUser();
+    for (String type : List.of("QUIZ_COUNT", "PERFECT_RUN", "UNKNOWN")) {
+      mockMvc.perform(post("/api/users/{id}/daily-quests/progress", userId)
+              .with(authentication(auth(userId, "ROLE_USER"))).contentType("application/json")
+              .content(objectMapper.writeValueAsString(java.util.Map.of("questType", type, "increment", 10))))
+          .andExpect(status().isBadRequest());
+    }
+    mockMvc.perform(post("/api/users/{id}/daily-quests/progress", userId)
+            .with(authentication(auth(userId, "ROLE_USER"))).contentType("application/json")
+            .content("{\"questType\":\"STUDY_TIME\",\"increment\":-1}"))
+        .andExpect(status().isBadRequest());
+    assertThat(dsl.fetchCount(dsl.selectFrom("user_daily_quest_progress"))).isZero();
+    mockMvc.perform(post("/api/users/{id}/daily-quests/progress", userId)
+            .with(authentication(auth(userId, "ROLE_USER"))).contentType("application/json")
+            .content("{\"questType\":\"STUDY_TIME\",\"increment\":60}"))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  void adminEditsRefreshCachedCatalogueAndLessonList() throws Exception {
+    Fixture fixture = createFixture(1);
+    var admin = authentication(auth(fixture.userId(), "ROLE_ADMIN"));
+    mockMvc.perform(get("/api/course").with(admin)).andExpect(status().isOk());
+    mockMvc.perform(put("/api/admin/courses/{id}", fixture.courseId()).with(admin)
+            .contentType("application/json")
+            .content("{\"title\":\"Updated catalogue title\",\"learningModel\":\"self-paced\",\"status\":\"active\",\"price\":0}"))
+        .andExpect(status().isOk());
+    mockMvc.perform(get("/api/course").with(admin)).andExpect(status().isOk())
+        .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+            .string(org.hamcrest.Matchers.containsString("Updated catalogue title")));
+    mockMvc.perform(get("/api/lesson").with(admin).param("courseID", fixture.courseId().toString()))
+        .andExpect(status().isOk());
+    mockMvc.perform(post("/api/admin/lessons").with(admin).contentType("application/json")
+            .content(objectMapper.writeValueAsString(java.util.Map.of("courseID", fixture.courseId(),
+                "title", "New cached lesson", "contentType", "text", "content", "New content"))))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.success").value(true));
+    mockMvc.perform(get("/api/lesson").with(admin).param("courseID", fixture.courseId().toString()))
+        .andExpect(status().isOk()).andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+            .string(org.hamcrest.Matchers.containsString("New cached lesson")));
   }
 
   private Fixture createFixture(int lessonCount) {

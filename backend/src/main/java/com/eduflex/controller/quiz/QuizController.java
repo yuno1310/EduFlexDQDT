@@ -21,10 +21,14 @@ import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 
 import java.util.UUID;
+import com.eduflex.security.CourseAccess;
 
 @RestController
 @RequestMapping("api/quiz")
 public class QuizController {
+  @Autowired
+  private CourseAccess courseAccess;
+
 
   @Autowired
   private CreateQuizUseCase createQuizUseCase;
@@ -42,7 +46,8 @@ public class QuizController {
   }
 
   @GetMapping("/{lessonId}")
-  public ResponseEntity<GetQuizResponse> getQuiz(@PathVariable UUID lessonId) {
+  public ResponseEntity<GetQuizResponse> getQuiz(@PathVariable UUID lessonId, Authentication authentication) {
+    courseAccess.requireLesson(authentication, lessonId);
     var response = getQuizUseCase.execute(lessonId);
     return response.success() ? ResponseEntity.ok(response) : ResponseEntity.badRequest().body(response);
   }
@@ -57,7 +62,7 @@ public class QuizController {
 
   @PostMapping("/fill-blank")
   public ResponseEntity<SubmitFillBlankResponse> submitFillBlank(
-      @RequestBody SubmitFillBlankRequest request, Authentication authentication) {
+      @Valid @RequestBody SubmitFillBlankRequest request, Authentication authentication) {
     AuthenticatedUser.requireOwner(authentication, request.userId());
     var response = submitFillBlankUseCase.execute(request);
     if (response.success() == true) {

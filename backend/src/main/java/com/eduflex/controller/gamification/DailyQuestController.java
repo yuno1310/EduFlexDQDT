@@ -36,6 +36,9 @@ public class DailyQuestController {
             @RequestBody QuestProgressRequest request,
             Authentication authentication) {
         AuthenticatedUser.requireOwner(authentication, userId);
+        if (!"STUDY_TIME".equals(request.questType()) || request.increment() <= 0) {
+            throw new IllegalArgumentException("Only positive study time may be reported by the client");
+        }
         updateDailyQuestProgressUseCase.execute(userId, request.questType(), request.increment());
         return ResponseEntity.ok().build();
     }

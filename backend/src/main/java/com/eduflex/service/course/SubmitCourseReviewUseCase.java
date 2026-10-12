@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.eduflex.security.CourseAccess;
 
 import com.eduflex.dto.course.CourseReviewDTO.SubmitCourseReviewRequest;
 import com.eduflex.dto.course.CourseReviewDTO.SubmitCourseReviewResponse;
@@ -12,6 +13,9 @@ import com.eduflex.repository.course.CourseReviewRepository;
 
 @Service
 public class SubmitCourseReviewUseCase {
+  @Autowired
+  private CourseAccess courseAccess;
+
 
   @Autowired
   private CourseRepository courseRepository;
@@ -23,6 +27,8 @@ public class SubmitCourseReviewUseCase {
     if (!courseRepository.existsById(courseId)) {
       return new SubmitCourseReviewResponse(false, "Course not found.");
     }
+
+    courseAccess.requireEnrollment(userId, courseId);
 
     int rating = request.rating();
     if (rating < 1 || rating > 5) {

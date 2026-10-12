@@ -1,5 +1,6 @@
 package com.eduflex.dto.quiz;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
@@ -18,7 +19,7 @@ public class QuizDTO {
   public record SubmitQuizRequest(
       @NotNull UUID userId,
       @NotNull UUID lessonId,
-      @NotEmpty List<AnswerItem> answers) {
+      @NotEmpty List<@NotNull @Valid AnswerItem> answers) {
   }
 
   public record CompletedQuestInfo(String title, int xpReward) {}

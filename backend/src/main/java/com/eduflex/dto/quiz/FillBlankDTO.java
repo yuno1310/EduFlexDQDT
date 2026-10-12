@@ -1,19 +1,22 @@
 package com.eduflex.dto.quiz;
 
 import java.util.List;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotEmpty;
 import java.util.UUID;
 
 public class FillBlankDTO {
 
   public record BlankAnswer(
-      Long questionId,
-      String submittedWord) {
+      @NotNull Long questionId,
+      @NotNull String submittedWord) {
   }
 
   public record SubmitFillBlankRequest(
-      UUID userId,
-      UUID lessonId,
-      List<BlankAnswer> answers) {
+      @NotNull UUID userId,
+      @NotNull UUID lessonId,
+      @NotEmpty List<@NotNull @Valid BlankAnswer> answers) {
   }
 
   public record FillBlankResultDetail(

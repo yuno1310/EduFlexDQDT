@@ -16,7 +16,7 @@ public class DeleteCourseUseCase {
     private CourseRepository courseRepository;
 
     @Transactional
-    @CacheEvict(value = {"courseCatalog", "courseSummaries", "semanticSearch"}, allEntries = true)
+    @CacheEvict(value = {"courses", "courseCatalog", "courseSummaries", "semanticSearch"}, allEntries = true)
     public DeleteCourseResponse execute(UUID courseId) {
         if (!courseRepository.existsById(courseId)) {
             return new DeleteCourseResponse(false, "Course not found");

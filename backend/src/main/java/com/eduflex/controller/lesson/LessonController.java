@@ -7,7 +7,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
 import java.util.UUID;
+import com.eduflex.security.CourseAccess;
 
 import com.eduflex.dto.lesson.CreateLessonDTO.CreateLessonRequest;
 import com.eduflex.dto.lesson.CreateLessonDTO.CreateLessonResponse;
@@ -19,6 +21,9 @@ import com.eduflex.service.lesson.GetLessonUseCase;
 @RestController
 @RequestMapping("api/lesson")
 public class LessonController {
+  @Autowired
+  private CourseAccess courseAccess;
+
   @Autowired
   private CreateLessonUseCase createLessonUseCase;
 
@@ -36,7 +41,9 @@ public class LessonController {
   }
 
   @GetMapping
-  public ResponseEntity<GetLessonResponse> getListLesson(@RequestParam("courseID") UUID courseID) {
+  public ResponseEntity<GetLessonResponse> getListLesson(@RequestParam("courseID") UUID courseID,
+      Authentication authentication) {
+    courseAccess.requireCourse(authentication, courseID);
     var request = new GetLessonRequest(courseID);
     var response = getLessonUseCase.execute(request);
     if (response.success() == true) {

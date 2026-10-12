@@ -18,7 +18,7 @@ public class CreateCourseUseCase {
   @Autowired
   private ContentEventPublisher contentEvents;
 
-  @CacheEvict(value = {"courseCatalog", "semanticSearch"}, allEntries = true)
+  @CacheEvict(value = {"courses", "courseCatalog", "semanticSearch"}, allEntries = true)
   public CreateCourseResponse execute(CreateCourseRequest request) {
     var course = new CourseDbO(
         request.title(),
